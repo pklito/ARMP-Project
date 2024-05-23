@@ -1,15 +1,50 @@
 import Robots
 from time import sleep, time
 import numpy as np
+import sys
+import urx
+from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
+
 
 
 robot_task = Robots.TaskRobot()
 robot_assis = Robots.AssistanceRobot()
+# rob = urx.Robot('192.168.0.11')
+rob = None
+while rob is None:
+    try:
+        rob = urx.Robot('192.168.0.11', use_rt=True)
+    except:
+        print('Cannot connect to robot. Retrying...')
+        sleep(5)
+def custom_robot():
+    robotiqgrip = Robotiq_Two_Finger_Gripper(robot=rob)
+    robotiqgrip.open_gripper()
+    robotiqgrip.close_gripper()
+    
+    
+    
 def task_robot():
     # robot_task.execute_task()
+    # final = np.deg2rad([34.03, -115.56, -64.3, 0.2, 56.23, 269.47])
+    # final_path = [robot_task.home, final]
+    # robot_task.execute_path(path=final_path)
+	 # Instantiate the gripper with the robot connection
+    # robotiqgrip = Robotiq_Two_Finger_Gripper(robot=robot_task.robot)
     final = np.deg2rad([34.03, -115.56, -64.3, 0.2, 56.23, 269.47])
     final_path = [robot_task.home, final]
+    # robotiqgrip.open_gripper()
+    # sleep(1)
     robot_task.execute_path(path=final_path)
+    # sleep(1)
+    # robotiqgrip.close_gripper()
+
+    # robotiqgrip.open_gripper()
+    # robotiqgrip.close_gripper()
+    # robot_task.send_program(robotiqgrip.ret_program_to_run())
+	
+ 
+ 
 def assistance_robot():
     my_path=[[0.45210981369018555, -3.539252897302145, 0.9914467970477503, -0.6139599245837708, 1.1233137845993042, 3.199092149734497],
             [-0.08237106004823858, -3.519120832482809, 1.6106651465045374, -1.1102524262717743, 1.054146409034729, 3.9091503620147705],
@@ -21,4 +56,5 @@ def assistance_robot():
     robot_assis.execute_path(path=my_path)
 if __name__ == '__main__':
     task_robot()
+    # custom_robot()
     # assistance_robot()

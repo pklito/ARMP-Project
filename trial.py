@@ -9,18 +9,18 @@ from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
 
 robot_task = Robots.TaskRobot()
 robot_assis = Robots.AssistanceRobot()
-# rob = urx.Robot('192.168.0.11')
-rob = None
-while rob is None:
-    try:
-        rob = urx.Robot('192.168.0.11', use_rt=True)
-    except:
-        print('Cannot connect to robot. Retrying...')
-        sleep(5)
-def custom_robot():
-    robotiqgrip = Robotiq_Two_Finger_Gripper(robot=rob)
-    robotiqgrip.open_gripper()
-    robotiqgrip.close_gripper()
+# # rob = urx.Robot('192.168.0.11')
+# rob = None
+# while rob is None:
+#     try:
+#         rob = urx.Robot('192.168.0.11', use_rt=True)
+#     except:
+#         print('Cannot connect to robot. Retrying...')
+#         sleep(5)
+# def custom_robot():
+#     robotiqgrip = Robotiq_Two_Finger_Gripper(robot=rob)
+#     robotiqgrip.open_gripper()
+#     robotiqgrip.close_gripper()
     
     
     

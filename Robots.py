@@ -19,16 +19,16 @@ class BaseRobot:
                 print('Cannot connect to robot. Retrying...')
                 sleep(5)
 
-    def move(self, config):
+    def move(self, config, end_early = False, velocity = 0.5):
         dist = lambda a, b: np.linalg.norm(np.array(a) - np.array(b))
         # print('Moving to:', config)
         try:
             # print(f'moving to {config}')
-            self.robot.movej(config, acc=10, vel=0.5)
+            self.robot.movej(config, acc=10, vel=velocity)
         except:
             pass
 
-        while dist(self.get_config(), config) > 0.1:
+        while dist(self.get_config(), config) > 0.1 and not end_early:
             pass
 
     def move_all(self, config_list):

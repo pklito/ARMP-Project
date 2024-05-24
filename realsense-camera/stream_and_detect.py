@@ -37,14 +37,9 @@ def gen_frames():
     config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
     pipeline.start(config)
 
-    # Load your object detection model here (e.g., YOLO, SSD, etc.)
-
     try:
         while True:
-            # Wait for a new frame
             frames = pipeline.wait_for_frames()
-            
-            # Get depth and color frames
             depth_frame = frames.get_depth_frame()
             color_frame = frames.get_color_frame()
 
@@ -58,8 +53,7 @@ def gen_frames():
             
             detected_ball = detect_object(color_image)  # Call your object detection function
             if detected_ball is not None:
-                # For each detected object, calculate the distance using depth values
-                x1, y1, x2, y2 = detected_ball  # Extract bounding box coordinates
+                x1, y1, x2, y2 = detected_ball  # Extract bounding box coordinates - top left + bottom right?
                 center_x = (x1 + x2) // 2
                 center_y = (y1 + y2) // 2
                 depth_value = depth_frame.get_distance(center_x, center_y)
@@ -73,14 +67,11 @@ def gen_frames():
 
             # Combine color image with colormap
             images = np.hstack((color_image, depth_colormap))
-
-            # Display the combined image with color and depth information
             cv2.imshow('RealSense Color and Depth', images)
 
             # Press 'q' to quit
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
     finally:
         pipeline.stop()
         cv2.destroyAllWindows()

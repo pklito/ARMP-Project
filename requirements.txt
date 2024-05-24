@@ -1,0 +1,11 @@
+Flask==3.0.3
+keyboard==0.13.5
+matplotlib==3.8.4
+numpy==1.26.4
+opencv_contrib_python==4.9.0.80
+opencv_python==4.9.0.80
+Pillow==10.3.0
+pyperclip==1.8.2
+pyrealsense2==2.55.1.6486
+urx==0.11.0
+~pencv_python_headless==4.8.0.76

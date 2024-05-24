@@ -2,7 +2,6 @@ import cv2
 import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
-from detectedObjects import *
 
 # Function to perform object detection on a frame
 def detect_object(frame):

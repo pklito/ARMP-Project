@@ -4,25 +4,39 @@ import numpy as np
 import sys
 import urx
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
+import keyboard  # Import the keyboard module
 
 
 
 robot_task = Robots.TaskRobot()
 robot_assis = Robots.AssistanceRobot()
-# # rob = urx.Robot('192.168.0.11')
-# rob = None
-# while rob is None:
-#     try:
-#         rob = urx.Robot('192.168.0.11', use_rt=True)
-#     except:
-#         print('Cannot connect to robot. Retrying...')
-#         sleep(5)
-# def custom_robot():
-#     robotiqgrip = Robotiq_Two_Finger_Gripper(robot=rob)
-#     robotiqgrip.open_gripper()
-#     robotiqgrip.close_gripper()
+
     
-    
+def run_circles():
+    current_config = robot_task.get_config()
+    diff = min(abs(robot_task.home[5] - 2 * np.pi), abs(robot_task.home[5] + 2 * np.pi))
+
+    # Add an event listener for the 'q' key to stop execution
+    stop_execution = False
+
+    def stop_running():
+        nonlocal stop_execution
+        stop_execution = True
+
+    keyboard.add_hotkey('q', stop_running)
+
+    try:
+        robot_task.move(robot_task.home)
+        for m in range(0, int(np.rad2deg(diff)), 5):
+            if stop_execution:
+                print("Execution stopped by user.")
+                break
+            new_config = current_config.copy()
+            new_config[5] += np.deg2rad(m)
+            robot_task.move(new_config, end_early=True, velocity=1)
+    finally:
+        keyboard.remove_hotkey('q')
+        
     
 def task_robot():
     # robot_task.execute_task()
@@ -55,6 +69,7 @@ def assistance_robot():
             [-1.2620652357684534, -1.5316730302623291, -0.4279654026031494, 1.9765478807636718, -1.260444466267721, 3.140753746032715]]
     robot_assis.execute_path(path=my_path)
 if __name__ == '__main__':
-    task_robot()
+    # task_robot()
+    run_circles()
     # custom_robot()
     # assistance_robot()

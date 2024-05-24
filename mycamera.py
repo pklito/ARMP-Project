@@ -21,13 +21,21 @@ def clamp(value, min, max):
 # Config
 plate_center = (317, 356)
 wrist_3_balance = 269.47
+
+
+
 # Settings
 max_error = 50
 kp = -0.08
 
+
+
 # Global vars
 robot_task = Robots.TaskRobot()
 robot_assis = Robots.AssistanceRobot()
+
+
+
 if __name__ == '__main__':
     camera = CameraWrapper()
     
@@ -38,7 +46,6 @@ if __name__ == '__main__':
             print("Can't receive frame (stream end?). Exiting ...")
             exit()
             
-        
         position = detect_object(frame)
         if(position is None):
             continue
@@ -47,7 +54,6 @@ if __name__ == '__main__':
         ball_center = (int((x1+x2)/2), int((y1+y2)/2))
         
         error = plate_center[0] - ball_center[0]
-        # error = clamp(error, -max_error, max_error)
         print("error: ", plate_center[0] - ball_center[0])
 
         final = np.deg2rad([34.03, -115.56, -64.3, 0.2, 56.23, wrist_3_balance + kp * error])

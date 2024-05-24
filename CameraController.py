@@ -64,8 +64,6 @@ class CameraWrapper:
         bbox = detect_object(frame)
 
         if show:
-            # cv2.imwrite(f'vid/frame_{i}.png', frame)
-            # i += 1
             # Display the resulting frame
             if(bbox is not None):
                 x1, y1, x2, y2 = bbox
@@ -85,6 +83,7 @@ class CameraWrapper:
             i += 1
 
     def real_time(self):
+        
         # clear vid folder
         if not os.path.exists('vid'):
             os.makedirs('vid')
@@ -96,14 +95,13 @@ class CameraWrapper:
         while True:
             # Capture frame-by-frame
             ret, frame = self.cap.read()
-            # print('ret is:', ret)
-            # print('frame is: ', frame)
+            
             # If frame is read correctly ret is True
             if not ret:
                 print("Can't receive frame (stream end?). Exiting ...")
                 return None
             position = detect_object(frame)
-            # print(position)
+            
             # Display the resulting frame
             if(position is not None):
                 x1,y1,x2,y2 = position
@@ -111,8 +109,8 @@ class CameraWrapper:
                 print(ball_center)
                 frame = cv2.circle(frame.copy(), center=ball_center, radius=3, color=(0, 0, 0), thickness=-1)
             cv2.imshow('Camera Stream', frame)
-            #cv2.imwrite(f'vid/frame_{i}.png', frame)
             i += 1
+            
             # Break the loop on 'q' key press
             if cv2.waitKey(1) == ord('q'):
                 return

@@ -51,7 +51,7 @@ def detect_object(frame):
 
 class CameraWrapper:
     def __init__(self):
-        self.cap = cv2.VideoCapture('http://192.168.0.3:5000/video_feed')
+        self.cap = cv2.VideoCapture('http://192.168.0.22:5000/video_feed')
 
     def is_visible(self, show=False, i=0):
         # Capture frame-by-frame

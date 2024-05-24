@@ -215,7 +215,7 @@ class HSVRangeFinder:
         return
         self.camIndex += 1
         self.cap.release()
-        self.cap = cv2.VideoCapture('http://192.168.0.3:5000/video_feed')
+        self.cap = cv2.VideoCapture('http://192.168.0.22:5000/video_feed')
         self.camChLabel.config(text='CH:{}'.format(self.camIndex))
 
     # Method to switch to the previous camera channel
@@ -227,7 +227,7 @@ class HSVRangeFinder:
         else:
             return
             self.cap.release()
-            self.cap = cv2.VideoCapture('http://192.168.0.3:5000/video_feed')
+            self.cap = cv2.VideoCapture('http://192.168.0.22:5000/video_feed')
             self.camChLabel.config(text='CH:{}'.format(self.camIndex))
 
     # Method to update the video frame and apply HSV range filtering

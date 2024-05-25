@@ -11,6 +11,7 @@ import sys
 import urx
 import math
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
+
 def clamp(value, min, max):
     if value < min:
         return min

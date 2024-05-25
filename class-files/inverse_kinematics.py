@@ -1,6 +1,6 @@
 import numpy as np
 from environment import Environment
-from kinematics import UR5e_PARAMS, Transform
+from kinematics import UR5e_PARAMS, UR3e_PARAMS, Transform
 from building_blocks import Building_Blocks
 from visualizer import Visualize_UR
 import numpy as np
@@ -15,7 +15,7 @@ DH_matrix_UR3e = np.matrix([[0, pi / 2.0, 0.15185],
                             [-0.2132, 0, 0],
                             [0, pi / 2.0, 0.13105],
                             [0, -pi / 2.0, 0.08535],
-                            [0, 0, 0.0921]])
+                            [0, 0, 0.0921]]) # should add tool length?
 
 DH_matrix_UR5e = np.matrix([[0, pi / 2.0, 0.1625],
                             [-0.425, 0, 0],
@@ -60,7 +60,7 @@ DH_matrix_UR10 = np.matrix([[0, pi / 2.0, 0.1273],
                             [0, 0, 0.0922]])
 
 
-def mat_transtorm_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
+def mat_transform_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
     n = n - 1
     t_z_theta = np.matrix([[cos(edges[n]), -sin(edges[n]), 0, 0],
                            [sin(edges[n]), cos(edges[n]), 0, 0],
@@ -79,12 +79,12 @@ def mat_transtorm_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]
 
 
 def forward_kinematic_solution(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
-    t01 = mat_transtorm_DH(DH_matrix, 1, edges)
-    t12 = mat_transtorm_DH(DH_matrix, 2, edges)
-    t23 = mat_transtorm_DH(DH_matrix, 3, edges)
-    t34 = mat_transtorm_DH(DH_matrix, 4, edges)
-    t45 = mat_transtorm_DH(DH_matrix, 5, edges)
-    t56 = mat_transtorm_DH(DH_matrix, 6, edges)
+    t01 = mat_transform_DH(DH_matrix, 1, edges)
+    t12 = mat_transform_DH(DH_matrix, 2, edges)
+    t23 = mat_transform_DH(DH_matrix, 3, edges)
+    t34 = mat_transform_DH(DH_matrix, 4, edges)
+    t45 = mat_transform_DH(DH_matrix, 5, edges)
+    t56 = mat_transform_DH(DH_matrix, 6, edges)
     answer = t01 * t12 * t23 * t34 * t45 * t56
     return answer
 
@@ -123,9 +123,9 @@ def inverse_kinematic_solution(DH_matrix, transform_matrix,):
 
     # theta 3
     for i in {0, 2, 4, 6}:
-        T01 = mat_transtorm_DH(DH_matrix, 1, theta[:, i])
-        T45 = mat_transtorm_DH(DH_matrix, 5, theta[:, i])
-        T56 = mat_transtorm_DH(DH_matrix, 6, theta[:, i])
+        T01 = mat_transform_DH(DH_matrix, 1, theta[:, i])
+        T45 = mat_transform_DH(DH_matrix, 5, theta[:, i])
+        T56 = mat_transform_DH(DH_matrix, 6, theta[:, i])
         T14 = linalg.inv(T01) * T06 * linalg.inv(T45 * T56)
         P13 = T14 * np.matrix([[0], [-DH_matrix[3, 2]], [0], [1]])
         costh3 = ((P13[0] ** 2 + P13[1] ** 2 - DH_matrix[1, 0] ** 2 - DH_matrix[2, 0] ** 2) /
@@ -139,35 +139,29 @@ def inverse_kinematic_solution(DH_matrix, transform_matrix,):
 
     # theta 2,4
     for i in range(8):
-        T01 = mat_transtorm_DH(DH_matrix, 1, theta[:, i])
-        T45 = mat_transtorm_DH(DH_matrix, 5, theta[:, i])
-        T56 = mat_transtorm_DH(DH_matrix, 6, theta[:, i])
+        T01 = mat_transform_DH(DH_matrix, 1, theta[:, i])
+        T45 = mat_transform_DH(DH_matrix, 5, theta[:, i])
+        T56 = mat_transform_DH(DH_matrix, 6, theta[:, i])
         T14 = linalg.inv(T01) * T06 * linalg.inv(T45 * T56)
         P13 = T14 * np.matrix([[0], [-DH_matrix[3, 2]], [0], [1]])
 
         theta[1, i] = atan2(-P13[1], -P13[0]) - asin(
             -DH_matrix[2, 0] * sin(theta[2, i]) / sqrt(P13[0] ** 2 + P13[1] ** 2)
         )
-        T32 = linalg.inv(mat_transtorm_DH(DH_matrix, 3, theta[:, i]))
-        T21 = linalg.inv(mat_transtorm_DH(DH_matrix, 2, theta[:, i]))
+        T32 = linalg.inv(mat_transform_DH(DH_matrix, 3, theta[:, i]))
+        T21 = linalg.inv(mat_transform_DH(DH_matrix, 2, theta[:, i]))
         T34 = T32 * T21 * T14
         theta[3, i] = atan2(T34[1, 0], T34[0, 0])
     return theta
 
 
 
-if __name__ == '__main__':
-   
-    # Edit the following parameters:
+def inverse_kinematics_solutions_endpos(tx, ty, tz, DH_matrix):
+    # alpha, beta, gamma set the orientation of the end effector [radians]
     alpha = -np.pi
     beta = 0.0
     gamma = 0
-    tx = 0.15
-    ty = -0.35
-    tz = 0.1
-    env_idx =4
-    # ------------------------------
-
+    
     transform = np.matrix([[cos(beta) * cos(gamma), sin(alpha) * sin(beta)*cos(gamma) - cos(alpha)*sin(gamma),
                     cos(alpha)*sin(beta)*cos(gamma)+sin(alpha)*sin(gamma), tx],
                     [cos(beta)* sin(gamma), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma),
@@ -175,19 +169,16 @@ if __name__ == '__main__':
                     [-sin(beta), sin(alpha)*cos(beta), cos(alpha)*cos(beta), tz],
                      [0, 0,0,1]])
     
-    IKS = inverse_kinematic_solution(DH_matrix_UR5e, transform)
-
-    ur_params = UR5e_PARAMS(inflation_factor=1)
-    env = Environment(env_idx=env_idx)
-    transform = Transform(ur_params)
-    bb = Building_Blocks(transform=transform, ur_params=ur_params, env=env, resolution=0.1, p_bias=0.05)
-    visualizer = Visualize_UR(ur_params, env=env, transform=transform, bb=bb)
+    IKS = inverse_kinematic_solution(DH_matrix, transform)
     candidate_sols = []
     for i in range(IKS.shape[1]):
         candidate_sols.append(IKS[:, i])  
-    candidate_sols = np.array(candidate_sols)
-    
-    # check for collisions and angles limits
+    return np.array(candidate_sols)
+
+
+
+def get_valid_inverse_solutions(tx,ty,tz,bb, DH_matrix):
+    candidate_sols = inverse_kinematics_solutions_endpos(tx, ty, tz)
     sols = [] 
     for candidate_sol in candidate_sols:
         if bb.is_in_collision(candidate_sol):
@@ -200,22 +191,48 @@ if __name__ == '__main__':
         if np.max(candidate_sol) > np.pi or np.min(candidate_sol) < -np.pi:
             continue  
         sols.append(candidate_sol)
-    
+        
     # verify solution:
     final_sol = []
     for sol in sols:
-        transform = forward_kinematic_solution(DH_matrix_UR5e, sol)
+        transform = forward_kinematic_solution(DH_matrix, sol)
         diff = np.linalg.norm(np.array([transform[0,3],transform[1,3],transform[2,3]])-
                               np.array([tx,ty,tz]))
         if diff < 0.05:
             final_sol.append(sol)
     final_sol = np.array(final_sol)
+    return [[c[0] for c in p] for p in final_sol]
+
+if __name__ == '__main__':    
+    # alpha, beta, gamma set the orientation of the end effector [radians]
+    alpha = -np.pi
+    beta = 0.0
+    gamma = 0
+    
+    # tx, ty, tz set the position of end effector [meter]
+    tx = 0.15
+    ty = -0.35
+    tz = 0.1 # the height to drop a cube for instance
+    
+    # env_idx sets the corresponding environment with obstacles
+    env_idx = 3
+    # ------------------------------
+    
+    DH_matrix, ur_params = DH_matrix_UR5e, UR5e_PARAMS(inflation_factor=1)
+    # DH_matrix, ur_params = DH_matrix_UR3e, UR3e_PARAMS(inflation_factor=1)
+
+    transform = Transform(ur_params)
+    env = Environment(env_idx=env_idx)
+    bb = Building_Blocks(transform=transform, ur_params=ur_params, env=env, resolution=0.1, p_bias=0.05)
+    # visualizer = Visualize_UR(ur_params, env=env, transform=transform, bb=bb)
 
     try:
-        visualizer.show_path(final_sol)
-        visualizer.show_conf(final_sol[0])
-        print(final_sol)
-        np.save('sol' ,np.array(final_sol))
+        cube = [-0.08, -0.42, 0.1] #example
+        valid_sols = get_valid_inverse_solutions(*cube,bb=bb, DH_matrix=DH_matrix)
+        print('valid solutions: ', valid_sols)
+        
+        # visualizer.show_path(final_sol)
+        # visualizer.show_conf(final_sol[0])
+        # np.save('sol' ,np.array(final_sol))
     except:
         print('No solution found')
-

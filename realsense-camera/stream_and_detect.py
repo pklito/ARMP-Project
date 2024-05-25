@@ -23,9 +23,6 @@ def detect_object(frame):
     mask_pil = Image.fromarray(mask)
     bbox = mask_pil.getbbox()
 
-    if bbox is None:
-        return None
-
     return bbox
 
 def gen_frames():

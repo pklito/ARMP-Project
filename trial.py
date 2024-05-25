@@ -37,26 +37,13 @@ def run_circles():
     finally:
         keyboard.remove_hotkey('q')
         
+   
     
 def task_robot():
-    # robot_task.execute_task()
-    # final = np.deg2rad([34.03, -115.56, -64.3, 0.2, 56.23, 269.47])
-    # final_path = [robot_task.home, final]
-    # robot_task.execute_path(path=final_path)
-	 # Instantiate the gripper with the robot connection
-    # robotiqgrip = Robotiq_Two_Finger_Gripper(robot=robot_task.robot)
     final = np.deg2rad([34.03, -115.56, -64.3, 0.2, 56.23, 269.47])
     final_path = [robot_task.home, final]
-    # robotiqgrip.open_gripper()
-    # sleep(1)
     robot_task.execute_path(path=final_path)
-    # sleep(1)
-    # robotiqgrip.close_gripper()
-
-    # robotiqgrip.open_gripper()
-    # robotiqgrip.close_gripper()
-    # robot_task.send_program(robotiqgrip.ret_program_to_run())
-	
+    	
  
  
 def assistance_robot():

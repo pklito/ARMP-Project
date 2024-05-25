@@ -79,7 +79,7 @@ class Building_Blocks(object):
                 if sphere[2] < self.ur_params.sphere_radius[joint]:
                     return True
         
-        # x - axis limit
+        # x - axis limit --> should check if UR3E has the same limit or if it's more / less + other limits
         for joint, spheres in global_sphere_coords.items(): #temp base always hits floor
             for sphere in spheres:
                 if sphere[0] + self.ur_params.sphere_radius[joint] > 0.4:

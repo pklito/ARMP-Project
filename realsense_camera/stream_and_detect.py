@@ -98,7 +98,7 @@ def gen_frames():
                 cv2.rectangle(color_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 
                 # Display the distance value on the color image
-                cv2.putText(color_image, f'Distance: {distance_meters:.2f} mm', (x1, y1 - 10),
+                cv2.putText(color_image, f'Distance: {distance_meters:.2f} mm, ({center_x}, {center_y})', (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
             # Combine color image with colormap

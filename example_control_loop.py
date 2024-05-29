@@ -36,7 +36,7 @@ import numpy as np
 from CameraController import *
 from Robots import *
 from realsense_camera import stream_and_detect
-
+from simple_pid import PID
 
 
 def clamp(value, min, max):
@@ -55,8 +55,9 @@ balanced_conf = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57]
 
 # Settings
 max_error = 50
-kp = -0.15/60
-        
+pid_controller = PID(0.002, 0, 0.0008)
+pid_controller.setpoint = 0
+
 # logging.basicConfig(level=logging.INFO)
 
 ROBOT_HOST = "192.168.0.11"
@@ -162,7 +163,7 @@ while keep_running:
         print(error)
         if(error is None):
             continue
-        new_setp[5] += kp * error
+        new_setp[5] += pid_controller(error)
         
         list_to_setp(setp, new_setp)
         #print("New pose = " + str(new_setp))

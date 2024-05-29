@@ -55,7 +55,7 @@ balanced_conf = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57]
 
 # Settings
 max_error = 50
-kp = -0.08/60
+kp = -0.15/60
         
 # logging.basicConfig(level=logging.INFO)
 
@@ -121,23 +121,25 @@ if not con.send_start():
     sys.exit()
 
 
-camera = CameraWrapper()
+camera = stream_and_detect.CameraStreamer()
 
 def get_error():
-    ret, frame = camera.cap.read()
-    if not ret:
+    color_image, depth_image = camera.get_frames()
+    if color_image.size == 0 or depth_image.size == 0:
         print("Can't receive frame (stream end?). Exiting ...")
         exit()
         
-    position = stream_and_detect.detect_object(frame)[0]
-    if(position is None):
-        return None
+    position = stream_and_detect.detect_object(color_image)
+    if len(position) > 0:
+        position = position[0]
+    else:
+        print('no object error!')
+        return
     
     x1,y1,x2,y2 = position
     ball_center = (int((x1+x2)/2), int((y1+y2)/2))
     
     error = plate_center[0] - ball_center[0]
-    print("error: ", plate_center[0] - ball_center[0])
 
     return error
     
@@ -149,24 +151,26 @@ while keep_running:
     state = con.receive()
     if state is None:
         break
-    full_print(state)
+    #full_print(state)
     # do something...
     if move_completed and state.output_int_register_0 == 1:
         move_completed = False
         
-        new_setp = balanced_conf
+        new_setp = balanced_conf.copy()
+        print('calculating error:')
         error = get_error()
+        print(error)
         if(error is None):
             continue
         new_setp[5] += kp * error
         
         list_to_setp(setp, new_setp)
-        print("New pose = " + str(new_setp))
+        #print("New pose = " + str(new_setp))
         # send new setpoint
         con.send(setp)
         watchdog.input_int_register_0 = 1
     elif not move_completed and state.output_int_register_0 == 0:
-        print("Move to confirmed pose = " + str(state.target_q))
+        #print("Move to confirmed pose = " + str(state.target_q))
         move_completed = True
         watchdog.input_int_register_0 = 0
 

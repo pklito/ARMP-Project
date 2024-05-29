@@ -3,6 +3,9 @@ import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
 
+def calculate_similarity(color1, color2):
+    return np.sum(np.abs(color1 - color2))
+
 # Function to perform object detection on a frame
 def detect_object(frame):
 
@@ -20,10 +23,20 @@ def detect_object(frame):
     mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)
     mask = cv2.bitwise_or(mask1, mask2)
 
-    mask_pil = Image.fromarray(mask)
-    bbox = mask_pil.getbbox()
+    # mask_pil = Image.fromarray(mask)
+    # bbox = mask_pil.getbbox()
 
-    return bbox
+    # return bbox
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Extract bounding boxes from contours
+    bounding_boxes = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        bounding_boxes.append((x, y, x + w, y + h))
+
+    return bounding_boxes
+
 
 def gen_frames():
     # Initialize RealSense camera pipeline
@@ -47,8 +60,10 @@ def gen_frames():
 
             color_image = np.asanyarray(color_frame.get_data())
             
-            detected_ball = detect_object(color_image)  # Call your object detection function
-            if detected_ball is not None:
+            # detected_ball = detect_object(color_image)  # Call your object detection function
+            detected_balls = detect_object(color_image)  # Call your object detection function
+                
+            for detected_ball in detected_balls:
                 x1, y1, x2, y2 = detected_ball  # Extract bounding box coordinates - top left + bottom right?
                 center_x = (x1 + x2) // 2
                 center_y = (y1 + y2) // 2

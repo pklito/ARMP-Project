@@ -1,7 +1,7 @@
 import numpy as np
 from environment import Environment
 from kinematics import UR5e_PARAMS, UR3e_PARAMS, Transform
-from building_blocks import Building_Blocks
+from building_blocks import *
 from visualizer import Visualize_UR
 import numpy as np
 from numpy import linalg
@@ -61,6 +61,17 @@ DH_matrix_UR10 = np.matrix([[0, pi / 2.0, 0.1273],
 
 
 def mat_transform_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
+    """
+    Compute the transformation matrix for the nth joint using Denavit-Hartenberg parameters.
+
+    Parameters:
+    DH_matrix (numpy.matrix): The DH parameters matrix for the robot.
+    n (int): The index of the joint (1-based index).
+    edges (numpy.matrix): The joint angles or displacements.
+
+    Returns:
+    numpy.matrix: The transformation matrix for the nth joint.
+    """
     n = n - 1
     t_z_theta = np.matrix([[cos(edges[n]), -sin(edges[n]), 0, 0],
                            [sin(edges[n]), cos(edges[n]), 0, 0],
@@ -79,6 +90,17 @@ def mat_transform_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]
 
 
 def forward_kinematic_solution(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
+    """
+    Compute the forward kinematic solution for the given joint angles.
+
+    Parameters:
+    DH_matrix (numpy.matrix): The DH parameters matrix for the robot.
+    edges (numpy.matrix): The joint angles or displacements.
+
+    Returns:
+    numpy.matrix: The transformation matrix representing the end-effector's position and orientation.
+    """
+    
     t01 = mat_transform_DH(DH_matrix, 1, edges)
     t12 = mat_transform_DH(DH_matrix, 2, edges)
     t23 = mat_transform_DH(DH_matrix, 3, edges)
@@ -89,7 +111,47 @@ def forward_kinematic_solution(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [
     return answer
 
 
+# to calculate T_BA:
+# 1. dentify the position of the origin of Robot B's frame in Robot A's frame. This gives you the translation vector \([t_x, t_y, t_z]\).
+# 2. Determine the rotation of Robot B's frame relative to Robot A's frame. This can be represented by a 3x3 rotation matrix \( R_{BA} \).
+# 3. Use the rotation matrix \( R_{BA} \) and the translation vector \([t_x, t_y, t_z]\) to construct the 4x4 transformation matrix \( T_{BA} \).
+# robotB is in (-1.35, -0.07) in realtion to robotA's frame
+
+def forward_kinematics_two_robots(DH_matrix_A, edges_A, DH_matrix_B, edges_B, T_BA):
+    """
+    Compute the forward kinematic solutions for two robots and transform Robot B's end-effector to Robot A's frame.
+
+    Parameters:
+    DH_matrix_A (numpy.matrix): The DH parameters matrix for Robot A.
+    edges_A (numpy.matrix): The joint angles or displacements for Robot A.
+    DH_matrix_B (numpy.matrix): The DH parameters matrix for Robot B.
+    edges_B (numpy.matrix): The joint angles or displacements for Robot B.
+    T_BA (numpy.matrix): The transformation matrix from Robot B to Robot A.
+
+    Returns:
+    numpy.matrix, numpy.matrix: The end-effector positions and orientations for Robot A and Robot B in Robot A's frame.
+    """
+    
+    end_effector_A = forward_kinematic_solution(DH_matrix_A, edges_A)
+    end_effector_B = forward_kinematic_solution(DH_matrix_B, edges_B)
+
+    # Transform end-effector of Robot B to Robot A's frame
+    end_effector_B_in_A = T_BA * np.append(end_effector_B[:3, 3], 1)
+
+    return end_effector_A, end_effector_B_in_A
+
+
 def inverse_kinematic_solution(DH_matrix, transform_matrix,):
+    """
+    Compute the inverse kinematic solution for the given transformation matrix.
+
+    Parameters:
+    DH_matrix (numpy.matrix): The DH parameters matrix for the robot.
+    transform_matrix (numpy.matrix): The transformation matrix representing the desired end-effector position and orientation.
+
+    Returns:
+    numpy.matrix: A matrix containing the possible joint angle solutions.
+    """
 
     theta = np.matrix(np.zeros((6, 8)))
     # theta 1
@@ -157,6 +219,19 @@ def inverse_kinematic_solution(DH_matrix, transform_matrix,):
 
 
 def inverse_kinematics_solutions_endpos(tx, ty, tz, DH_matrix):
+    """
+    Compute the inverse kinematic solutions for the given end-effector position.
+
+    Parameters:
+    tx (float): The x-coordinate of the end-effector position.
+    ty (float): The y-coordinate of the end-effector position.
+    tz (float): The z-coordinate of the end-effector position.
+    DH_matrix (numpy.matrix): The DH parameters matrix for the robot.
+
+    Returns:
+    numpy.ndarray: An array containing the possible joint angle solutions.
+    """
+    
     # alpha, beta, gamma set the orientation of the end effector [radians]
     alpha = -np.pi
     beta = 0.0
@@ -178,6 +253,20 @@ def inverse_kinematics_solutions_endpos(tx, ty, tz, DH_matrix):
 
 
 def get_valid_inverse_solutions(tx,ty,tz,bb, DH_matrix):
+    """
+    Compute and validate the inverse kinematic solutions for the given end-effector position, considering collision constraints.
+
+    Parameters:
+    tx (float): The x-coordinate of the end-effector position.
+    ty (float): The y-coordinate of the end-effector position.
+    tz (float): The z-coordinate of the end-effector position.
+    bb (Building_Blocks): The collision detection system.
+    DH_matrix (numpy.matrix): The DH parameters matrix for the robot.
+
+    Returns:
+    list: A list of valid joint angle solutions that do not cause collisions.
+    """
+    
     candidate_sols = inverse_kinematics_solutions_endpos(tx, ty, tz)
     sols = [] 
     for candidate_sol in candidate_sols:
@@ -202,6 +291,40 @@ def get_valid_inverse_solutions(tx,ty,tz,bb, DH_matrix):
             final_sol.append(sol)
     final_sol = np.array(final_sol)
     return [[c[0] for c in p] for p in final_sol]
+
+
+def get_valid_inverse_solutions_two_robots(tx_A, ty_A, tz_A, tx_B, ty_B, tz_B, bb, DH_matrix_A, DH_matrix_B, T_BA):
+    """
+    Compute and validate the inverse kinematic solutions for two robots aiming at specified target positions,
+    considering collision constraints and other mechanical limits.
+
+    Parameters:
+    tx_A, ty_A, tz_A (float): Target x, y, z coordinates for Robot A's end-effector position.
+    tx_B, ty_B, tz_B (float): Target x, y, z coordinates for Robot B's end-effector position, specified in Robot A's frame.
+    bb (Building_Blocks): The collision detection system.
+    DH_matrix_A (numpy.matrix): The DH parameters matrix for Robot A.
+    DH_matrix_B (numpy.matrix): The DH parameters matrix for Robot B.
+    T_BA (numpy.matrix): The transformation matrix from Robot B's frame to Robot A's frame.
+
+    Returns:
+    list: A list of tuples containing valid joint angle solutions for both Robot A and Robot B that do not cause collisions.
+    """
+    # Transform target position from Robot A's frame to Robot B's frame
+    target_in_B_frame = np.linalg.inv(T_BA) * np.append([tx_B, ty_B, tz_B], 1)
+    target_in_B_frame = target_in_B_frame[:3]
+
+    # Compute IK solutions for Robot A and Robot B
+    valid_solutions_A = get_valid_inverse_solutions(tx_A, ty_A, tz_A, bb, DH_matrix_A)
+    valid_solutions_B = get_valid_inverse_solutions(target_in_B_frame[0, 0], target_in_B_frame[1, 0], target_in_B_frame[2, 0], bb, DH_matrix_B)
+
+    # Combine solutions or add additional checks if necessary
+    final_solutions = [(sol_A, sol_B) for sol_A in valid_solutions_A for sol_B in valid_solutions_B]
+    final_solutions = [ check_two_robot_collision() for sol in final_solutions ] # call this function to ensure there are no collisions but first need to implement it!
+
+    if len(final_solutions) == 0:
+        print('No solution found')
+        
+    return final_solutions[0]
 
 if __name__ == '__main__':    
     # alpha, beta, gamma set the orientation of the end effector [radians]

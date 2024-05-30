@@ -39,33 +39,31 @@ wrist_3_balance = 269.47
 # a potential problem with using configurations is that the ball might keep on rolling
 # even if we get to the goal configuration we're trying to center around. consider changing this!
 """
-balanced_conf = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57] 
+balanced_conf = [0.2144722044467926, -2.2630707226195277, -0.0021737099159508944, -0.8701519531062623, 1.3459954261779785, -1.5668462175599647]
 
 # Settings
-pid_controller = PID(Kp=0.002, Ki=0, Kd=0.0008)
+pid_controller = PID(Kp=0.0006, Ki=0, Kd=0.0003)
 pid_controller.setpoint = 0
 
 
-camera = None
+camera = CameraStreamer()
 
 def get_error():
-    while True:
-        color_image, depth_image, depth_frame, depth_map = camera.get_frames()
-        if color_image.size == 0 or depth_image.size == 0:
-            print("Can't receive frame (stream end?).")
-            return None  # Return None to indicate an error state
+    color_image, depth_image, depth_frame, depth_map = camera.get_frames()
+    if color_image.size == 0 or depth_image.size == 0:
+        print("Can't receive frame (stream end?).")
+        return None  # Return None to indicate an error state
 
-        positions = detect_object(color_image)
-        if len(positions) == 0:  
-            print('No object detected!')
-            time.sleep(1)   
-            continue
+    positions = detect_object(color_image)
+    if len(positions) == 0:  
+        print('No object detected!')  
+        return None
 
-        x1, y1, x2, y2 = positions[0]
-        ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+    x1, y1, x2, y2 = positions[0]
+    ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
 
-        error = plate_center[0] - ball_center[0]
-        return error
+    error = plate_center[0] - ball_center[0]
+    return error
     
 robot = RTDERobot()
 
@@ -76,7 +74,12 @@ while keep_moving:
     
     current_config = balanced_conf.copy()
 
-    current_config[5] += fmod(time()/6,1)
+    error = get_error()
+    if error is None:
+        robot.sendWatchdog(0)
+        continue
+    
+    current_config[5] += pid_controller(error)
     robot.sendConfig(current_config)
 
     robot.sendWatchdog(1)

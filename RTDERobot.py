@@ -49,11 +49,11 @@ class RTDERobot:
         self.con.disconnect()
 
     def __del__(self):
-        self.disconnect(self)
+        self.disconnect()
     
     
     def sendConfig(self, config):
-        self.setp = list_to_setp(config)
+        self.setp = list_to_setp(self.setp, config)
         self.con.send(self.setp)
 
     def sendWatchdog(self, value):

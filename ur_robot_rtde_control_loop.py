@@ -46,7 +46,7 @@ pid_controller = PID(Kp=0.002, Ki=0, Kd=0.0008)
 pid_controller.setpoint = 0
 
 
-camera = CameraStreamer()
+camera = None
 
 def get_error():
     while True:
@@ -75,6 +75,8 @@ while keep_moving:
         break
     
     current_config = balanced_conf.copy()
+
+    current_config[5] += fmod(time()/6,1)
     robot.sendConfig(current_config)
 
     robot.sendWatchdog(1)

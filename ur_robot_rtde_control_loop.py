@@ -23,39 +23,28 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-
 sys.path.append("..")
 import logging
-
 import rtde.rtde as rtde
 import rtde.rtde_config as rtde_config
 from time import time
 from math import fmod
-
 import numpy as np
-from CameraController import *
-from Robots import *
-from realsense_camera import stream_and_detect
+from realsense_camera.CameraStreamer import *
 from simple_pid import PID
-
-
-def clamp(value, min, max):
-    if value < min:
-        return min
-    if value > max:
-        return max
-    return value
 
 # Config
 plate_center = (317, 356)
 wrist_3_balance = 269.47
-balanced_conf = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57]
-
+"""
+# a potential problem with using configurations is that the ball might keep on rolling
+# even if we get to the goal configuration we're trying to center around. consider changing this!
+"""
+balanced_conf = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57] 
 
 
 # Settings
-max_error = 50
-pid_controller = PID(0.002, 0, 0.0008)
+pid_controller = PID(Kp=0.002, Ki=0, Kd=0.0008)
 pid_controller.setpoint = 0
 
 # logging.basicConfig(level=logging.INFO)
@@ -122,30 +111,28 @@ if not con.send_start():
     sys.exit()
 
 
-camera = stream_and_detect.CameraStreamer()
+camera = CameraStreamer()
 
 def get_error():
-    color_image, depth_image = camera.get_frames()
-    if color_image.size == 0 or depth_image.size == 0:
-        print("Can't receive frame (stream end?). Exiting ...")
-        exit()
-        
-    position = stream_and_detect.detect_object(color_image)
-    if len(position) > 0:
-        position = position[0]
-    else:
-        print('no object error!')
-        return
-    
-    x1,y1,x2,y2 = position
-    ball_center = (int((x1+x2)/2), int((y1+y2)/2))
-    
-    error = plate_center[0] - ball_center[0]
+    while True:
+        color_image, depth_image, depth_map = camera.get_frames()
+        if color_image.size == 0 or depth_image.size == 0:
+            print("Can't receive frame (stream end?).")
+            return None  # Return None to indicate an error state
 
-    return error
+        positions = detect_object(color_image)
+        if len(positions) == 0:  
+            print('No object detected!')
+            time.sleep(1)   
+            continue
+
+        x1, y1, x2, y2 = positions[0]
+        ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+
+        error = plate_center[0] - ball_center[0]
+        return error
     
-        
-# control loop
+    
 move_completed = True
 while keep_running:
     # receive the current state
@@ -153,10 +140,11 @@ while keep_running:
     if state is None:
         break
     #full_print(state)
+    
     # do something...
     if move_completed and state.output_int_register_0 == 1:
         move_completed = False
-        
+        ### balancing the ball ###
         new_setp = balanced_conf.copy()
         print('calculating error:')
         error = get_error()
@@ -164,9 +152,10 @@ while keep_running:
         if(error is None):
             continue
         new_setp[5] += pid_controller(error)
-        
+        ### balancing the ball ###
         list_to_setp(setp, new_setp)
         #print("New pose = " + str(new_setp))
+        
         # send new setpoint
         con.send(setp)
         watchdog.input_int_register_0 = 1

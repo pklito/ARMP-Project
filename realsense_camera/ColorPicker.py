@@ -5,7 +5,7 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import numpy as np
 import pyperclip
-import CameraController
+import Eitan_code.CameraController as CameraController
 
 # Author and version information
 __author__ = "Teeraphat Kullanankanjana"

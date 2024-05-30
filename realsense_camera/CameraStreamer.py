@@ -53,7 +53,7 @@ class CameraStreamer:
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
         color_image = np.asanyarray(color_frame.get_data())
 
-        return color_image, depth_image, depth_colormap
+        return color_image, depth_image, depth_frame, depth_colormap
 
     def stop(self):
         self.pipeline.stop()
@@ -61,7 +61,7 @@ class CameraStreamer:
     def run_object_detection(self):
         try:
             while True:
-                color_image, depth_image, depth_colormap = self.get_frames()
+                color_image, depth_image, depth_frame, depth_colormap = self.get_frames()
 
                 if color_image is None or depth_image is None:
                     continue
@@ -71,7 +71,7 @@ class CameraStreamer:
                     x1, y1, x2, y2 = detected_ball
                     center_x = (x1 + x2) // 2
                     center_y = (y1 + y2) // 2
-                    depth_value = depth_image.get_distance(center_x, center_y)
+                    depth_value = depth_frame.get_distance(center_x, center_y)
                     distance_meters = depth_value * 1000  # Convert to millimeters
                     
                     cv2.rectangle(color_image, (x1, y1), (x2, y2), (0, 255, 0), 2)

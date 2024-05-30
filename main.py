@@ -33,7 +33,7 @@ from RTDERobot import *
 from simple_pid import PID
 
 # Config
-plate_center = (317, 356)
+plate_center = (338, 280)
 wrist_3_balance = 269.47
 """
 # a potential problem with using configurations is that the ball might keep on rolling
@@ -41,10 +41,16 @@ wrist_3_balance = 269.47
 """
 balanced_conf = [0.2144722044467926, -2.2630707226195277, -0.0021737099159508944, -0.8701519531062623, 1.3459954261779785, -1.5668462175599647]
 
-# Settings
-pid_controller = PID(Kp=0.0006, Ki=0, Kd=0.0003)
-pid_controller.setpoint = 0
 
+ur5e_conf = np.deg2rad([-0.97, -87.86, 20.94, -61.44, -91.22, -0.05])
+
+# Settings
+pid_controller_x = PID(Kp=0.0006, Ki=0, Kd=0.0003)
+pid_controller_x.setpoint = 0
+
+
+pid_controller_y = PID(Kp=0.0006, Ki=0, Kd=0.0003)
+pid_controller_y.setpoint = 0
 
 camera = CameraStreamer()
 
@@ -62,8 +68,7 @@ def get_error():
     x1, y1, x2, y2 = positions[0]
     ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
 
-    error = plate_center[0] - ball_center[0]
-    return error
+    return plate_center[0] - ball_center[0], plate_center[1] - ball_center[1]
     
 robot = RTDERobot()
 
@@ -74,12 +79,15 @@ while keep_moving:
     
     current_config = balanced_conf.copy()
 
-    error = get_error()
-    if error is None:
+    errors = get_error()
+    if errors is None:
         robot.sendWatchdog(0)
         continue
     
-    current_config[5] += pid_controller(error)
+    error_x, error_y = errors
+    current_config[5] += pid_controller_x(error_x)
+    current_config[3] += pid_controller_y(error_y)
+    
     robot.sendConfig(current_config)
 
     robot.sendWatchdog(1)

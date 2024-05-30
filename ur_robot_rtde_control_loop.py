@@ -25,12 +25,11 @@
 import sys
 sys.path.append("..")
 import logging
-import rtde.rtde as rtde
-import rtde.rtde_config as rtde_config
 from time import time
 from math import fmod
 import numpy as np
 from realsense_camera.CameraStreamer import *
+from RTDERobot import *
 from simple_pid import PID
 
 # Config
@@ -42,73 +41,9 @@ wrist_3_balance = 269.47
 """
 balanced_conf = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57] 
 
-
 # Settings
 pid_controller = PID(Kp=0.002, Ki=0, Kd=0.0008)
 pid_controller.setpoint = 0
-
-# logging.basicConfig(level=logging.INFO)
-
-ROBOT_HOST = "192.168.0.11"
-ROBOT_PORT = 30004
-config_filename = "control_loop_configuration.xml"
-
-keep_running = True
-
-logging.getLogger().setLevel(logging.INFO)
-
-conf = rtde_config.ConfigFile(config_filename)
-state_names, state_types = conf.get_recipe("state")
-setp_names, setp_types = conf.get_recipe("setp")
-watchdog_names, watchdog_types = conf.get_recipe("watchdog")
-
-con = rtde.RTDE(ROBOT_HOST, ROBOT_PORT)
-con.connect()
-
-# get controller version
-con.get_controller_version()
-
-# setup recipes
-con.send_output_setup(state_names, state_types)
-setp = con.send_input_setup(setp_names, setp_types)
-watchdog = con.send_input_setup(watchdog_names, watchdog_types)
-
-old_setp2 = [34.03, -115.56, -64.3, 0.2, 56.23, 269.47]
-# # Setpoints to move the robot to
-# setp1 = [0, -3.14 / 2, 0, -3.14 / 2, 0, 0]
-# setp2 = [(3.1415926*a)/180 for a in old_setp2]
-
-setp.input_double_register_0 = 0
-setp.input_double_register_1 = 0
-setp.input_double_register_2 = 0
-setp.input_double_register_3 = 0
-setp.input_double_register_4 = 0
-setp.input_double_register_5 = 0
-
-# The function "rtde_set_watchdog" in the "rtde_control_loop.urp" creates a 1 Hz watchdog
-watchdog.input_int_register_0 = 0
-
-
-def setp_to_list(sp):
-    sp_list = []
-    for i in range(0, 6):
-        sp_list.append(sp.__dict__["input_double_register_%i" % i])
-    return sp_list
-
-
-def list_to_setp(sp, list):
-    for i in range(0, 6):
-        sp.__dict__["input_double_register_%i" % i] = list[i]
-    return sp
-
-def full_print(state,move_completed = False):
-    print(watchdog.input_int_register_0, move_completed)
-    
-    print([float('%.2f' % a) for a in state.target_q],[float('%.2f' % a) for a in state.target_qd],state.output_int_register_0)
-
-# start data synchronization
-if not con.send_start():
-    sys.exit()
 
 
 camera = CameraStreamer()
@@ -132,41 +67,14 @@ def get_error():
         error = plate_center[0] - ball_center[0]
         return error
     
-    
-move_completed = True
-while keep_running:
-    # receive the current state
-    state = con.receive()
-    if state is None:
+robot = RTDERobot()
+
+keep_moving = True
+while keep_moving:
+    if not robot.getState():
         break
-    #full_print(state)
     
-    # do something...
-    if move_completed and state.output_int_register_0 == 1:
-        move_completed = False
-        ### balancing the ball ###
-        new_setp = balanced_conf.copy()
-        print('calculating error:')
-        error = get_error()
-        print(error)
-        if(error is None):
-            continue
-        new_setp[5] += pid_controller(error)
-        ### balancing the ball ###
-        list_to_setp(setp, new_setp)
-        #print("New pose = " + str(new_setp))
-        
-        # send new setpoint
-        con.send(setp)
-        watchdog.input_int_register_0 = 1
-    elif not move_completed and state.output_int_register_0 == 0:
-        #print("Move to confirmed pose = " + str(state.target_q))
-        move_completed = True
-        watchdog.input_int_register_0 = 0
+    current_config = balanced_conf.copy()
+    robot.sendConfig(current_config)
 
-    # kick watchdog
-    con.send(watchdog)
-
-con.send_pause()
-
-con.disconnect()
+    robot.sendWatchdog(1)

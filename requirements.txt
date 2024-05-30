@@ -8,4 +8,4 @@ Pillow==10.3.0
 pyperclip==1.8.2
 pyrealsense2==2.55.1.6486
 urx==0.11.0
-~pencv_python_headless==4.8.0.76
+simple-pid==2.0.0

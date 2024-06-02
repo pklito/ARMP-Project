@@ -36,6 +36,7 @@ def calculate_camera_robot_transitions(task_robot_path_configs):
         safety_distance = 0.65 # add 0.65 [meters] safety distance above the plate for safety concerns
         position_in_ur5e_frame[2] += safety_distance
         xyz_position = position_in_ur5e_frame[0], position_in_ur5e_frame[1], position_in_ur5e_frame[2]
+        print('current UR3E FK solution: ', xyz_position)
         try:
             valid_ur5e_sols = get_valid_inverse_solutions(*xyz_position, alpha, beta, gamma, DH_matrix_UR5e, ur_params_ur5e, transform_ur5e)
             print('valid solutions: ', valid_ur5e_sols)

@@ -12,3 +12,24 @@ Idea: having the arm hold a plate, on which a ball resides, and to try to move i
 3. Writing URX path follower.
 4. Balancing a ball on a plate with URX
 5. combining the two!
+
+
+had to download:
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+.\vcpkg integrate install
+.\vcpkg install lapack:x64-windows
+.\vcpkg install blas:x64-windows
+pip install --user numpy Cython
+
+
+linux users can just execute: 
+sudo apt-get install libblas-dev liblapack-dev
+pip install --user numpy Cython
+
+
+and then had to download:
+git clone https://github.com/cambel/ur_ikfast.git
+cd ur_ikfast
+pip install -e .

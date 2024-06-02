@@ -15,3 +15,4 @@ print("forward() matrix \n", pose_matrix)
 print("inverse() one from quat", ur3e_arm.inverse(pose_quat, False, q_guess=joint_angles))
 
 print("inverse() one from matrix", ur3e_arm.inverse(pose_matrix, False, q_guess=joint_angles))
+# actually runs on WSL

@@ -7,7 +7,7 @@ from PIL import Image
 def calculate_similarity(color1, color2):
     return np.sum(np.abs(color1 - color2))
 
-# Function to perform object detection on a frame
+# Function to perform object detection on a frame (eggroll)
 def detect_object(frame):
 
     frame = cv2.GaussianBlur(frame, (17, 17), 0)
@@ -31,6 +31,34 @@ def detect_object(frame):
         bounding_boxes.append((x, y, x + w, y + h))
 
     return bounding_boxes
+
+def detect_plate(frame):
+
+    frame = cv2.GaussianBlur(frame, (17, 17), 0)
+    kernel = np.ones((5, 5), np.uint8)
+    frame = cv2.dilate(frame, kernel, iterations=1)
+
+    hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+    # TODO: adjust the limits to accommodate the plate
+    lower_limit1, upper_limit1 = (0, 154, 146), (9,  255, 255)
+    lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255)
+
+    mask1 = cv2.inRange(hsv_image, lower_limit1, upper_limit1)
+    mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)
+    mask = cv2.bitwise_or(mask1, mask2)
+
+    kernel = np.ones((5, 5), np.uint8)
+    plate_mask = cv2.morphologyEx(plate_mask, cv2.MORPH_CLOSE, kernel)
+    plate_mask = cv2.morphologyEx(plate_mask, cv2.MORPH_OPEN, kernel)
+    
+    coords = cv2.findNonZero(plate_mask)
+    if coords is not None:
+        x, y, w, h = cv2.boundingRect(coords)
+        bounding_box = (x, y, x + w, y + h)
+        return [bounding_box]
+    else:
+        return []  
         
 class CameraStreamer:
     def __init__(self):
@@ -66,9 +94,10 @@ class CameraStreamer:
                 if color_image is None or depth_image is None:
                     continue
 
-                bounding_boxes = detect_object(color_image)
-                for detected_ball in bounding_boxes:
-                    x1, y1, x2, y2 = detected_ball
+                object_bounding_boxes = detect_object(color_image)
+                    
+                for detected_object in object_bounding_boxes:
+                    x1, y1, x2, y2 = detected_object
                     center_x = (x1 + x2) // 2
                     center_y = (y1 + y2) // 2
                     depth_value = depth_frame.get_distance(center_x, center_y)

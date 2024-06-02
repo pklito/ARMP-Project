@@ -1,7 +1,5 @@
-from UR_Robot_Params import *
-from kinematics import *
+from ur_ikfast import ur_kinematics
 import numpy as np
-
 
 def transition_coordinates(point_A):
     """
@@ -19,35 +17,49 @@ def transition_coordinates(point_A):
     T_AB[2, 3] = dz  
 
     point_B = np.dot(T_AB, point_A)
-    return point_B
+    return point_B[:3]
 
-def calculate_camera_robot_transitions(task_robot_path_configs):
+
+def calculate_camera_robot_transitions(ur3e_arm, ur5e_arm, task_robot_path_configs):
     # alpha, beta, gamma set the orientation of the end effector [radians]
     alpha = -np.pi
     beta = 0.0
     gamma = 0
     
     # calculate FK to get the position of the end effector on the UR3E
-    solutions = {}
     for index, conf in enumerate(task_robot_path_configs):
-        transform = forward_kinematic_solution(DH_matrix=DH_matrix_UR3e, edges=np.array(conf))
-        position = np.array([transform[0,3], transform[1,3], transform[2,3], 1])
-        position_in_ur5e_frame = transition_coordinates(position) # transition to UR5E frame
-        safety_distance = 0.65 # add 0.65 [meters] safety distance above the plate for safety concerns
+        # Use the forward kinematics function from ur_ikfast for UR3E
+        pose_matrix_ur3e = ur3e_arm.forward(conf, 'matrix')
+        xyz_position_ur3e = pose_matrix_ur3e[:3, 3]  # Extract position from the transformation matrix
+        
+        # Transition to UR5E frame
+        position_in_ur5e_frame = transition_coordinates(np.append(xyz_position_ur3e, 1))
+        
+        safety_distance = 0.5  # add 0.5 [meters] safety distance above the plate for safety concerns
         position_in_ur5e_frame[2] += safety_distance
-        xyz_position = position_in_ur5e_frame[0], position_in_ur5e_frame[1], position_in_ur5e_frame[2]
-        print('current UR3E FK solution: ', xyz_position)
+        
+        xyz_position_ur5e = position_in_ur5e_frame[:3]  # Extract position from the transformed vector
+        
         try:
-            valid_ur5e_sols = get_valid_inverse_solutions(*xyz_position, alpha, beta, gamma, DH_matrix_UR5e, ur_params_ur5e, transform_ur5e)
-            print('valid solutions: ', valid_ur5e_sols)
-            solutions[conf] = valid_ur5e_sols
-        except:
-            print(f"{index}'th config has no corresponding solution: ")
-            
+            # Use inverse kinematics function from ur_ikfast for UR5E to find joint angles
+            valid_ur5e_sol = ur5e_arm.inverse(pose_matrix_ur3e, False)
+            print(valid_ur5e_sol)
+            # Assuming valid_ur5e_sol returns a list of joint angles
+            if valid_ur5e_sol is not None:
+                ur5e_joint_angles = valid_ur5e_sol
+                # Use forward kinematics of UR5E to get the position of its end effector
+                pose_matrix_ur5e = ur5e_arm.forward(ur5e_joint_angles, 'matrix')
+                xyz_position_ur5e_end_effector = pose_matrix_ur5e[:3, 3]
+                print(f"UR3E position: {xyz_position_ur3e}, UR5E position: {xyz_position_ur5e_end_effector}")
+            else:
+                print(f"{index}'th config has no corresponding solution.")
+        except Exception as e:
+            print(f"Error in finding inverse kinematics solution: {e}")
 
 
 if __name__ == '__main__':    
-
+    ur3e_arm = ur_kinematics.URKinematics('ur3e')
+    ur5e_arm = ur_kinematics.URKinematics('ur5e')
     task_robot_path_configs = [np.array([-0.17453293, -1.3962634 ,  0.17453293, -1.22173048,  0.17453293,
         0.        ]), np.array([-0.17104227, -1.39277274,  0.17366026, -1.22173048,  0.17104227,
         0.        ]), np.array([-0.16755161, -1.38928208,  0.1727876 , -1.22173048,  0.16755161,
@@ -150,5 +162,19 @@ if __name__ == '__main__':
         0.        ]), np.array([ 0.17104227, -1.05068821,  0.08813913, -1.22173048, -0.17104227,
         0.        ]), np.array([ 0.17453293, -1.04719755,  0.08726646, -1.22173048, -0.17453293,
         0.        ])]
+    calculate_camera_robot_transitions(ur3e_arm, ur5e_arm, task_robot_path_configs)
 
-    calculate_camera_robot_transitions(task_robot_path_configs)
+    # # Example use:
+    # joint_angles = [-3.1, -1.6, 1.6, -1.6, -1.6, 0.]  # in radians
+    # print("joint angles", joint_angles)
+
+    # pose_quat = ur3e_arm.forward(joint_angles)
+    # pose_matrix = ur3e_arm.forward(joint_angles, 'matrix')
+
+    # print("forward() quaternion \n", pose_quat)
+    # print("forward() matrix \n", pose_matrix)
+
+    # # print("inverse() all", ur3e_arm.inverse(pose_quat, True))
+    # print("inverse() one from quat", ur3e_arm.inverse(pose_quat, False, q_guess=joint_angles))
+
+    # print("inverse() one from matrix", ur3e_arm.inverse(pose_matrix, False, q_guess=joint_angles))

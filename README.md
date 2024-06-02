@@ -1,3 +1,5 @@
+## Description
+
 Yada Yada this is a semester project we'll make this more official later i promise.
 
 
@@ -14,22 +16,40 @@ Idea: having the arm hold a plate, on which a ball resides, and to try to move i
 5. combining the two!
 
 
-had to download:
-git clone https://github.com/Microsoft/vcpkg.git
-cd vcpkg
-.\bootstrap-vcpkg.bat
-.\vcpkg integrate install
-.\vcpkg install lapack:x64-windows
-.\vcpkg install blas:x64-windows
-pip install --user numpy Cython
+## Dependencies
 
-
-linux users can just execute: 
+### Linux Installation
 sudo apt-get install libblas-dev liblapack-dev
+
+pip install --user numpy Cython
+
+### Windows Installation
+
+#### * this could be a little bug as we only tested the linux installation.
+
+git clone https://github.com/Microsoft/vcpkg.git
+
+cd vcpkg
+
+.\bootstrap-vcpkg.bat
+
+.\vcpkg integrate install
+
+.\vcpkg install lapack:x64-windows
+
+.\vcpkg install blas:x64-windows
+
 pip install --user numpy Cython
 
 
-and then had to download:
+### Kinematics Library Download
+
 git clone https://github.com/cambel/ur_ikfast.git
+
 cd ur_ikfast
+
 pip install -e .
+
+### Other Requirements
+
+pip install -r requirements.txt

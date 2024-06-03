@@ -1,13 +1,15 @@
 from ur_ikfast import ur_kinematics
 import numpy as np
+import building_blocks as bb
+import UR_Params as ur
+from inverse_kinematics import *
 
 def transition_coordinates(point_A):
     """
     transition from UR3E coordinates to UR5E coordinates
     """
-    # point_A = np.array([x, y, z, 1])  # example input
-    dx = -0.13  # Distance along the x-axis from frame A to frame B
-    dy = -0.37  # Distance along the y-axis from frame A to frame B
+    dx = -0.13  # Distance along the x-axis from frame A to frame B - TODO: measure
+    dy = -0.37  # Distance along the y-axis from frame A to frame B - TODO: measure
     dz = 0.0  
 
     # Create the transformation matrix
@@ -26,6 +28,11 @@ def calculate_camera_robot_transitions(ur3e_arm, ur5e_arm, task_robot_path_confi
     beta = 0.0
     gamma = 0
     
+    ur_params = UR5e_PARAMS(inflation_factor=1)
+    transform = Transform(ur_params)
+    bb = Building_Blocks(transform=transform, ur_params=ur_params, env=None, resolution=0.1, p_bias=0.05)
+    tx, ty, tz = 0,0,0
+    
     # calculate FK to get the position of the end effector on the UR3E
     for index, conf in enumerate(task_robot_path_configs):
         # Use the forward kinematics function from ur_ikfast for UR3E
@@ -43,6 +50,7 @@ def calculate_camera_robot_transitions(ur3e_arm, ur5e_arm, task_robot_path_confi
         try:
             # Use inverse kinematics function from ur_ikfast for UR5E to find joint angles
             valid_ur5e_sol = ur5e_arm.inverse(pose_matrix_ur3e, False)
+            # valid_ur5e_sol = get_valid_inverse_solutions(tx, ty, tz, alpha, beta, gamma, bb, ur5e_arm)
             print(valid_ur5e_sol)
             # Assuming valid_ur5e_sol returns a list of joint angles
             if valid_ur5e_sol is not None:

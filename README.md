@@ -15,6 +15,10 @@ Idea: having the arm hold a plate, on which a ball resides, and to try to move i
 4. Balancing a ball on a plate with URX
 5. combining the two!
 
+## Requirements
+
+pip install -r requirements.txt
+
 
 ## Dependencies
 
@@ -49,7 +53,3 @@ git clone https://github.com/cambel/ur_ikfast.git
 cd ur_ikfast
 
 pip install -e .
-
-### Other Requirements
-
-pip install -r requirements.txt

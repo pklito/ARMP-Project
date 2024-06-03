@@ -1,51 +1,18 @@
 {
-    "python.analysis.typeCheckingMode": "off",
     "python.analysis.autoImportCompletions": true,
-    "editor.tokenColorCustomizations": {
-        "textMateRules": [
-            {
-                "scope": "variable",
-                "settings": {
-                    "foreground": "#3498DB"  // Blue for variables
-                }
-            },
-            {
-                "scope": "constant",
-                "settings": {
-                    "foreground": "#E67E22"  // Orange for constants
-                }
-            },
-            {
-                "scope": "keyword",
-                "settings": {
-                    "foreground": "#8E44AD"  // Purple for keywords
-                }
-            },
-            {
-                "scope": "string",
-                "settings": {
-                    "foreground": "#27AE60"  // Green for strings
-                }
-            },
-            {
-                "scope": "comment",
-                "settings": {
-                    "foreground": "#7F8C8D",  // Gray for comments
-                    "fontStyle": "italic"    // Italicize comments
-                }
-            },
-            {
-                "scope": "function",
-                "settings": {
-                    "foreground": "#C0392B"  // Red for functions
-                }
-            },
-            {
-                "scope": "keyword.operator",
-                "settings": {
-                    "foreground": "#F39C12"  // Yellow for operators
-                }
-            }
-        ]
-    }
+    "python.analysis.typeCheckingMode": "off"
+    "workbench.colorTheme": "Default Dark+",
+    "editor.fontFamily": "Fira Code, Consolas, 'Courier New', monospace",
+    "editor.fontSize": 14,
+    "editor.lineHeight": 22,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.wordWrap": "on",
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "files.trimTrailingWhitespace": true, // Trim trailing whitespace on save
+    "files.insertFinalNewline": true, // Insert a final newline on save
+    "terminal.integrated.fontSize": 14,
+    "editor.minimap.enabled": true,
+    "breadcrumbs.enabled": true
 }

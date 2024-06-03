@@ -2,7 +2,7 @@ from ur_ikfast import ur_kinematics
 import numpy as np
 import building_blocks as bb
 import UR_Params as ur
-from inverse_kinematics import *
+from robot_utils.kinematics import *
 
 def transition_coordinates(point_A):
     """
@@ -10,13 +10,13 @@ def transition_coordinates(point_A):
     """
     dx = -0.13  # Distance along the x-axis from frame A to frame B - TODO: measure
     dy = -0.37  # Distance along the y-axis from frame A to frame B - TODO: measure
-    dz = 0.0  
+    dz = 0.0
 
     # Create the transformation matrix
-    T_AB = np.eye(4)  
-    T_AB[0, 3] = dx  
-    T_AB[1, 3] = dy  
-    T_AB[2, 3] = dz  
+    T_AB = np.eye(4)
+    T_AB[0, 3] = dx
+    T_AB[1, 3] = dy
+    T_AB[2, 3] = dz
 
     point_B = np.dot(T_AB, point_A)
     return point_B[:3]
@@ -27,29 +27,29 @@ def calculate_camera_robot_transitions(ur3e_arm, ur5e_arm, task_robot_path_confi
     alpha = -np.pi
     beta = 0.0
     gamma = 0
-    
+
     ur_params = UR5e_PARAMS(inflation_factor=1)
     transform = Transform(ur_params)
     bb = Building_Blocks(transform=transform, ur_params=ur_params, env=None, resolution=0.1, p_bias=0.05)
     tx, ty, tz = 0,0,0
-    
+
     # calculate FK to get the position of the end effector on the UR3E
     for index, conf in enumerate(task_robot_path_configs):
         # Use the forward kinematics function from ur_ikfast for UR3E
         pose_matrix_ur3e = ur3e_arm.forward(conf, 'matrix')
         xyz_position_ur3e = pose_matrix_ur3e[:3, 3]  # Extract position from the transformation matrix
-        
+
         # Transition to UR5E frame
         position_in_ur5e_frame = transition_coordinates(np.append(xyz_position_ur3e, 1))
-        
+
         safety_distance = 0.5  # add 0.5 [meters] safety distance above the plate for safety concerns
         position_in_ur5e_frame[2] += safety_distance
-        
+
         xyz_position_ur5e = position_in_ur5e_frame[:3]  # Extract position from the transformed vector
-        
+
         try:
             # Use inverse kinematics function from ur_ikfast for UR5E to find joint angles
-            valid_ur5e_sol = ur5e_arm.inverse(pose_matrix_ur3e, False)
+            valid_ur5e_sol = ur5e_arm.inverse(pose_matrix_ur3e, False) # returns best IK solution
             # valid_ur5e_sol = get_valid_inverse_solutions(tx, ty, tz, alpha, beta, gamma, bb, ur5e_arm)
             print(valid_ur5e_sol)
             # Assuming valid_ur5e_sol returns a list of joint angles
@@ -58,14 +58,14 @@ def calculate_camera_robot_transitions(ur3e_arm, ur5e_arm, task_robot_path_confi
                 # Use forward kinematics of UR5E to get the position of its end effector
                 pose_matrix_ur5e = ur5e_arm.forward(ur5e_joint_angles, 'matrix')
                 xyz_position_ur5e_end_effector = pose_matrix_ur5e[:3, 3]
-                print(f"UR3E position: {xyz_position_ur3e}, UR5E position: {xyz_position_ur5e_end_effector}")
+                print(f"UR3E position: {xyz_position_ur3e}, \nUR5E position: {xyz_position_ur5e_end_effector}\n\n")
             else:
                 print(f"{index}'th config has no corresponding solution.")
         except Exception as e:
             print(f"Error in finding inverse kinematics solution: {e}")
 
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     ur3e_arm = ur_kinematics.URKinematics('ur3e')
     ur5e_arm = ur_kinematics.URKinematics('ur5e')
     task_robot_path_configs = [np.array([-0.17453293, -1.3962634 ,  0.17453293, -1.22173048,  0.17453293,

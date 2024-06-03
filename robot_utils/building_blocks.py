@@ -75,11 +75,11 @@ class Robot:
 class RobotA(Robot):
     def __init__(self, transform, ur_params, env, resolution=0.1, p_bias=0.05):
         super().__init__(transform, ur_params, env, resolution, p_bias)
-    
+
     def is_in_collision(self, conf) -> bool:
         """check for collision in given configuration, arm-arm and arm-obstacle
         return True if in collision
-        @param conf - some configuration 
+        @param conf - some configuration
         """
         global_sphere_coords = self.transform.conf2sphere_coords(conf)
         # arm - arm collision
@@ -118,7 +118,7 @@ class RobotB(Robot):
     def is_in_collision(self, conf) -> bool:
         """check for collision in given configuration, arm-arm and arm-obstacle
         return True if in collision
-        @param conf - some configuration 
+        @param conf - some configuration
         """
         global_sphere_coords = self.transform.conf2sphere_coords(conf)
         # arm - arm collision
@@ -170,7 +170,7 @@ class Building_Blocks(object):
     def is_in_collision(self, conf) -> bool:
         """check for collision in given configuration, arm-arm and arm-obstacle
         return True if in collision
-        @param conf - some configuration 
+        @param conf - some configuration
         """
         global_sphere_coords = self.transform.conf2sphere_coords(conf)
         # arm - arm collision
@@ -183,11 +183,11 @@ class Building_Blocks(object):
                         if sphere_collision(s[0:3], s2[0:3], self.ur_params.sphere_radius[self.ur_params.ur_links[i]], self.ur_params.sphere_radius[self.ur_params.ur_links[j]]):
                             return True
         # arm - obstacle collision
-        for joint, spheres in global_sphere_coords.items():
-            for sphere in spheres:
-                for obstacle in self.env.obstacles:
-                    if sphere_collision(sphere[0:3], obstacle, self.ur_params.sphere_radius[joint], self.env.radius):
-                        return True
+        # for joint, spheres in global_sphere_coords.items():
+        #     for sphere in spheres:
+        #         for obstacle in self.env.obstacles:
+        #             if sphere_collision(sphere[0:3], obstacle, self.ur_params.sphere_radius[joint], self.env.radius):
+        #                 return True
         # arm - floor collision
         for joint, spheres in global_sphere_coords.items():
             if joint == self.ur_params.ur_links[0]:
@@ -205,7 +205,7 @@ class Building_Blocks(object):
     def local_planner(self, prev_conf, current_conf) -> bool:
         '''check for collisions between two configurations - return True if transition is valid
         @param prev_conf - some configuration
-        @param current_conf - current configuration 
+        @param current_conf - current configuration
         '''
         number_of_configurations_to_check = max(3, int(max_angle_difference(prev_conf, current_conf) / self.resolution))
         return not any([self.is_in_collision(np.array(conf)) for conf in np.linspace(prev_conf, current_conf, number_of_configurations_to_check, endpoint=True)])

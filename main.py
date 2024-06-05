@@ -141,4 +141,3 @@ while keep_moving:
         task_robot.sendWatchdog(1)
     keep_moving = False
     print("Path Execution is Finished")
-

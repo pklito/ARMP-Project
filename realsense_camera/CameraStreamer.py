@@ -42,20 +42,19 @@ def detect_plate(frame):
     hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # TODO: adjust the limits to accommodate the plate
-    lower_limit1, upper_limit1 = (0, 154, 146), (9,  255, 255)
-    lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255)
+    lower_limit1, upper_limit1 = (0,0,143), (179,53,210)
+    # lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255)
 
-    mask1 = cv2.inRange(hsv_image, lower_limit1, upper_limit1)
-    mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)
-    mask = cv2.bitwise_or(mask1, mask2)
+    mask = cv2.inRange(hsv_image, lower_limit1, upper_limit1)
+    # mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)
+    # mask = cv2.bitwise_or(mask1, mask2)
 
-    kernel = np.ones((5, 5), np.uint8)
-    plate_mask = cv2.morphologyEx(plate_mask, cv2.MORPH_CLOSE, kernel)
-    plate_mask = cv2.morphologyEx(plate_mask, cv2.MORPH_OPEN, kernel)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    coords = cv2.findNonZero(plate_mask)
-    if coords is not None:
-        x, y, w, h = cv2.boundingRect(coords)
+    if contours:
+        contour_area = [cv2.contourArea(contour) for contour in contours]
+        max_contour_index = np.argmax(contour_area)
+        x, y, w, h = cv2.boundingRect(contours[max_contour_index])
         bounding_box = (x, y, x + w, y + h)
         return [bounding_box]
     else:
@@ -69,6 +68,7 @@ class CameraStreamer:
         config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
         self.pipeline.start(config)
+        # self.cap = cv2.VideoCapture(2)
 
     def get_frames(self):
         frames = self.pipeline.wait_for_frames()
@@ -101,8 +101,7 @@ class CameraStreamer:
                     continue
 
                 object_bounding_boxes = detect_object(color_image)
-                # plate_bounding_boxes = detect_plate(color_image)  # Add plate detection
-                plate_bounding_boxes = []
+                plate_bounding_boxes = []#detect_plate(color_image)  # Add plate detection
 
                 # Combine bounding boxes for both ball and plate
                 all_bounding_boxes = object_bounding_boxes + plate_bounding_boxes

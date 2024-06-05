@@ -5,7 +5,9 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import numpy as np
 import pyperclip
-import Eitan_code.CameraController as CameraController
+import os, sys
+from CameraStreamer import CameraStreamer
+# import Eitan_code.CameraController as CameraController
 
 # Author and version information
 __author__ = "Teeraphat Kullanankanjana"
@@ -24,13 +26,13 @@ class HSVRangeFinder:
         self.window.geometry('910x600')
         self.window.title('HSV Range Finder')
         self.window.resizable(0, 0)
-        
-        self.wrapper = CameraController.CameraWrapper()
+
+        self.wrapper = CameraStreamer()
         # Initialize video capture using OpenCV
         self.cap = self.wrapper.cap
 
         # --- Camera Frames ---
-        
+
         # Create a frame for the main camera feed
         self.mainCameraFrame = LabelFrame(self.window, text='Main Camera')
         self.mainCameraFrame.place(x=0, y=0)
@@ -204,12 +206,12 @@ class HSVRangeFinder:
     def flip_horizontal(self):
         self.flip_horizontal = not self.flip_horizontal
         self.flip_vertical = False
-    
+
     # Method to flip the camera feed vertically
     def flip_vertical(self):
         self.flip_vertical = not self.flip_vertical
         self.flip_horizontal = False
-        
+
     # Method to switch to the next camera channel
     def next_cam(self):
         return
@@ -238,7 +240,7 @@ class HSVRangeFinder:
             frame = cv2.flip(frame, 1)  # Horizontal mirror
         elif self.flip_vertical:
             frame = cv2.flip(frame, 0)  # Vertical flip
-        
+
         # Get the lower and upper bound values from the sliders
         lower_bound = np.array([self.l_h.get(), self.l_s.get(), self.l_v.get()])
         upper_bound = np.array([self.u_h.get(), self.u_s.get(), self.u_v.get()])
@@ -257,7 +259,7 @@ class HSVRangeFinder:
 
         # Threshold the grayscale image to get a binary image
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)
-        
+
         # Convert the frame to a PhotoImage object
         img1 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img1 = Image.fromarray(img1)
@@ -334,7 +336,7 @@ class HSVRangeFinder:
     # Event handler for upper value slider change
     def uv_changed(self, event):
         self.uvShow.configure(text=self.get_uv())
-    
+
     # Method to release resources and close the application
     def cleanup(self):
         self.cap.release()
@@ -348,14 +350,14 @@ class HSVRangeFinder:
 
         # Start updating the frame
         self.update_frame()
-        
+
         # Bind the cleanup method to the window's close event
         self.window.protocol("WM_DELETE_WINDOW", self.cleanup)
-        
+
         # Run the Tkinter event loop
         self.window.mainloop()
         self.window.after_cancel(self.update_frame)
         self.cap.release()
-        
+
 hsvfinder = HSVRangeFinder()
 hsvfinder.run()

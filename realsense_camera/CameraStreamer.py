@@ -2,6 +2,7 @@ import cv2
 import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
+import os
 
 
 def calculate_similarity(color1, color2):
@@ -88,6 +89,11 @@ class CameraStreamer:
 
     def run_object_detection(self):
         try:
+            if not os.path.exists('vid'):
+                os.makedirs('vid')
+            else:
+                for file in os.listdir('vid'):
+                    os.remove(f'vid/{file}')
             while True:
                 color_image, depth_image, depth_frame, depth_colormap = self.get_frames()
 
@@ -95,7 +101,8 @@ class CameraStreamer:
                     continue
 
                 object_bounding_boxes = detect_object(color_image)
-                plate_bounding_boxes = detect_plate(color_image)  # Add plate detection
+                # plate_bounding_boxes = detect_plate(color_image)  # Add plate detection
+                plate_bounding_boxes = []
 
                 # Combine bounding boxes for both ball and plate
                 all_bounding_boxes = object_bounding_boxes + plate_bounding_boxes

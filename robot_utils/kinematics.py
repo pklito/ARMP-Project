@@ -58,6 +58,27 @@ def quat_to_ur_axis_angle(quaternion):
     return [axis_normed[0]*angle, axis_normed[1]*angle, axis_normed[2]*angle]
 
 
+def calculate_plate_center(ur3e_arm, ur3e_joint_angles):
+    """
+    Calculate the center of a plate using the UR3e arm's end-effector position.
+
+    Parameters:
+    ur3e_arm: object
+        An instance of the UR3e robotic arm.
+    ur3e_joint_angles: list or array-like
+        A list or array containing the joint angles of the UR3e arm.
+
+    Returns:
+    tuple
+        A tuple containing the x and y coordinates of the plate's center.
+    """
+    quaternion_ur3e = forward_kinematic_solution(ur3e_joint_angles, ur3e_arm)
+    xy_position_ur3e_end_effector = quaternion_ur3e[:2]
+    dx, dy = 0.1, 0.1 # TODO: perform the calculations between the ee and the plate center, adjust as necessary!
+    plate_center = xy_position_ur3e_end_effector[0] + dx, xy_position_ur3e_end_effector[1] + dy
+    return plate_center
+
+
 def valid_inverse_solutions(bb, ur_arm, tx, ty, tz, w, alpha, beta, gamma, q_guess=np.zeros(6), weights=np.ones(6)):
     """
     Get valid inverse kinematics solutions that are collision-free.
@@ -146,6 +167,7 @@ def calculate_assistant_robot_path(ur3e_arm, ur5e_arm, task_robot_path):
         except Exception as e:
             print(f"Error in finding inverse kinematics solution: {e}")
     return assistant_path
+
 
 # ur3e_arm = ur_kinematics.URKinematics('ur3e')
 # ur5e_arm = ur_kinematics.URKinematics('ur5e')

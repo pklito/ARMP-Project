@@ -23,6 +23,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+from tracemalloc import start
 sys.path.append("..")
 import logging
 from time import time
@@ -31,6 +32,8 @@ import numpy as np
 from realsense_camera.CameraStreamer import *
 from RTDERobot import *
 from simple_pid import PID
+from ur_ikfast import ur_kinematics
+from robot_utils.kinematics import *
 
 # Config
 plate_center = (338, 280)
@@ -60,10 +63,10 @@ def get_error():
 
     plate_positions = detect_plate(color_image)
     object_positions = detect_object(color_image)
-    if len(object_positions) == 0 or len(plate_positions) == 0:  
-        print('No object detected!')  
+    if len(object_positions) == 0 or len(plate_positions) == 0:
+        print('No object detected!')
         return None
-    
+
     p_x1, p_y1, p_x2, p_y2 = plate_positions[0]
     plate_center = (int((p_x1 + p_x2) / 2), int((p_y1 + p_y2) / 2)) # dynamic positioning of the plate
     print(f'Plate Center: {plate_center}')
@@ -79,50 +82,63 @@ def interpolate_path(start_conf, goal_conf, num_steps=100):
     for i in range(num_steps + 1):
         alpha = i / num_steps
         intermediate_conf = (1 - alpha) * np.array(start_conf) + alpha * np.array(goal_conf)
-        intermediate_conf[5] = pid_x_config
-        intermediate_conf[3] = pid_y_config
+        # intermediate_conf[5] = pid_x_config
+        # intermediate_conf[3] = pid_y_config
         path.append(intermediate_conf)
     return path
 
-num_steps = 100
-start_conf = np.deg2rad([-0.97, -87.86, 20.94, -61.44, -91.22, -0.05])
-pid_x_config = start_conf[5]
-pid_y_config = start_conf[3]
-goal_conf = np.deg2rad([30.0, -45.0, 20.0, -60.0, -90.0, 0.0])  # example goal position - change accordingly
+def plan_task_path(start_conf, goal_conf):
+    return interpolate_path(start_conf, goal_conf, num_steps=100) # can change later to accomodate for more complex planning methods
 
-path = interpolate_path(start_conf, goal_conf, num_steps) # naive path planning - TODO: use a more suffosticated algorithm
-# also need to move the ur5e as to keep the plate and the ball within the camera's frame!
-# to get the ur5e end effector position:
-# 1. given the joint configuration of the UR3E
-# 2. calculate the Forward Kinematics to get the position of the end effector which is holding the plate
-# 3. now given the position of the plate, add a safety distance above it for the camera and calculate Inverse kinematics for the UR5E
-# 4. after calculating the inverse kinematics for hte UR5E, make sure to execute the path in synchronization the UR3E
 
-robot = RTDERobot()
+# strategy for movement:
+# 1. calculate a path for the task robot
+# 2. use calculate_assistant_robot_transitions() to compute a path for the assistance robot to get a static_path
+# 3. start executing the path from the start_config to goal_config in both robots
+# 4. attempt calculating the corresponding movements after using FK/IK kinematics on the move
+# 5. if the previous attempt fails, use the corresponding configurations in the static_path ( a little risky, could ruin the balancing ofc but in this case consider adjusting the coordinates corresponding to the wrists that would be affected by the ball balancing)
+# 6. repeat this until the goal_config is reached
+
+task_robot = RTDERobot()
+assistant_robot = RTDERobot()
+ur3e_arm = ur_kinematics.URKinematics('ur3e')
+ur5e_arm = ur_kinematics.URKinematics('ur5e')
+
+start_conf = [0.2144722044467926, -2.2630707226195277, -0.0021737099159508944, -0.8701519531062623, 1.3459954261779785, -1.5668462175599647] # TODO - change
+goal_conf = np.deg2rad([30.0, -45.0, 20.0, -60.0, -90.0, 0.0]) # TODO - change
+balance_config = start_conf.copy()
+
+task_path = plan_task_path(start_conf, goal_conf) # naive path planning - TODO: use a more suffosticated algorithm
+assistant_path = [config.copy() for config in calculate_assistant_robot_path(ur3e_arm, ur5e_arm, task_path)]
 
 keep_moving = True
 while keep_moving:
-    # if not robot.getState():
-    #     break
-    for waypoint in path:
-        if not robot.getState():
+    for index, waypoint in enumerate(task_path):
+        if not task_robot.getState() or not assistant_robot.getState():
             break
-    
-    # current_config = balanced_conf.copy()
         current_config = waypoint.copy()
 
         errors = get_error()
         if errors is None:
-            robot.sendWatchdog(0)
+            task_robot.sendWatchdog(0)
             continue
-        
         error_x, error_y = errors
-        current_config[5] += pid_controller_x(error_x)
-        pid_x_config = current_config[5]
-        current_config[3] += pid_controller_y(error_y)
-        pid_y_config = current_config[3]
-        
-        robot.sendConfig(current_config)
 
-        robot.sendWatchdog(1)
-    keep_moving = False # done executing the path!
+        balance_config[5] += pid_controller_x(error_x)
+        current_config[5] = balance_config[5]
+        balance_config[3] += pid_controller_y(error_y)
+        current_config[3] = balance_config[3]
+
+        task_robot.sendConfig(current_config)
+
+        # Calculate and send assistant robot configuration
+        ur5e_joint_angles = calculate_assistant_robot_path(ur3e_arm, ur5e_arm, [current_config])[0]
+        if ur5e_joint_angles is None:
+            ur5e_joint_angles = assistant_path[index]
+        assistant_robot.sendConfig(ur5e_joint_angles)
+        assistant_robot.sendWatchdog(1) # should I use watchdog for assistant robot?
+
+        task_robot.sendWatchdog(1)
+    keep_moving = False
+    print("Path Execution is Finished")
+

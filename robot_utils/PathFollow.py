@@ -10,8 +10,8 @@ from constants import *
 # this  is its own class so i can store
 class PathFollow:
     path = None
-    PATH_LOOKAHEAD = 0.3
-    EDGE_CUTOFF = 0.8
+    PATH_LOOKAHEAD = 0
+    EDGE_CUTOFF = 0
     current_edge = 0
     def __init__(self, path, path_lookahead = TASK_PATH_LOOKAHEAD, EDGE_CUTOFF = TASK_EDGE_CUTOFF):
         self.path = path
@@ -50,7 +50,7 @@ class PathFollow:
 
             distance = np.linalg.norm(point-projection)
 
-            if( t*edge_length > self.EDGE_CUTOFF and index >= self.current_edge):
+            if( (1-t)*edge_length < self.EDGE_CUTOFF and index >= self.current_edge):
                 self.current_edge += 1
 
 

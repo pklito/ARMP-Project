@@ -4,7 +4,7 @@
 
 # womp womp i use numpy :/
 import numpy as np
-from constants import TASK_PATH_LOOKAHEAD
+from constants import *
 
 # Stores function follow()
 # this  is its own class so i can store

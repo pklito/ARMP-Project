@@ -3,7 +3,7 @@ from networkx import center
 import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
-from yarg import get
+import os
 
 
 def calculate_similarity(color1, color2):
@@ -118,6 +118,11 @@ class CameraStreamer:
 
     def run_object_detection(self):
         try:
+            if not os.path.exists('vid'):
+                os.makedirs('vid')
+            else:
+                for file in os.listdir('vid'):
+                    os.remove(f'vid/{file}')
             while True:
                 self.color_image, self.depth_image, self.depth_frame, self.depth_colormap, self.depth_intrinsics = self.get_frames()
 

@@ -50,8 +50,8 @@ class RTDERobot:
 
     def __del__(self):
         self.disconnect()
-    
-    
+
+
     def sendConfig(self, config):
         self.setp = list_to_setp(self.setp, config)
         self.con.send(self.setp)
@@ -62,15 +62,15 @@ class RTDERobot:
 
     def getState(self):
         return self.con.receive()
-    
-    def getConfig(self):
+
+    def getTargetConfig(self):
         return setp_to_list(self.setp)
-    
+
 if __name__ == '__main__':
     robot = RTDERobot()
 
-    setp1 = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57] 
-    setp2 = [0.44, -2.22, -0.0, -0.93, 1.08, -1.0] 
+    setp1 = [0.44, -2.22, -0.0, -0.93, 1.08, -1.57]
+    setp2 = [0.44, -2.22, -0.0, -0.93, 1.08, -1.0]
     move_completed = True
     keep_running = True
     # do something...
@@ -81,17 +81,16 @@ if __name__ == '__main__':
         state = robot.getState()
         if state is None:
             break
-        
+
         if move_completed and state.output_int_register_0 == 1:
             move_completed = False
-            new_setp = setp1 if robot.getConfig() == setp2 else setp2
+            new_setp = setp1 if robot.getTargetConfig() == setp2 else setp2
             robot.sendConfig(new_setp)
             wd = 1
         elif not move_completed and state.output_int_register_0 == 0:
             print("Move to confirmed pose = " + str(state.target_q))
             move_completed = True
             wd = 0
-        
+
         robot.sendWatchdog(wd)
-    
-        
+

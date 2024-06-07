@@ -32,17 +32,18 @@ def getEdgeProjection(config, edge):
 class PathFollowStrict:
     path = None
     path_edges = None
-    PATH_LOOKAHEAD = 0
-    EDGE_CUTOFF = 0
+    PATH_LOOKAHEAD = 0.3
+    EDGE_CUTOFF = 0.3
     current_edge = 0
     def __init__(self, path, path_lookahead = TASK_PATH_LOOKAHEAD, EDGE_CUTOFF = TASK_EDGE_CUTOFF):
         self.path = path
         self.path_edges = [edge for edge in zip(self.path, self.path[1:])]
         self.PATH_LOOKAHEAD = path_lookahead
+        self.EDGE_CUTOFF = EDGE_CUTOFF
 
     def getLookaheadConfig(self, config, lookahead_distance = PATH_LOOKAHEAD):
-        if self.current_edge >= len(self.path):
-            return self.path[-1]
+        if self.current_edge >= len(self.path)-1:
+            return np.asarray(self.path[-1])
 
         point = np.asarray(config)
         edge = self.path_edges[self.current_edge]
@@ -56,13 +57,13 @@ class PathFollowStrict:
             edge_vector = np.asarray(edge[1]) - edge[0]
             edge_length = np.linalg.norm(edge_vector)
             edge_unit_vector = edge_vector/edge_length
-            return edge[0] + (edge_unit_vector * max(t_distance + lookahead_distance - distance, edge_length))
+            return np.asarray(edge[0]) + (edge_unit_vector * max(t_distance + lookahead_distance - distance, edge_length))
 
     def updateCurrentEdge(self, config, cutoff_radius = EDGE_CUTOFF):
-        if self.current_edge >= len(self.path):
+        if self.current_edge >= len(self.path)-1:
             return
         if np.linalg.norm(np.asarray(config) - self.path[self.current_edge + 1]) < cutoff_radius:
-            current_edge += 1
+            self.current_edge += 1
 
 
 

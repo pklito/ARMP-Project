@@ -22,7 +22,7 @@ while keep_moving:
     lookahead_config = pathfollower.getLookaheadConfig(current_config)
     pathfollower.updateCurrentEdge(current_config)
     index = pathfollower.current_edge
-    print(lookahead_config, index)
+    print(lookahead_config - current_config, index)
 
     robot.sendConfig(lookahead_config)
 

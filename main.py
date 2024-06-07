@@ -106,8 +106,8 @@ def plan_task_path(start_conf, goal_conf):
 # 5. if the previous attempt fails, use the corresponding configurations in the static_path ( a little risky, could ruin the balancing ofc but in this case consider adjusting the coordinates corresponding to the wrists that would be affected by the ball balancing)
 # 6. repeat this until the goal_config is reached
 
-# task_robot = RTDERobot()
-# assistant_robot = RTDERobot()
+task_robot = RTDERobot()
+assistant_robot = RTDERobot()
 # ur3e_arm = ur_kinematics.URKinematics('ur3e')
 # ur5e_arm = ur_kinematics.URKinematics('ur5e')
 
@@ -147,42 +147,3 @@ balance_config = start_conf.copy()
 #         task_robot.sendWatchdog(1)
 #     keep_moving = False
 #     print("Path Execution is Finished")
-
-while True:
-    try:
-        current_center = calculate_plate_center(ur3e_joint_angles=np.deg2rad([0, -90, 0, -90, 0, 0]))
-        intrinsic_matrix = np.linalg.inv(calculate_intrinsic_matrix(camera_params))
-        color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
-        if color_image is None or depth_image is None:
-            continue
-
-        object_bounding_boxes = detect_object(color_image)
-
-        # Combine bounding boxes for both ball and plate
-        all_bounding_boxes = object_bounding_boxes
-        camera_xyz_to_pixels = None
-        for bbox in all_bounding_boxes:
-            x1, y1, x2, y2 = bbox
-            center_x = (x1 + x2) // 2
-            center_y = (y1 + y2) // 2
-            depth_value = depth_frame.get_distance(center_x, center_y)
-            depth = depth_value * 1000  # Convert to millimeters
-            camera_xyz_to_pixels = pixel_coords_to_world_coords((250, 330, 1), intrinsic_matrix) * depth
-
-            cv2.rectangle(color_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(color_image, f'Distance: {depth:.2f} mm, Center: ({center_x}, {center_y})', (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-        images = np.hstack((color_image, depth_colormap))
-        cv2.imshow('RealSense Color and Depth Stream', images)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-        print("\ncenter", current_center)
-        print("\nmatrix", intrinsic_matrix)
-        print("\world coords: ", camera_xyz_to_pixels)
-    finally:
-        print("done")
-
-# xyz_ur3e =
-# print("ur3e coords: ", xyz_ur3e)

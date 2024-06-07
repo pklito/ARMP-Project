@@ -1,7 +1,9 @@
 import cv2
+from networkx import center
 import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
+from yarg import get
 
 
 def calculate_similarity(color1, color2):
@@ -102,6 +104,18 @@ class CameraStreamer:
             self.stop()
             cv2.destroyAllWindows()
 
+    def get_world_position_from_camera(self, pixel_x=320, pixel_y=240):
+        if not self.depth_frame:
+            return None
+
+        depth = self.depth_frame.get_distance(pixel_x, pixel_y)
+        depth_intrinsics = self.depth_frame.profile.as_video_stream_profile().intrinsics
+
+        # Convert pixel coordinates to world coordinates (from the Camera's Perspective!)
+        ball_position = rs.rs2_deproject_pixel_to_point(depth_intrinsics, [pixel_x, pixel_y], depth)
+        return np.array(ball_position)
+
+
     def run_object_detection(self):
         try:
             while True:
@@ -122,6 +136,7 @@ class CameraStreamer:
                     center_y = (y1 + y2) // 2
                     depth_value = self.depth_frame.get_distance(center_x, center_y)
                     distance_meters = depth_value * 1000  # Convert to millimeters
+                    camera_world_coords = self.get_world_position_from_camera(center_x, center_y)
 
                     if bbox in object_bounding_boxes:
                         color = (0, 255, 0)  # Green for ball
@@ -131,8 +146,9 @@ class CameraStreamer:
                         object_type = "Plate"
 
                     cv2.rectangle(self.color_image, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(self.color_image, f'{object_type} Distance: {distance_meters:.2f} mm, Center: ({center_x}, {center_y})', (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.putText(self.color_image, f'{object_type} Distance: {distance_meters:.2f} mm,', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.putText(self.color_image, f'Center: ({center_x}, {center_y}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.putText(self.color_image, f'World Coordinates: {camera_world_coords}', (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
                 images = np.hstack((self.color_image, self.depth_colormap))
                 cv2.imshow('RealSense Color and Depth Stream', images)

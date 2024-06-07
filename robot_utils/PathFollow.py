@@ -77,7 +77,7 @@ class PathFollow:
             curr_edge_remainder = np.linalg.norm(np.array(point)-remaining_path_edges[0][1])
             if(curr_edge_remainder <= lookahead_left):
                 lookahead_left -= curr_edge_remainder
-                point = remaining_path_edges[0][1]
+                point = np.array(remaining_path_edges[0][1])
                 remaining_path_edges = remaining_path_edges[1:]
             else:
                 edge = np.array(remaining_path_edges[0][1]) - remaining_path_edges[0][0]

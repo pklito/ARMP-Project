@@ -50,7 +50,7 @@ class PathFollow:
 
             distance = np.linalg.norm(point-projection)
 
-            if( t*edge_length > EDGE_CUTOFF and index >= self.current_edge):
+            if( t*edge_length > self.EDGE_CUTOFF and index >= self.current_edge):
                 self.current_edge += 1
 
 

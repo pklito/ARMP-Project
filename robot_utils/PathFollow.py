@@ -6,6 +6,29 @@
 import numpy as np
 from constants import *
 
+def getEdgeProjection(config, edge):
+    p1 = np.asarray(edge[0])
+    p2 = np.asarray(edge[1])
+    point = np.asarray(config)
+
+    edge_vector = p2 - p1
+    edge_length = np.linalg.norm(edge_vector)
+
+    point_vector = point - p1
+
+    t_distance = edge_vector.dot(point_vector)
+    t = t_distance / edge_length
+
+    projection = None
+    if(t < 0):
+        projection = p1
+    elif (t>1):
+        projection = p2
+    else:
+        projection = t*edge_vector + p1
+
+    return projection, t, t_distance
+
 # Stores function follow()
 # this  is its own class so i can store
 class PathFollow:
@@ -26,31 +49,10 @@ class PathFollow:
         best_index = -1
         # iterate through the path in segments (p0, p1, 0), (p1,p2,1), ...., (pn-1, pn, n-1)
         for i, j, index in zip(self.path[:self.current_edge+2], self.path[1: self.current_edge + 2], range(len(self.path)-1)):
-            p1 = np.asarray(i)
-            p2 = np.asarray(j)
-            point = np.asarray(config)
+            projection, t, t_distance = getEdgeProjection(config, (i,j))
+            distance = np.linalg.norm(np.asarray(config)-projection)
 
-            # We assume the path starts at the origin, shift the odometry to match that space
-            vecpath = p2 - p1
-            pr = config - p1 #relative point to vector origin
-
-            edge_length = np.linalg.norm(vecpath)
-            distance = None
-            projection = None
-            t = vecpath.dot(pr)/edge_length # Percentage on the current line
-            # Create a bounded projection:
-            # Projection is the closest point on the line to our robot.
-            #  this differs from a regular projection because our line is finite.
-            if(t < 0):
-                projection = p1
-            elif (t>1):
-                projection = p2
-            else:
-                projection = t*vecpath + p1
-
-            distance = np.linalg.norm(point-projection)
-
-            if( (1-t)*edge_length < self.EDGE_CUTOFF and index >= self.current_edge):
+            if( np.linalg.norm(np.asarray(i)-j) - t_distance < self.EDGE_CUTOFF and index >= self.current_edge):
                 self.current_edge += 1
 
 

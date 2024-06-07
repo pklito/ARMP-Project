@@ -29,6 +29,43 @@ def getEdgeProjection(config, edge):
 
     return projection, t, t_distance
 
+class PathFollowStrict:
+    path = None
+    path_edges = None
+    PATH_LOOKAHEAD = 0
+    EDGE_CUTOFF = 0
+    current_edge = 0
+    def __init__(self, path, path_lookahead = TASK_PATH_LOOKAHEAD, EDGE_CUTOFF = TASK_EDGE_CUTOFF):
+        self.path = path
+        self.path_edges = zip(self.path, self.path[1:])
+        self.PATH_LOOKAHEAD = path_lookahead
+
+    def getLookaheadConfig(self, config, lookahead_distance = PATH_LOOKAHEAD):
+        if self.current_edge >= len(self.path):
+            return self.path[-1]
+        
+        point = np.asarray(config)
+        edge = self.path_edges[self.current_edge]
+
+        projection, t, t_distance = getEdgeProjection(config, edge)
+        distance = np.linalg.norm(projection-point)
+
+        if distance > lookahead_distance:
+            return point + lookahead_distance*((projection-point)/distance)
+        else:
+            edge_vector = np.asarray(edge[1]) - edge[0]
+            edge_length = np.linalg.norm(edge_vector)
+            edge_unit_vector = edge_vector/edge_length
+            return edge[0] + (edge_unit_vector * max(t_distance + lookahead_distance - distance, edge_length))
+
+    def updateCurrentEdge(self, config, cutoff_radius = EDGE_CUTOFF):
+        if current_edge >= len(self.path):
+            return
+        if np.linalg.norm(np.asarray(config) - self.path[self.current_edge + 1]) < cutoff_radius:
+            current_edge += 1
+
+
+
 # Stores function follow()
 # this  is its own class so i can store
 class PathFollow:

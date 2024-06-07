@@ -32,8 +32,9 @@ import numpy as np
 from realsense_camera.CameraStreamer import *
 from RTDERobot import *
 from simple_pid import PID
-from ur_ikfast import ur_kinematics
+# from ur_ikfast import ur_kinematics
 from robot_utils.kinematics import *
+from robot_utils.kinematicsUtils import *
 
 # Config
 plate_center = (338, 280)
@@ -54,6 +55,12 @@ pid_controller_y = PID(Kp=0.0006, Ki=0, Kd=0.0003)
 pid_controller_y.setpoint = 0
 
 camera = CameraStreamer()
+camera_params = {
+    'fov_horizontal_rad': 70.74957348407156,
+    'fov_vertical_rad': 43.54111545632642,
+    'image_width': 640,
+    'image_height': 480
+}
 
 def get_error():
     color_image, depth_image, depth_frame, depth_map = camera.get_frames()
@@ -99,45 +106,83 @@ def plan_task_path(start_conf, goal_conf):
 # 5. if the previous attempt fails, use the corresponding configurations in the static_path ( a little risky, could ruin the balancing ofc but in this case consider adjusting the coordinates corresponding to the wrists that would be affected by the ball balancing)
 # 6. repeat this until the goal_config is reached
 
-task_robot = RTDERobot()
-assistant_robot = RTDERobot()
-ur3e_arm = ur_kinematics.URKinematics('ur3e')
-ur5e_arm = ur_kinematics.URKinematics('ur5e')
+# task_robot = RTDERobot()
+# assistant_robot = RTDERobot()
+# ur3e_arm = ur_kinematics.URKinematics('ur3e')
+# ur5e_arm = ur_kinematics.URKinematics('ur5e')
 
 start_conf = [0.2144722044467926, -2.2630707226195277, -0.0021737099159508944, -0.8701519531062623, 1.3459954261779785, -1.5668462175599647] # TODO - change
 goal_conf = np.deg2rad([30.0, -45.0, 20.0, -60.0, -90.0, 0.0]) # TODO - change
 balance_config = start_conf.copy()
 
-task_path = plan_task_path(start_conf, goal_conf) # naive path planning - TODO: use a more suffosticated algorithm
-assistant_path = [config.copy() for config in calculate_assistant_robot_path(ur3e_arm, ur5e_arm, task_path)]
+# task_path = plan_task_path(start_conf, goal_conf) # naive path planning - TODO: use a more suffosticated algorithm
+# assistant_path = [config.copy() for config in calculate_assistant_robot_path(ur3e_arm, ur5e_arm, task_path)]
+# keep_moving = True
+# while keep_moving:
+#     for index, waypoint in enumerate(task_path):
+#         if not task_robot.getState() or not assistant_robot.getState():
+#             break
+#         current_config = waypoint.copy()
 
-keep_moving = True
-while keep_moving:
-    for index, waypoint in enumerate(task_path):
-        if not task_robot.getState() or not assistant_robot.getState():
-            break
-        current_config = waypoint.copy()
+#         errors = get_error()
+#         if errors is None:
+#             task_robot.sendWatchdog(0)
+#             continue
+#         error_x, error_y = errors
 
-        errors = get_error()
-        if errors is None:
-            task_robot.sendWatchdog(0)
+#         balance_config[5] += pid_controller_x(error_x)
+#         current_config[5] = balance_config[5]
+#         balance_config[3] += pid_controller_y(error_y)
+#         current_config[3] = balance_config[3]
+
+#         task_robot.sendConfig(current_config)
+
+#         # Calculate and send assistant robot configuration
+#         ur5e_joint_angles = calculate_assistant_robot_path(ur3e_arm, ur5e_arm, [current_config])[0]
+#         if ur5e_joint_angles is None:
+#             ur5e_joint_angles = assistant_path[index]
+#         assistant_robot.sendConfig(ur5e_joint_angles)
+#         assistant_robot.sendWatchdog(1) # should I use watchdog for assistant robot?
+
+#         task_robot.sendWatchdog(1)
+#     keep_moving = False
+#     print("Path Execution is Finished")
+
+while True:
+    try:
+        current_center = calculate_plate_center(ur3e_joint_angles=np.deg2rad([0, -90, 0, -90, 0, 0]))
+        intrinsic_matrix = np.linalg.inv(calculate_intrinsic_matrix(camera_params))
+        color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
+        if color_image is None or depth_image is None:
             continue
-        error_x, error_y = errors
 
-        balance_config[5] += pid_controller_x(error_x)
-        current_config[5] = balance_config[5]
-        balance_config[3] += pid_controller_y(error_y)
-        current_config[3] = balance_config[3]
+        object_bounding_boxes = detect_object(color_image)
 
-        task_robot.sendConfig(current_config)
+        # Combine bounding boxes for both ball and plate
+        all_bounding_boxes = object_bounding_boxes
+        camera_xyz_to_pixels = None
+        for bbox in all_bounding_boxes:
+            x1, y1, x2, y2 = bbox
+            center_x = (x1 + x2) // 2
+            center_y = (y1 + y2) // 2
+            depth_value = depth_frame.get_distance(center_x, center_y)
+            depth = depth_value * 1000  # Convert to millimeters
+            camera_xyz_to_pixels = pixel_coords_to_world_coords((250, 330, 1), intrinsic_matrix) * depth
 
-        # Calculate and send assistant robot configuration
-        ur5e_joint_angles = calculate_assistant_robot_path(ur3e_arm, ur5e_arm, [current_config])[0]
-        if ur5e_joint_angles is None:
-            ur5e_joint_angles = assistant_path[index]
-        assistant_robot.sendConfig(ur5e_joint_angles)
-        assistant_robot.sendWatchdog(1) # should I use watchdog for assistant robot?
+            cv2.rectangle(color_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(color_image, f'Distance: {depth:.2f} mm, Center: ({center_x}, {center_y})', (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        task_robot.sendWatchdog(1)
-    keep_moving = False
-    print("Path Execution is Finished")
+        images = np.hstack((color_image, depth_colormap))
+        cv2.imshow('RealSense Color and Depth Stream', images)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        print("\ncenter", current_center)
+        print("\nmatrix", intrinsic_matrix)
+        print("\world coords: ", camera_xyz_to_pixels)
+    finally:
+        print("done")
+
+# xyz_ur3e =
+# print("ur3e coords: ", xyz_ur3e)

@@ -10,11 +10,12 @@ from constants import TASK_PATH_LOOKAHEAD
 # this  is its own class so i can store
 class PathFollow:
     path = None
-    path_lookahead = 0
+    PATH_LOOKAHEAD = 0.3
+    EDGE_CUTOFF = 0.8
     current_edge = 0
-    def __init__(self, path, path_lookahead = TASK_PATH_LOOKAHEAD):
+    def __init__(self, path, path_lookahead = TASK_PATH_LOOKAHEAD, EDGE_CUTOFF = TASK_EDGE_CUTOFF):
         self.path = path
-        self.path_lookahead = path_lookahead
+        self.PATH_LOOKAHEAD = path_lookahead
 
     # Return:
     # best edge index (bounded)
@@ -33,9 +34,10 @@ class PathFollow:
             vecpath = p2 - p1
             pr = config - p1 #relative point to vector origin
 
+            edge_length = np.linalg.norm(vecpath)
             distance = None
             projection = None
-            t = vecpath.dot(pr)/np.linalg.norm(vecpath) # Percentage on the current line
+            t = vecpath.dot(pr)/edge_length # Percentage on the current line
             # Create a bounded projection:
             # Projection is the closest point on the line to our robot.
             #  this differs from a regular projection because our line is finite.
@@ -48,7 +50,7 @@ class PathFollow:
 
             distance = np.linalg.norm(point-projection)
 
-            if( t > 0.8 and index >= self.current_edge):
+            if( t*edge_length > EDGE_CUTOFF and index >= self.current_edge):
                 self.current_edge += 1
 
 
@@ -63,7 +65,7 @@ class PathFollow:
 
     def getLookaheadEdge(self, config):
         # Get current lookahead number
-        lookahead_left = self.path_lookahead
+        lookahead_left = self.PATH_LOOKAHEAD
         # Get projection of config onto the path
         current_path_index, distance, projection = self.getClosestEdge(config)
         # Closest edge and the ones after it

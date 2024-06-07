@@ -5,10 +5,10 @@ from RTDERobot import *
 
 if __name__ == '__main__':
     robot = RTDERobot(ROBOT_HOST='192.168.0.11')
-    
+
     while True:
         state = robot.getState()
-        
-        print(state.target_q)
-        
+
+        print([round(q, 3) for q in state.target_q])
+
         robot.sendWatchdog(1)

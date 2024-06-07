@@ -27,7 +27,7 @@ def getEdgeProjection(config, edge):
     else:
         projection = t*edge_vector + p1
 
-    return projection, t, t_distance
+    return projection, min(max(t,0),1), min(max(t_distance,0),edge_length)
 
 class PathFollowStrict:
     path = None
@@ -50,14 +50,13 @@ class PathFollowStrict:
 
         projection, t, t_distance = getEdgeProjection(config, edge)
         distance = np.linalg.norm(projection-point)
-
         if distance > lookahead_distance:
             return point + lookahead_distance*((projection-point)/distance)
         else:
             edge_vector = np.asarray(edge[1]) - edge[0]
             edge_length = np.linalg.norm(edge_vector)
             edge_unit_vector = edge_vector/edge_length
-            return np.asarray(edge[0]) + (edge_unit_vector * max(t_distance + lookahead_distance - distance, edge_length))
+            return np.asarray(edge[0]) + (edge_unit_vector * min(t_distance + lookahead_distance - distance, edge_length))
 
     def updateCurrentEdge(self, config, cutoff_radius = EDGE_CUTOFF):
         if self.current_edge >= len(self.path)-1:

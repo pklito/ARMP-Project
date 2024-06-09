@@ -27,7 +27,8 @@ pip install --user numpy Cython
 
 ### Windows Installation
 
-#### * this could be a little bug as we only tested the linux installation.
+#### * this could be a little buggy as we only tested the linux installation. But go to your C:\ and clone the following
+
 
 git clone https://github.com/Microsoft/vcpkg.git
 
@@ -35,11 +36,13 @@ cd vcpkg
 
 .\bootstrap-vcpkg.bat
 
-.\vcpkg integrate install
+#### * after this add your vcpkg path to PATH Environment Variable and restart
 
-.\vcpkg install lapack:x64-windows
+vcpkg install lapack:x64-windows
 
-.\vcpkg install blas:x64-windows
+vcpkg install blas:x64-windows
+
+vcpkg integrate install
 
 pip install --user numpy Cython
 

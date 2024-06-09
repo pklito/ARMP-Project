@@ -1,4 +1,5 @@
 import cv2
+from networkx import center
 import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
@@ -63,12 +64,13 @@ def detect_plate(frame):
 class CameraStreamer:
     def __init__(self):
         # Initialize RealSense camera pipeline
+        # self.cap = cv2.VideoCapture(2) # Intel's Realsense Camera is on my pc
         self.pipeline = rs.pipeline()
         config = rs.config()
         config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
         self.pipeline.start(config)
-        # self.cap = cv2.VideoCapture(2)
+        self.color_image, self.depth_image, self.depth_frame, self.depth_colormap, self.depth_intrinsics = self.get_frames()
 
     def get_frames(self):
         frames = self.pipeline.wait_for_frames()
@@ -76,16 +78,43 @@ class CameraStreamer:
         color_frame = frames.get_color_frame()
 
         if not depth_frame or not color_frame:
-            return None, None, None
+            return None, None, None, None
 
         depth_image = np.asanyarray(depth_frame.get_data())
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
         color_image = np.asanyarray(color_frame.get_data())
+        depth_intrinsics = depth_frame.profile.as_video_stream_profile().intrinsics
 
-        return color_image, depth_image, depth_frame, depth_colormap
+        return color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics
 
     def stop(self):
         self.pipeline.stop()
+
+    def stream(self):
+        try:
+            while True:
+                self.color_image, self.depth_image, self.depth_frame, self.depth_colormap, self.depth_intrinsics = self.get_frames()
+                if self.color_image is not None and self.depth_colormap is not None:
+                    images = np.hstack((self.color_image, self.depth_colormap))
+                    cv2.imshow('RealSense Color and Depth Stream', images)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+        finally:
+            self.stop()
+            cv2.destroyAllWindows()
+
+    def get_world_position_from_camera(self, pixel_x=320, pixel_y=240):
+        if not self.depth_frame:
+            return None
+
+        depth = self.depth_frame.get_distance(pixel_x, pixel_y)
+        depth_intrinsics = self.depth_frame.profile.as_video_stream_profile().intrinsics
+
+        # Convert pixel coordinates to world coordinates (from the Camera's Perspective!)
+        ball_position = rs.rs2_deproject_pixel_to_point(depth_intrinsics, [pixel_x, pixel_y], depth)
+        return np.array(ball_position)
+
 
     def run_object_detection(self):
         try:
@@ -95,13 +124,13 @@ class CameraStreamer:
                 for file in os.listdir('vid'):
                     os.remove(f'vid/{file}')
             while True:
-                color_image, depth_image, depth_frame, depth_colormap = self.get_frames()
+                self.color_image, self.depth_image, self.depth_frame, self.depth_colormap, self.depth_intrinsics = self.get_frames()
 
-                if color_image is None or depth_image is None:
+                if self.color_image is None or self.depth_image is None:
                     continue
 
-                object_bounding_boxes = detect_object(color_image)
-                plate_bounding_boxes = []#detect_plate(color_image)  # Add plate detection
+                object_bounding_boxes = detect_object(self.color_image)
+                plate_bounding_boxes = [] # detect_plate(color_image)  # Add plate detection
 
                 # Combine bounding boxes for both ball and plate
                 all_bounding_boxes = object_bounding_boxes + plate_bounding_boxes
@@ -110,8 +139,9 @@ class CameraStreamer:
                     x1, y1, x2, y2 = bbox
                     center_x = (x1 + x2) // 2
                     center_y = (y1 + y2) // 2
-                    depth_value = depth_frame.get_distance(center_x, center_y)
+                    depth_value = self.depth_frame.get_distance(center_x, center_y)
                     distance_meters = depth_value * 1000  # Convert to millimeters
+                    camera_world_coords = self.get_world_position_from_camera(center_x, center_y)
 
                     if bbox in object_bounding_boxes:
                         color = (0, 255, 0)  # Green for ball
@@ -120,11 +150,12 @@ class CameraStreamer:
                         color = (0, 0, 255)  # Red for plate
                         object_type = "Plate"
 
-                    cv2.rectangle(color_image, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(color_image, f'{object_type} Distance: {distance_meters:.2f} mm, Center: ({center_x}, {center_y})', (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.rectangle(self.color_image, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(self.color_image, f'{object_type} Distance: {distance_meters:.2f} mm,', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.putText(self.color_image, f'Center: ({center_x}, {center_y}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.putText(self.color_image, f'World Coordinates: {camera_world_coords}', (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-                images = np.hstack((color_image, depth_colormap))
+                images = np.hstack((self.color_image, self.depth_colormap))
                 cv2.imshow('RealSense Color and Depth Stream', images)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):

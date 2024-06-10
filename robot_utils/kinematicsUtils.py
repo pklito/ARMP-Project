@@ -26,9 +26,9 @@ T_UR3E_to_UR5E_Camera[0, 3] = 1.35  # Distance along the x-axis from UR3E to UR5
 T_UR3E_to_UR5E_Camera[1, 3] = 0.07  # Distance along the y-axis from UR3E to UR5E Camera
 T_UR3E_to_UR5E_Camera[2, 3] = 0.1   # Distance along the z-axis from UR3E to UR5E Camera
 
-T_AB_UR3E_to_UR5E[0, 3] = 1.35  # Distance along the x-axis from UR3E to UR5E
-T_AB_UR3E_to_UR5E[1, 3] = 0.07  # Distance along the y-axis from UR3E to UR5E
-T_AB_UR3E_to_UR5E[2, 3] = 0.00   # Distance along the z-axis from UR3E to UR5E
+T_AB_UR3E_to_UR5E[0, 3] = -1.35  # Distance along the x-axis from UR3E to UR5E
+T_AB_UR3E_to_UR5E[1, 3] = -0.07  # Distance along the y-axis from UR3E to UR5E
+T_AB_UR3E_to_UR5E[2, 3] = -0.00   # Distance along the z-axis from UR3E to UR5E
 
 T_UR5E_Camera_to_UR3E = np.linalg.inv(T_UR3E_to_UR5E_Camera)
 T_BA_UR5E_to_UR3E = np.linalg.inv(T_AB_UR3E_to_UR5E)
@@ -105,12 +105,11 @@ def assure_homogeneous(coord):
 def ur3e_effector_to_home(ur3e_joints, local_coords = [0,0,0,1]):
     local_coords = assure_homogeneous(local_coords)
     mat_end_to_ur3_base = forward_kinematic_matrix(DH_matrix_ur3e, ur3e_joints)
-    position = T_AB_UR3E_to_UR5E.dot((mat_end_to_ur3_base.dot(local_coords)))
+    inter = np.ravel(np.dot(mat_end_to_ur3_base, np.asarray(local_coords)))
+    position = np.ravel(np.dot(T_AB_UR3E_to_UR5E, inter))
     return position
 
 def ur5e_effector_to_home(ur5e_joints, local_coords = [0,0,0,1]):
     local_coords = assure_homogeneous(local_coords)
     mat_end_to_ur5_base = forward_kinematic_matrix(DH_matrix_ur5e, ur5e_joints)
-    return mat_end_to_ur5_base.dot(np.array(local_coords))
-
-print(ur5e_effector_to_home([0,-1.57,0,-1.57,1.57,3.1415],camera_from_ee([0,0,1,1])))
+    return np.ravel(np.dot(mat_end_to_ur5_base,local_coords))

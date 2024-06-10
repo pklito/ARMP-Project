@@ -5,17 +5,21 @@
 # womp womp i use numpy :/
 import numpy as np
 from constants import *
-
+def clamp(val, v_min, v_max):
+    return min(v_max, max(v_min,val))
 def getEdgeProjection(config, edge):
     p1 = np.asarray(edge[0])
     p2 = np.asarray(edge[1])
     point = np.asarray(config)
 
+    # Get a vector of the given path edge
     edge_vector = p2 - p1
     edge_length = np.linalg.norm(edge_vector)
 
+    # Vector from path start to current point
     point_vector = point - p1
 
+    # T is the fraction along the path the projection is on.
     t_distance = edge_vector.dot(point_vector)
     t = t_distance / edge_length
 
@@ -27,11 +31,11 @@ def getEdgeProjection(config, edge):
     else:
         projection = t*edge_vector + p1
 
-    return projection, min(max(t,0),1), min(max(t_distance,0),edge_length)
+    return projection, clamp(t, 0, 1), clamp(t_distance, 0, edge_length)
 
 class PathFollowStrict:
-    path = None
-    path_edges = None
+    path = None     #List of the path configurations
+    path_edges = None       #List of edges I.E. pairs of points
     PATH_LOOKAHEAD = 0.3
     EDGE_CUTOFF = 0.3
     current_edge = 0

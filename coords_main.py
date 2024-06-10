@@ -52,15 +52,5 @@ while keep_moving:
         continue
     i += 1
     if i > 50:
-
-        plate_center = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,0,1]))
-        ball_top = fk.ur5e_effector_to_home(current_cam_config, fk.camera_from_ee(ball_position))
-        plate_z_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,1,1]))
-        plate_x_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([1,0,0,1]))
-        plate_y_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,1,0,1]))
-        final = np.ravel(np.dot(np.matrix([[plate_x_axis[0],plate_y_axis[0],plate_z_axis[0],plate_center[0]],
-                                           [plate_x_axis[1],plate_y_axis[1],plate_z_axis[1],plate_center[1]],
-                                           [plate_x_axis[2],plate_y_axis[2],plate_z_axis[2],plate_center[2]],
-                                           [0,0,0,1]]),ball_top))
-        print(final)
+        print(fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,0,1])) - fk.ur5e_effector_to_home(current_cam_config, fk.camera_from_ee(ball_position)))
         i = 0

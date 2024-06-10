@@ -1,5 +1,4 @@
 import cv2
-from networkx import center
 import pyrealsense2 as rs
 import numpy as np
 from PIL import Image

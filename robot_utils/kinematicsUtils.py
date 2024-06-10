@@ -18,20 +18,14 @@ DH_matrix_ur5e = np.matrix([[0, np.pi / 2.0, 0.1625],
                        [0, -np.pi / 2.0, 0.0997],
                        [0, 0, 0.0996]])
 
-T_UR3E_to_UR5E_Camera = np.eye(4)
-T_UR5E_Camera_to_UR3E = np.eye(4)
 T_AB_UR3E_to_UR5E = np.eye(4)
-
-T_UR3E_to_UR5E_Camera[0, 3] = 1.35  # Distance along the x-axis from UR3E to UR5E Camera
-T_UR3E_to_UR5E_Camera[1, 3] = 0.07  # Distance along the y-axis from UR3E to UR5E Camera
-T_UR3E_to_UR5E_Camera[2, 3] = 0.1   # Distance along the z-axis from UR3E to UR5E Camera
 
 T_AB_UR3E_to_UR5E[0, 3] = -1.35  # Distance along the x-axis from UR3E to UR5E
 T_AB_UR3E_to_UR5E[1, 3] = -0.07  # Distance along the y-axis from UR3E to UR5E
 T_AB_UR3E_to_UR5E[2, 3] = -0.00   # Distance along the z-axis from UR3E to UR5E
 
-T_UR5E_Camera_to_UR3E = np.linalg.inv(T_UR3E_to_UR5E_Camera)
-T_BA_UR5E_to_UR3E = np.linalg.inv(T_AB_UR3E_to_UR5E)
+CAMERA_EE_DISPLACEMENT = [0,-0.1,0]
+PLATE_EE_DISPLACEMENT = [0,0,0.1]
 
 def mat_transform_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
     """
@@ -93,9 +87,9 @@ def forward_kinematic_matrix(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0]
     return transform
 
 def camera_from_ee(coord):
-    return [coord[0], coord[1] - 0.1, coord[2], 1]
+    return [coord[0] + CAMERA_EE_DISPLACEMENT[0], coord[1] + CAMERA_EE_DISPLACEMENT[1], coord[2] + CAMERA_EE_DISPLACEMENT[2], 1]
 def plate_from_ee(coord):
-    return [coord[0], coord[1], coord[2] + 0.1, 1]
+    return [coord[0] + PLATE_EE_DISPLACEMENT[0], coord[1] + PLATE_EE_DISPLACEMENT[1], coord[2] + PLATE_EE_DISPLACEMENT[2], 1]
 
 def assure_homogeneous(coord):
     if(len(coord) == 3):

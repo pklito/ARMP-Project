@@ -70,7 +70,15 @@ while keep_moving:
     ball_top = fk.ur5e_effector_to_home(current_cam_config, fk.camera_from_ee(ball_position))
     plate_z_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,1,1]))
     plate_x_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([1,0,0,1]))
-
+    plate_y_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,1,0,1]))
+    transform_to_plate = np.matrix([[plate_x_axis[0],plate_y_axis[0],plate_z_axis[0],plate_center[0]],
+                                           [plate_x_axis[1],plate_y_axis[1],plate_z_axis[1],plate_center[1]],
+                                           [plate_x_axis[2],plate_y_axis[2],plate_z_axis[2],plate_center[2]],
+                                           [0,0,0,1]])
+    # Transform to plate is supposed to give us the inverse matrix.
+    # E.G. error = np.dot(transform_to_plate, ball_top)
+    # Otherwise, we can try to get the dot product with the axis from the plate
+    # E.G. x_error = np.dot(plate_x_axis, (ball_top - plate_center))
     error = ball_top - [-0.61362,-0.11040671,0.63503892, 1.]
 
     pos = initial_pos.copy()

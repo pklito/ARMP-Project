@@ -17,6 +17,8 @@ def getEdgeProjection(config, edge):
     # Get a vector of the given path edge
     edge_vector = p2 - p1
     edge_length = np.linalg.norm(edge_vector)
+    if edge_length <= 0.001:
+        return p2, 1, edge_length
 
     # Vector from path start to current point
     point_vector = point - p1
@@ -35,6 +37,13 @@ def getEdgeProjection(config, edge):
 
     return projection, clamp(t, 0, 1), clamp(t_distance, 0, edge_length)
 
+def getClampedLookahead(point, target, lookahead_distance):
+    target_vector = np.asarray(target) - point
+    target_distance = np.linalg.norm(target_vector)
+    if target_distance <= 0.001:
+        return target
+
+    return point + lookahead_distance * target_vector / target_distance
 class PathFollowStrict:
     path = None     #List of the path configurations
     path_edges = None       #List of edges I.E. pairs of points
@@ -54,15 +63,16 @@ class PathFollowStrict:
         point = np.asarray(config)
         edge = self.path_edges[self.current_edge]
 
-        projection, t, t_distance = getEdgeProjection(config, edge)
-        distance = np.linalg.norm(projection-point)
-        if distance > lookahead_distance:
-            return point + lookahead_distance*((projection-point)/distance)
+        proj, t, t_dist = getEdgeProjection(config, edge)
+        edge_length = np.linalg.norm(edge[1] - np.array(edge[0]))
+
+        target = None
+        if edge_length <= 0.001:
+            target = edge[1]
         else:
-            edge_vector = np.asarray(edge[1]) - edge[0]
-            edge_length = np.linalg.norm(edge_vector)
-            edge_unit_vector = edge_vector/edge_length
-            return np.asarray(edge[0]) + (edge_unit_vector * min(t_distance + lookahead_distance - distance, edge_length))
+            target = self.getPointFromT(self.current_edge, clamp(t + lookahead_distance / edge_length, 0, 1))
+
+        return getClampedLookahead(point, target, lookahead_distance)
 
     def updateCurrentEdge(self, config, cutoff_radius = EDGE_CUTOFF):
         if self.current_edge >= len(self.path)-1:
@@ -70,18 +80,13 @@ class PathFollowStrict:
         if np.linalg.norm(np.asarray(config) - self.path[self.current_edge + 1]) < cutoff_radius:
             self.current_edge += 1
 
-    def getPathFromT(self,edge_num, t):
+    def getPointFromT(self,edge_num, t):
         if edge_num >= len(self.path_edges):
             return np.array(self.path_edges[-1][1])
         p1 = np.asarray(self.path_edges[edge_num][0])
         p2 = np.asarray(self.path_edges[edge_num][1])
 
         return (1-t) * p1 + t * p2
-
-    def getPathFromT(self,t_plus_edge):
-        edge, t = modf(t_plus_edge)
-        return self.getPathFromT(int(edge), t)
-
 
 
 # Stores function follow()

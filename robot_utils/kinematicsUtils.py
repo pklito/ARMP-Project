@@ -33,14 +33,6 @@ T_AB_UR3E_to_UR5E[2, 3] = 0.00   # Distance along the z-axis from UR3E to UR5E
 T_UR5E_Camera_to_UR3E = np.linalg.inv(T_UR3E_to_UR5E_Camera)
 T_BA_UR5E_to_UR3E = np.linalg.inv(T_AB_UR3E_to_UR5E)
 
-def transition_coordinates(point, transformation_matrix):
-    """
-    Transition coordinates from one frame to another using a transformation matrix.
-    """
-    transformed_point = np.dot(transformation_matrix, np.append(point, 1))
-    return transformed_point[:3] # Return only the XYZ coordinates
-
-
 def mat_transform_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
     """
     Compute the transformation matrix for the nth joint using Denavit-Hartenberg parameters.
@@ -100,41 +92,6 @@ def forward_kinematic_matrix(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0]
     transform = t01 * t12 * t23 * t34 * t45 * t56
     return transform
 
-# Note: the following code could have multiple errors due to a minus / plus sign! try changing the signs of trasformations from one frame to another to receive a solution - TODO: Fix this!
-
-def calculate_plate_center(ur3e_joint_angles, DH_matrix=DH_matrix_ur3e):
-    """
-    Calculate the center of a plate using the UR3e arm's end-effector position in UR3E's frame.
-    """
-    xyz_position_ur3e_end_effector = forward_kinematic_solution(DH_matrix, ur3e_joint_angles)
-    dx, dy, dz = 0.1, 0.0, 0.0 # TODO - Fix distances as necessary, there could be a mess up in which axis should be added to
-    plate_center = xyz_position_ur3e_end_effector[0] + dx, xyz_position_ur3e_end_effector[1] + dy, xyz_position_ur3e_end_effector[2] + dz
-    return plate_center # in UR3E World coordinates
-
-def transform_UR3E_to_UR5E(position_UR3E):
-    # Transformation matrix from UR3E to UR5E - TODO: Fix distances if wrong
-    T_UR3E_to_UR5E = np.eye(4)
-    T_UR3E_to_UR5E[0, 3] = 1.35  # Distance along the x-axis from UR3E Base to UR5E Base
-    T_UR3E_to_UR5E[1, 3] = 0.07  # Distance along the y-axis from UR3E Base to UR5E Base
-    T_UR3E_to_UR5E[2, 3] = 0.00   # Distance along the z-axis from UR3E Base to UR5E Base
-    position_in_ur5e_ = np.dot(T_UR3E_to_UR5E, position_UR3E)
-    return position_in_ur5e_
-
-def transform_UR5E_End_Effector_to_Camera(position_UR5E):
-    # Transformation matrix from UR5E to Camera - TODO: Fix distances if wrong
-    T_UR5E_to_Camera = np.eye(4)
-    T_UR5E_to_Camera[0, 3] = 0.00  # Distance along the x-axis from UR5E End-Effector to UR5E mounted Camera
-    T_UR5E_to_Camera[1, 3] = 0.00  # Distance along the y-axis from UR5E End-Effector to UR5E mounted Camera
-    T_UR5E_to_Camera[2, 3] = 0.10  # Distance along the z-axis from UR5E End-Effector to UR5E mounted Camera
-    position_Camera_ = np.dot(T_UR5E_to_Camera, np.append(position_UR5E, 1))
-    return position_Camera_[:3]
-
-def transform_UR3E_to_Camera(position_UR3E, ur5e_joints):
-    ur5e_end_effector_position = forward_kinematic_solution(DH_matrix_ur5e,ur5e_joints) # this is in relation to the UR5E Base
-    position_UR5E = transform_UR3E_to_UR5E(position_UR3E) # this is the position of a point from the UR3E worls in the UR5E world
-    position_in_end_effector_world = position_UR5E - ur5e_end_effector_position # basically considering the end effector of UR5E as the Origin
-    return transform_UR5E_End_Effector_to_Camera(position_in_end_effector_world)
-
 def camera_from_ee(coord):
     return [coord[0], coord[1] - 0.1, coord[2], 1]
 def plate_from_ee(coord):
@@ -148,7 +105,7 @@ def assure_homogeneous(coord):
 def ur3e_effector_to_home(ur3e_joints, local_coords = [0,0,0,1]):
     local_coords = assure_homogeneous(local_coords)
     mat_end_to_ur3_base = forward_kinematic_matrix(DH_matrix_ur3e, ur3e_joints)
-    position = transform_UR3E_to_UR5E(mat_end_to_ur3_base.dot(local_coords))
+    position = T_AB_UR3E_to_UR5E.dot((mat_end_to_ur3_base.dot(local_coords)))
     return position
 
 def ur5e_effector_to_home(ur5e_joints, local_coords = [0,0,0,1]):

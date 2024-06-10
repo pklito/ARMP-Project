@@ -6,6 +6,8 @@ from realsense_camera.CameraStreamer import *
 from RTDERobot import *
 import robot_utils.kinematicsUtils as fk
 
+from simple_pid import PID
+
 print("here")
 camera = CameraStreamer()
 task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
@@ -33,11 +35,16 @@ def get_position():
     ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
     return get_world_position_from_buffers(ball_center[0],ball_center[1], depth_frame,depth_intrinsics)
 
-i = 0
+pid_controller_x = PID(Kp=1.5, Ki=0, Kd=0.5)
+pid_controller_x.setpoint = 0
+
+pid_controller_y = PID(Kp=0.6, Ki=0, Kd=0.1)
+pid_controller_y.setpoint = 0
+
 print("start!")
 keep_moving = True
 not_started = True
-initial_pos = None
+initial_pos = [0.12, -2.47, 0.018, -0.65, 1.456, -1.608]
 while keep_moving:
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
@@ -47,8 +54,7 @@ while keep_moving:
         continue
     elif not_started:
         not_started = True
-        initial_pos = task_state.target_q
-    
+
     if not task_state or not cam_state:
         break
     task_robot.sendWatchdog(1)
@@ -60,5 +66,16 @@ while keep_moving:
     ball_position = get_position()
     if ball_position is None:
         continue
+    plate_center = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,0,1]))
+    ball_top = fk.ur5e_effector_to_home(current_cam_config, fk.camera_from_ee(ball_position))
+    plate_z_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,1,1]))
+    plate_x_axis = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([1,0,0,1]))
 
-    print(fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,0,1])) - fk.ur5e_effector_to_home(current_cam_config, fk.camera_from_ee(ball_position)))
+    error = ball_top - [-0.61362,-0.11040671,0.63503892, 1.]
+
+    pos = initial_pos.copy()
+    pos[5] += pid_controller_x(-error[1])
+    pos[3] += pid_controller_y(-error[0])
+    print(error)
+    task_robot.sendConfig(pos)
+

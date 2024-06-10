@@ -114,27 +114,3 @@ def ur5e_effector_to_home(ur5e_joints, local_coords = [0,0,0,1]):
     return mat_end_to_ur5_base.dot(np.array(local_coords))
 
 print(ur5e_effector_to_home([0,-1.57,0,-1.57,1.57,3.1415],camera_from_ee([0,0,1,1])))
-# def pixel_coords_to_world_coords(xyz_coords, intrinsic_matrix):
-#     xyz_homogeneous = np.array(xyz_coords)
-#     pixel_coords_homogeneous = np.dot(intrinsic_matrix, xyz_homogeneous)
-#     pixel_coords = pixel_coords_homogeneous / pixel_coords_homogeneous[2]
-#     return pixel_coords[:3]
-
-# def calculate_intrinsic_matrix(camera_params):
-    # fov_horizontal_rad = camera_params['fov_horizontal_rad']
-    # fov_vertical_rad = camera_params['fov_vertical_rad']
-    # image_width = camera_params['image_width']
-    # image_height = camera_params['image_height']
-
-    # focal_length_x = (image_width / 2) / np.tan(fov_horizontal_rad / 2)
-    # focal_length_y = (image_height / 2) / np.tan(fov_vertical_rad / 2)
-
-    # c_x = image_width / 2
-    # c_y = image_height / 2
-
-    # intrinsic_matrix = np.array([[focal_length_x, 0, c_x],
-    #                              [0, focal_length_y, c_y],
-    #                              [0, 0, 1]])
-
-    # return intrinsic_matrix
-

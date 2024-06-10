@@ -3,10 +3,12 @@
 # Stream: updates of robot position or returns NaN if not updated.
 
 # womp womp i use numpy :/
+from math import fmod, modf
 import numpy as np
 from constants import *
 def clamp(val, v_min, v_max):
     return min(v_max, max(v_min,val))
+
 def getEdgeProjection(config, edge):
     p1 = np.asarray(edge[0])
     p2 = np.asarray(edge[1])
@@ -67,6 +69,18 @@ class PathFollowStrict:
             return
         if np.linalg.norm(np.asarray(config) - self.path[self.current_edge + 1]) < cutoff_radius:
             self.current_edge += 1
+
+    def getPathFromT(self,edge_num, t):
+        if edge_num >= len(self.path_edges):
+            return np.array(self.path_edges[-1][1])
+        p1 = np.asarray(self.path_edges[edge_num][0])
+        p2 = np.asarray(self.path_edges[edge_num][1])
+
+        return (1-t) * p1 + t * p2
+
+    def getPathFromT(self,t_plus_edge):
+        edge, t = modf(t_plus_edge)
+        return self.getPathFromT(int(edge), t)
 
 
 

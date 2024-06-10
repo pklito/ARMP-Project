@@ -69,7 +69,6 @@ class CameraStreamer:
         config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
         self.pipeline.start(config)
-        self.color_image, self.depth_image, self.depth_frame, self.depth_colormap, self.depth_intrinsics = self.get_frames()
 
     def get_frames(self):
         frames = self.pipeline.wait_for_frames()
@@ -103,12 +102,15 @@ class CameraStreamer:
             self.stop()
             cv2.destroyAllWindows()
 
-    def get_world_position_from_camera(self, pixel_x=320, pixel_y=240):
-        if not self.depth_frame:
+    def get_world_position_from_camera(self, pixel_x, pixel_y, depth_frame_input = None):
+        df = depth_frame_input
+        if df is None:
+            df = self.depth_frame
+        if not df:
             return None
 
-        depth = self.depth_frame.get_distance(pixel_x, pixel_y)
-        depth_intrinsics = self.depth_frame.profile.as_video_stream_profile().intrinsics
+        depth = df.get_distance(pixel_x, pixel_y)
+        depth_intrinsics = df.profile.as_video_stream_profile().intrinsics
 
         # Convert pixel coordinates to world coordinates (from the Camera's Perspective!)
         ball_position = rs.rs2_deproject_pixel_to_point(depth_intrinsics, [pixel_x, pixel_y], depth)

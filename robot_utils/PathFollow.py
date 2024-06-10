@@ -56,7 +56,10 @@ class PathFollowStrict:
         self.PATH_LOOKAHEAD = path_lookahead
         self.EDGE_CUTOFF = EDGE_CUTOFF
 
-    def getLookaheadConfig(self, config, lookahead_distance = PATH_LOOKAHEAD):
+    def getLookaheadConfig(self, config, lookahead_distance = None):
+        if lookahead_distance == None:
+            lookahead_distance = self.PATH_LOOKAHEAD
+
         if self.current_edge >= len(self.path)-1:
             return np.asarray(self.path[-1])
 
@@ -74,7 +77,10 @@ class PathFollowStrict:
 
         return getClampedLookahead(point, target, lookahead_distance)
 
-    def updateCurrentEdge(self, config, cutoff_radius = EDGE_CUTOFF):
+    def updateCurrentEdge(self, config, cutoff_radius = None):
+        if cutoff_radius == None:
+            cutoff_radius = self.EDGE_CUTOFF
+        
         if self.current_edge >= len(self.path)-1:
             return
         if np.linalg.norm(np.asarray(config) - self.path[self.current_edge + 1]) < cutoff_radius:

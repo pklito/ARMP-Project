@@ -1,6 +1,5 @@
 import numpy as np
 from math import sin, cos, atan2
-from realsense_camera.CameraStreamer import *
 
 # Define the tool length and DH matrices for different UR arms
 tool_length = 0.135  # [m]
@@ -91,6 +90,15 @@ def forward_kinematic_solution(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [
     transform = t01 * t12 * t23 * t34 * t45 * t56
     return np.array([transform[0,3],transform[1,3],transform[2,3]]) # xyz coordinates format
 
+def forward_kinematic_matrix(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
+    t01 = mat_transform_DH(DH_matrix, 1, edges)
+    t12 = mat_transform_DH(DH_matrix, 2, edges)
+    t23 = mat_transform_DH(DH_matrix, 3, edges)
+    t34 = mat_transform_DH(DH_matrix, 4, edges)
+    t45 = mat_transform_DH(DH_matrix, 5, edges)
+    t56 = mat_transform_DH(DH_matrix, 6, edges)
+    transform = t01 * t12 * t23 * t34 * t45 * t56
+    return transform
 
 # Note: the following code could have multiple errors due to a minus / plus sign! try changing the signs of trasformations from one frame to another to receive a solution - TODO: Fix this!
 
@@ -109,8 +117,8 @@ def transform_UR3E_to_UR5E(position_UR3E):
     T_UR3E_to_UR5E[0, 3] = 1.35  # Distance along the x-axis from UR3E Base to UR5E Base
     T_UR3E_to_UR5E[1, 3] = 0.07  # Distance along the y-axis from UR3E Base to UR5E Base
     T_UR3E_to_UR5E[2, 3] = 0.00   # Distance along the z-axis from UR3E Base to UR5E Base
-    position_in_ur5e_ = np.dot(T_UR3E_to_UR5E, np.append(position_UR3E, 1))
-    return position_in_ur5e_[:3]
+    position_in_ur5e_ = np.dot(T_UR3E_to_UR5E, position_UR3E)
+    return position_in_ur5e_
 
 def transform_UR5E_End_Effector_to_Camera(position_UR5E):
     # Transformation matrix from UR5E to Camera - TODO: Fix distances if wrong
@@ -127,7 +135,28 @@ def transform_UR3E_to_Camera(position_UR3E, ur5e_joints):
     position_in_end_effector_world = position_UR5E - ur5e_end_effector_position # basically considering the end effector of UR5E as the Origin
     return transform_UR5E_End_Effector_to_Camera(position_in_end_effector_world)
 
+def camera_from_ee(coord):
+    return [coord[0], coord[1] - 0.1, coord[2], 1]
+def plate_from_ee(coord):
+    return [coord[0], coord[1], coord[2] + 0.1, 1]
 
+def assure_homogeneous(coord):
+    if(len(coord) == 3):
+        return np.append(coord,1)
+    return coord
+
+def ur3e_effector_to_home(ur3e_joints, local_coords = [0,0,0,1]):
+    local_coords = assure_homogeneous(local_coords)
+    mat_end_to_ur3_base = forward_kinematic_matrix(DH_matrix_ur3e, ur3e_joints)
+    position = transform_UR3E_to_UR5E(mat_end_to_ur3_base.dot(local_coords))
+    return position
+
+def ur5e_effector_to_home(ur5e_joints, local_coords = [0,0,0,1]):
+    local_coords = assure_homogeneous(local_coords)
+    mat_end_to_ur5_base = forward_kinematic_matrix(DH_matrix_ur5e, ur5e_joints)
+    return mat_end_to_ur5_base.dot(np.array(local_coords))
+
+print(ur5e_effector_to_home([0,-1.57,0,-1.57,1.57,3.1415],camera_from_ee([0,0,1,1])))
 # def pixel_coords_to_world_coords(xyz_coords, intrinsic_matrix):
 #     xyz_homogeneous = np.array(xyz_coords)
 #     pixel_coords_homogeneous = np.dot(intrinsic_matrix, xyz_homogeneous)
@@ -135,20 +164,20 @@ def transform_UR3E_to_Camera(position_UR3E, ur5e_joints):
 #     return pixel_coords[:3]
 
 # def calculate_intrinsic_matrix(camera_params):
-    fov_horizontal_rad = camera_params['fov_horizontal_rad']
-    fov_vertical_rad = camera_params['fov_vertical_rad']
-    image_width = camera_params['image_width']
-    image_height = camera_params['image_height']
+    # fov_horizontal_rad = camera_params['fov_horizontal_rad']
+    # fov_vertical_rad = camera_params['fov_vertical_rad']
+    # image_width = camera_params['image_width']
+    # image_height = camera_params['image_height']
 
-    focal_length_x = (image_width / 2) / np.tan(fov_horizontal_rad / 2)
-    focal_length_y = (image_height / 2) / np.tan(fov_vertical_rad / 2)
+    # focal_length_x = (image_width / 2) / np.tan(fov_horizontal_rad / 2)
+    # focal_length_y = (image_height / 2) / np.tan(fov_vertical_rad / 2)
 
-    c_x = image_width / 2
-    c_y = image_height / 2
+    # c_x = image_width / 2
+    # c_y = image_height / 2
 
-    intrinsic_matrix = np.array([[focal_length_x, 0, c_x],
-                                 [0, focal_length_y, c_y],
-                                 [0, 0, 1]])
+    # intrinsic_matrix = np.array([[focal_length_x, 0, c_x],
+    #                              [0, focal_length_y, c_y],
+    #                              [0, 0, 1]])
 
-    return intrinsic_matrix
+    # return intrinsic_matrix
 

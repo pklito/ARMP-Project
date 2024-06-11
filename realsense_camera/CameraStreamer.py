@@ -1,11 +1,38 @@
+from audioop import avg
+from operator import index
 import cv2
 import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
 import os
 import threading
-import copy  # For shallow and deep copying
+import cv2.aruco as aruco
 
+# from robot_utils.kinematics import calculate_plate_center
+
+ARUCO_DICT = {
+	"DICT_4X4_50": cv2.aruco.DICT_4X4_50,
+	"DICT_4X4_100": cv2.aruco.DICT_4X4_100,
+	"DICT_4X4_250": cv2.aruco.DICT_4X4_250,
+	"DICT_4X4_1000": cv2.aruco.DICT_4X4_1000,
+	"DICT_5X5_50": cv2.aruco.DICT_5X5_50,
+	"DICT_5X5_100": cv2.aruco.DICT_5X5_100,
+	"DICT_5X5_250": cv2.aruco.DICT_5X5_250,
+	"DICT_5X5_1000": cv2.aruco.DICT_5X5_1000,
+	"DICT_6X6_50": cv2.aruco.DICT_6X6_50,
+	"DICT_6X6_100": cv2.aruco.DICT_6X6_100,
+	"DICT_6X6_250": cv2.aruco.DICT_6X6_250,
+	"DICT_6X6_1000": cv2.aruco.DICT_6X6_1000,
+	"DICT_7X7_50": cv2.aruco.DICT_7X7_50,
+	"DICT_7X7_100": cv2.aruco.DICT_7X7_100,
+	"DICT_7X7_250": cv2.aruco.DICT_7X7_250,
+	"DICT_7X7_1000": cv2.aruco.DICT_7X7_1000,
+	"DICT_ARUCO_ORIGINAL": cv2.aruco.DICT_ARUCO_ORIGINAL,
+#	"DICT_APRILTAG_16h5": cv2.aruco.DICT_APRILTAG_16h5,
+#	"DICT_APRILTAG_25h9": cv2.aruco.DICT_APRILTAG_25h9,
+#	"DICT_APRILTAG_36h10": cv2.aruco.DICT_APRILTAG_36h10,
+#	"DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
+}
 
 def calculate_similarity(color1, color2):
     return np.sum(np.abs(color1 - color2))
@@ -103,13 +130,36 @@ class CameraStreamer:
 
     def get_frames(self):
         with self.lock:
-            color_image = (self.color_image)
-            depth_image = (self.depth_image)
+            color_image = (self.color_image).copy() if self.color_image is not None else None
+            depth_image = (self.depth_image).copy() if self.depth_image is not None else None
             depth_frame = (self.depth_frame)
             depth_colormap = (self.depth_colormap)
             depth_intrinsics = (self.depth_intrinsics)
 
         return color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics
+
+    def detect_arucos(self, color_image):
+        arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+        arucoParams = cv2.aruco.DetectorParameters()
+        corners, ids, rejectedImgPoints = aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
+        if ids is not None:
+            color_image_with_markers = cv2.aruco.drawDetectedMarkers(color_image.copy(), corners, ids)
+
+            centers = []
+            for corner in corners:
+                # Corner order: [top-left, top-right, bottom-right, bottom-left]
+                c = corner[0]
+                center = (c[:, 0].mean(), c[:, 1].mean())
+                centers.append(center)
+                # cv2.circle(color_image_with_markers, (int(center[0]), int(center[1])), 3 ,(0,255,0),2)
+            avg_center = np.mean(centers, axis=0)
+            # cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(0,255,0),2)
+            # cv2.imwrite("aruco_detected.jpg", color_image_with_markers)
+            return avg_center, color_image_with_markers
+        else:
+            print("No arucos detected")
+            color_image_with_markers = color_image.copy()
+        return None, color_image_with_markers
 
     def stop(self):
         self.pipeline.stop()
@@ -129,11 +179,11 @@ class CameraStreamer:
             self.stop()
             cv2.destroyAllWindows()
 
-    def stream_frames(self):
-        if self.color_image is not None and self.depth_colormap is not None:
-            images = np.hstack((self.color_image, self.depth_colormap))
+    def stream_frames(self, color_image, depth_colormap):
+        if color_image is not None and depth_colormap is not None:
+            images = np.hstack((color_image, depth_colormap))
             cv2.imshow('RealSense Color and Depth Stream', images)
-            self.color_image = None
+            # self.color_image = None
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self.stop()
                 cv2.destroyAllWindows()
@@ -155,18 +205,18 @@ class CameraStreamer:
 
     def run_object_detection(self):
         try:
-            if not os.path.exists('vid'):
-                os.makedirs('vid')
-            else:
-                for file in os.listdir('vid'):
-                    os.remove(f'vid/{file}')
+            # if not os.path.exists('vid'):
+            #     os.makedirs('vid')
+            # else:
+            #     for file in os.listdir('vid'):
+            #         os.remove(f'vid/{file}')
             while True:
                 color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = self.get_frames()
 
                 if self.color_image is None or self.depth_image is None:
                     continue
 
-                object_bounding_boxes = detect_object(self.color_image)
+                object_bounding_boxes = detect_object(color_image)
                 plate_bounding_boxes = [] # detect_plate(color_image)
 
                 # Combine bounding boxes for both ball and plate
@@ -187,12 +237,11 @@ class CameraStreamer:
                         color = (0, 0, 255)  # Red for plate
                         object_type = "Plate"
 
-                    cv2.rectangle(self.color_image, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(self.color_image, f'{object_type} Distance: {distance_meters:.2f} mm,', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                    cv2.putText(self.color_image, f'Center: ({center_x}, {center_y}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                    cv2.putText(self.color_image, f'World Coordinates: {camera_world_coords}', (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-                images = np.hstack((self.color_image, self.depth_colormap))
+                    cv2.rectangle(color_image, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(color_image, f'{object_type} Distance: {distance_meters:.2f} mm,', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.putText(color_image, f'Center: ({center_x}, {center_y}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    cv2.putText(color_image, f'World Coordinates: {camera_world_coords}', (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                images = np.hstack((color_image, depth_colormap))
                 cv2.imshow('RealSense Color and Depth Stream', images)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):

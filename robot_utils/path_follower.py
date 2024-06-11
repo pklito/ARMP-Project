@@ -19,6 +19,11 @@ import numpy as np
 #         [3.563, -2.824, 1.454, -1.623, -1.456, 0.287],
 #         [0.0, -1.571, 0.0, -1.571, 0.0, 0.0]]
 
+#[-0.222, -2.844, -0.068, -2.154, 4.925, -0.738]
+
+# path = [[0.0, -1.571, 0.0, -1.571, 0.0, 0.0],
+#         [0.797, -2.788, -0.017, -0.379, -0.055, -1.566]]
+
 initial_pos = [0.12, -2.47, 0.018, -0.65, 1.456, -1.608]
 goal_position = np.deg2rad([40.88, -12.77, -28.43, -142.90, -34.73, 273.11])
 path = np.linspace(initial_pos, goal_position,1000)
@@ -26,11 +31,6 @@ for conf in path:
     # these values will be dictated by the error!
     conf[3] = initial_pos[3]
     conf[5] = initial_pos[5]
-
-#[-0.222, -2.844, -0.068, -2.154, 4.925, -0.738]
-
-# path = [[0.0, -1.571, 0.0, -1.571, 0.0, 0.0],
-#         [0.797, -2.788, -0.017, -0.379, -0.055, -1.566]]
 
 pathfollower = PathFollowStrict(path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
 robot = RTDERobot("192.168.0.11",config_filename="../control_loop_configuration.xml")

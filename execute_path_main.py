@@ -8,7 +8,7 @@ import robot_utils.kinematicsUtils as fk
 from collections import deque
 from simple_pid import PID
 
-print("initializing parameters")
+print("Initializing parameters")
 camera = CameraStreamer()
 task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
@@ -47,6 +47,8 @@ print("start!")
 keep_moving = True
 not_started = True
 initial_pos = [0.12, -2.47, 0.018, -0.65, 1.456, -1.608]
+# goal_position = np.deg2rad([40.88, -12.77, -28.43, -142.90, -34.73, 273.11])
+# path = np.linspace(initial_pos, goal_position, num_steps=100)
 
 
 while keep_moving:
@@ -68,7 +70,7 @@ while keep_moving:
     current_cam_config = cam_state.target_q
 
     ball_position = get_position()
-    if ball_position is None:
+    if ball_position is None: # or if ball_position is out of bounds then maybe consider stopping
         continue
     plate_center = fk.ur3e_effector_to_home(current_task_config,fk.plate_from_ee([0,0,0,1]))
     ball_top = fk.ur5e_effector_to_home(current_cam_config, fk.camera_from_ee(ball_position))
@@ -95,4 +97,32 @@ while keep_moving:
     print(error)
     task_robot.sendConfig(pos)
 
+# Define the desired orientation of the plate (in this example, it's upright)
+desired_orientation = np.eye(3)
 
+# Define the desired position of the plate's center
+desired_position = np.array([0.12, -2.47, 0.018])
+
+num_steps = 100
+path = []
+
+# Calculate the initial joint angles
+initial_state = task_robot.getState()
+initial_config = initial_state.target_q
+initial_ee_position = fk.ur3e_fk(initial_config)
+
+initial_plate_position = fk.ur3e_effector_to_home(initial_config, fk.plate_from_ee([0, 0, 0, 1]))
+initial_plate_orientation = fk.ur3e_effector_to_home(initial_config, fk.plate_from_ee([0, 0, 1, 1]))
+
+for i in range(num_steps):
+    # Calculate the desired plate position and orientation at the current step
+    desired_plate_position = desired_position + (initial_plate_position - desired_position) * (i / (num_steps - 1))
+    desired_plate_orientation = np.dot(initial_plate_orientation, desired_orientation)
+
+    # Calculate the desired end-effector position and orientation
+    desired_ee_position = np.dot(desired_plate_position, desired_plate_orientation)
+
+    # Calculate the joint angles that achieve the desired end-effector position and orientation
+    desired_config = fk.ur3e_ik(desired_ee_position, initial_config)
+
+    path.append(desired_config)

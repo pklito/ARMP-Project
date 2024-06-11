@@ -3,6 +3,8 @@ import pyrealsense2 as rs
 import numpy as np
 from PIL import Image
 import os
+import threading
+import copy  # For shallow and deep copying
 
 
 def calculate_similarity(color1, color2):
@@ -70,30 +72,55 @@ class CameraStreamer:
         config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
         self.pipeline.start(config)
 
+        # Create a lock to synchronize access to the frames
+        self.lock = threading.Lock()
+
+        # Create a thread for collecting frames
+        self.collect_thread = threading.Thread(target=self.collect_frames)
+        self.collect_thread.start()
+
+        # Initialize variables for storing the frames
+        self.color_image = None
+        self.depth_image = None
+        self.depth_frame = None
+        self.depth_colormap = None
+        self.depth_intrinsics = None
+
+    def collect_frames(self):
+        while True:
+            frames = self.pipeline.wait_for_frames()
+            with self.lock:
+                self.depth_frame = frames.get_depth_frame()
+                color_frame = frames.get_color_frame()
+
+                if not self.depth_frame or not color_frame:
+                    continue
+
+                self.depth_image = np.asanyarray(self.depth_frame.get_data())
+                self.depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(self.depth_image, alpha=0.03), cv2.COLORMAP_JET)
+                self.color_image = np.asanyarray(color_frame.get_data())
+                self.depth_intrinsics = self.depth_frame.profile.as_video_stream_profile().intrinsics
+
     def get_frames(self):
-        frames = self.pipeline.wait_for_frames()
-        depth_frame = frames.get_depth_frame()
-        color_frame = frames.get_color_frame()
-
-        if not depth_frame or not color_frame:
-            return None, None, None, None
-
-        depth_image = np.asanyarray(depth_frame.get_data())
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
-        color_image = np.asanyarray(color_frame.get_data())
-        depth_intrinsics = depth_frame.profile.as_video_stream_profile().intrinsics
+        with self.lock:
+            color_image = (self.color_image)
+            depth_image = (self.depth_image)
+            depth_frame = (self.depth_frame)
+            depth_colormap = (self.depth_colormap)
+            depth_intrinsics = (self.depth_intrinsics)
 
         return color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics
 
     def stop(self):
         self.pipeline.stop()
+        self.collect_thread.join()
 
     def stream(self):
         try:
             while True:
-                self.color_image, self.depth_image, self.depth_frame, self.depth_colormap, self.depth_intrinsics = self.get_frames()
-                if self.color_image is not None and self.depth_colormap is not None:
-                    images = np.hstack((self.color_image, self.depth_colormap))
+                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = self.get_frames()
+                if color_image is not None and depth_colormap is not None:
+                    images = np.hstack((color_image, depth_colormap))
                     cv2.imshow('RealSense Color and Depth Stream', images)
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -101,6 +128,15 @@ class CameraStreamer:
         finally:
             self.stop()
             cv2.destroyAllWindows()
+
+    def stream_frames(self):
+        if self.color_image is not None and self.depth_colormap is not None:
+            images = np.hstack((self.color_image, self.depth_colormap))
+            cv2.imshow('RealSense Color and Depth Stream', images)
+            self.color_image = None
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                self.stop()
+                cv2.destroyAllWindows()
 
     def get_world_position_from_camera(self, pixel_x, pixel_y, depth_frame_input = None):
         df = depth_frame_input
@@ -125,13 +161,13 @@ class CameraStreamer:
                 for file in os.listdir('vid'):
                     os.remove(f'vid/{file}')
             while True:
-                self.color_image, self.depth_image, self.depth_frame, self.depth_colormap, self.depth_intrinsics = self.get_frames()
+                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = self.get_frames()
 
                 if self.color_image is None or self.depth_image is None:
                     continue
 
                 object_bounding_boxes = detect_object(self.color_image)
-                plate_bounding_boxes = [] # detect_plate(color_image)  # Add plate detection
+                plate_bounding_boxes = [] # detect_plate(color_image)
 
                 # Combine bounding boxes for both ball and plate
                 all_bounding_boxes = object_bounding_boxes + plate_bounding_boxes
@@ -171,3 +207,4 @@ class CameraStreamer:
 if __name__ == '__main__':
     camera = CameraStreamer()
     camera.run_object_detection()
+    # camera.stream()

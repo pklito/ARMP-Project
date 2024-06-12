@@ -2,6 +2,28 @@ import cv2
 import numpy as np
 from CameraStreamer import CameraStreamer
 
+def store_images(camera):
+    camera = CameraStreamer()
+    count = 0
+    loop = True
+    while loop:
+        color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
+        if color_image is None:
+            continue
+        gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('test', gray)
+        key = cv2.waitKey(1) & 0xFF
+        ret, corners = cv2.findChessboardCorners(gray, (14,5), None)
+        if ret:
+            cv2.imwrite(f"realsense_camera/chessboard/{count}.png",color_image)
+            count += 1
+
+            if key == ord('q'):
+                cv2.destroyAllWindows()
+                loop = False
+            if count >= 251:
+                break
+
 arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
 arucoParams = cv2.aruco.DetectorParameters()
 
@@ -82,14 +104,14 @@ matrix_coeff = np.load("mtx.npy")
 if __name__ == "__main__":
     count = 0
     camera = CameraStreamer()
-    # common_sizes = [(6, 9), (9, 6), (6, 7), (7, 6), (6, 8), (8, 6), (6, 15), (15, 6), (5,4), (4,5), (5,6), (6,5), (14,5), (5,14)]
-    common_sizes = [(14, 5)]
+    count = 0
     loop = True
-
     while loop:
         color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
         if color_image is None:
             continue
+        gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('test', gray)
         ids, corners = get_aruco_corners(color_image)
         if ids is not None:
             object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)

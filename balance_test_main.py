@@ -37,20 +37,20 @@ def get_position():
     color_image, depth_image, depth_frame, depth_map, depth_intrinsics = camera.get_frames()
     if color_image is None or depth_image is None:
         print("None Frames Received")
-        return None, None  # Return None to indi
+        return None, None, None  # Return None to indi
     if color_image.size == 0 or depth_image.size == 0:
         print("Can't receive frame (stream end?).")
-        return None, None  # Return None to indicate an error state
+        return None, None, None  # Return None to indicate an error state
 
     positions = detect_object(color_image)
     if len(positions) == 0:
         print('No object detected!')
-        return None, None
+        return None, None, None
 
     x1, y1, x2, y2 = positions[0]
     ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
-    plate_center, _ = camera.detect_arucos(color_image)
-    return ball_center, plate_center
+    plate_center, color_image_with_markers = camera.detect_arucos(color_image)
+    return ball_center, plate_center, color_image_with_markers
     # return get_world_position_from_buffers(ball_center[0],ball_center[1], depth_frame,depth_intrinsics)
 
 print("start!")
@@ -58,37 +58,41 @@ keep_moving = True
 not_started = True
 # initial_pos = [0.12, -2.47, 0.018, -0.65, 1.456, -1.608]
 initial_pos = [0.44, -2.84, 0.0, -0.26, 1.12, -1.58]
-
+count = 0
 while keep_moving:
-    task_state = task_robot.getState()
-    cam_state = camera_robot.getState()
+    # task_state = task_robot.getState()
+    # cam_state = camera_robot.getState()
 
-    if not task_state.output_int_register_0:
-        print("Not started yet", [round(q,2) for q in task_state.target_q])
-        continue
-    elif not_started:
-        not_started = True
+    # if not task_state.output_int_register_0:
+    #     print("Not started yet", [round(q,2) for q in task_state.target_q])
+    #     continue
+    # elif not_started:
+    #     not_started = True
 
-    if not task_state or not cam_state:
-        break
-    task_robot.sendWatchdog(1)
-    camera_robot.sendWatchdog(1)
+    # if not task_state or not cam_state:
+    #     break
+    # task_robot.sendWatchdog(1)
+    # camera_robot.sendWatchdog(1)
 
-    current_task_config = task_state.target_q
-    current_cam_config = cam_state.target_q
+    # current_task_config = task_state.target_q
+    # current_cam_config = cam_state.target_q
 
-    ball_center, plate_center = get_position()
+    ball_center, plate_center, color_image_with_markers = get_position()
     if ball_center is None or plate_center is None:
         continue
     print("ball top", ball_center)
     print("plate center", plate_center)
     # error = ball_top - [-0.61362,-0.11040671,0.63503892, 1.]
     error = ball_center - plate_center
-    pos = initial_pos.copy()
-    pos[5] += pid_controller_x(-error[1])
-    pos[3] += pid_controller_y(-error[0])
+    # pos = initial_pos.copy()
+    # pos[5] += pid_controller_x(-error[1])
+    # pos[3] += pid_controller_y(-error[0])
     print(error)
-    task_robot.sendConfig(pos)
+    # task_robot.sendConfig(pos)
+    cv2.imshow('color_image_with_markers', color_image_with_markers)
+    if cv2.waitKey(1) & 0xFF == ord('p'):
+        cv2.imwrite(f'aruco_detected_{count}.jpg', color_image_with_markers)
+        count += 1
 
 # ====================================================================================================================================================== #
 # ====================================================================================================================================================== #

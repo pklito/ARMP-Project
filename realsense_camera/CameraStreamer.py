@@ -32,6 +32,13 @@ ARUCO_DICT = {
 #	"DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
 }
 
+ARUCO_POSITIONS = {
+    500: "top_left",
+    400: "top_right",
+    600: "bottom_right",
+    300: "bottom_left",
+    200: "center"
+}
 def calculate_similarity(color1, color2):
     return np.sum(np.abs(color1 - color2))
 
@@ -90,7 +97,7 @@ def detect_plate(frame):
 class CameraStreamer:
     def __init__(self):
         self.WIDTH = 640
-        self.HEIGHT = 480
+        self.HEIGHT = 360
         # Initialize RealSense camera pipeline
         # self.cap = cv2.VideoCapture(2) # Intel's Realsense Camera is on my pc
         self.pipeline = rs.pipeline()
@@ -146,15 +153,20 @@ class CameraStreamer:
             color_image_with_markers = cv2.aruco.drawDetectedMarkers(color_image.copy(), corners, ids)
 
             centers = []
-            for corner in corners:
+            for id, corner in zip(ids, corners):
+                print("id: " + str(id))
                 # Corner order: [top-left, top-right, bottom-right, bottom-left]
                 c = corner[0]
                 center = (c[:, 0].mean(), c[:, 1].mean())
                 centers.append(center)
-                # cv2.circle(color_image_with_markers, (int(center[0]), int(center[1])), 3 ,(0,255,0),2)
+                cv2.circle(color_image_with_markers, (int(center[0]), int(center[1])), 3 ,(0,255,0),2)
+                if ARUCO_POSITIONS[id[0]] == 'center':
+                    centers = [center]
+                    break
             avg_center = np.mean(centers, axis=0)
-            # cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(0,255,0),2)
-            # cv2.imwrite("aruco_detected.jpg", color_image_with_markers)
+            cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(255,0,0),2)
+            cv2.imwrite("aruco_detected.jpg", color_image_with_markers)
+            # cv2.imshow("aruco_detected.jpg", color_image_with_markers)
             return avg_center, color_image_with_markers
         else:
             print("No arucos detected")
@@ -183,7 +195,6 @@ class CameraStreamer:
         if color_image is not None and depth_colormap is not None:
             images = np.hstack((color_image, depth_colormap))
             cv2.imshow('RealSense Color and Depth Stream', images)
-            # self.color_image = None
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self.stop()
                 cv2.destroyAllWindows()

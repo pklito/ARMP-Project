@@ -8,7 +8,7 @@ arucoParams = cv2.aruco.DetectorParameters()
 WIDTH = 640
 #HEIGHT = 480
 #FOV_X = 70.7495
-HEIGHT = 360
+HEIGHT = 480
 FOV_X = 58.0548
 FOV_Y = 43.5411
 
@@ -114,11 +114,15 @@ if __name__ == "__main__":
                 homogeneous_coords = np.array([px-WIDTH/2,py-HEIGHT/2,Z_DIST , 1])
 
                 cam_ball_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,homogeneous_coords),-1))
-                cam_focal_world = np.ravel(np.reshape(-tvec,-1))
+                cam_focal_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,np.array([0,0,-Z_DIST,1])),-1))
 
                 ### Calculate plane intersection ###
                 a = intersect_ray_with_plane(np.array(cam_focal_world), cam_ball_world - cam_focal_world, np.array([0,0,0]),np.array([0,0,1]))
                 print("a", a)
+                center = cv2.projectPoints(np.array([a]),rvec,tvec,matrix_coeff,dist_coeff)[0][0][0]
+                print(center)
+                cv2.circle(color_image,[int(x) for x in center.tolist()],4,[255,0,0])
+                # cv2.circle(color_image,[0],4,np.array([255,0,0]))
                 cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
 
         cv2.imshow("i,", color_image)

@@ -14,6 +14,36 @@ FOV_Y = 43.5411
 
 Z_DIST = 0.5*WIDTH/np.tan(np.deg2rad(FOV_X/2))
 
+import numpy as np
+
+def intersect_ray_with_plane(ray_origin, ray_direction, plane_point, plane_normal):
+    """
+    Calculate the intersection of a ray with a plane.
+
+    :param ray_origin: Origin of the ray (3D point) as a numpy array.
+    :param ray_direction: Direction of the ray (3D vector) as a numpy array.
+    :param plane_point: A point on the plane (3D point) as a numpy array.
+    :param plane_normal: Normal vector of the plane (3D vector) as a numpy array.
+    :return: Intersection point (3D point) as a numpy array, or None if no intersection.
+    """
+    # Ensure the direction vector is normalizedm
+    ray_direction = ray_direction / np.linalg.norm(ray_direction)
+    # Calculate the dot product of ray direction and plane normal
+    denom = np.dot(ray_direction, plane_normal)
+
+    # Check if the ray is parallel to the plane
+    if np.abs(denom) < 1e-6:
+        return None  # No intersection, the ray is parallel to the plane
+
+    # Calculate the parameter t for the ray equation
+    t = np.dot(plane_point - ray_origin, plane_normal) / denom
+
+    # Calculate the intersection point
+    intersection_point = ray_origin + t * ray_direction
+
+    return intersection_point
+
+
 
 def get_aruco_corners(color_image):
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
@@ -73,17 +103,23 @@ if __name__ == "__main__":
                 if object_pts.size == 0 or pixel_pts.size == 0:
                     continue
 
+                ### Get Plane rotation and translation ###
                 ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, matrix_coeff, dist_coeff)
-
                 rotation_matrix, _ = cv2.Rodrigues(rvec)
+                extrinsic_matrix_inv = np.hstack((rotation_matrix.T,-tvec))
 
-                # Define homogeneous coordinates for the pixel (x, y, 0)
-                homogeneous_coords = np.array([0,0,Z_DIST , 1])
+                ### Convert pixel to plate world ###
+                px = WIDTH/2
+                py = HEIGHT/2
+                homogeneous_coords = np.array([px-WIDTH/2,py-HEIGHT/2,Z_DIST , 1])
 
-                extrinsic_matrix = np.hstack((rotation_matrix, tvec))
-                world = np.dot(extrinsic_matrix,homogeneous_coords)
-                print(world.tolist(), tvec.tolist())
-                cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 10, 2)
+                cam_ball_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,homogeneous_coords),-1))
+                cam_focal_world = np.ravel(np.reshape(-tvec,-1))
+
+                ### Calculate plane intersection ###
+                a = intersect_ray_with_plane(np.array(cam_focal_world), cam_ball_world - cam_focal_world, np.array([0,0,0]),np.array([0,0,1]))
+                print("a", a)
+                cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
 
         cv2.imshow("i,", color_image)
         key = cv2.waitKey(1) & 0xFF

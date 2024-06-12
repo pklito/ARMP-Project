@@ -26,11 +26,11 @@ def get_object(aruco_ids):
     BL_DISP = ( (64 + SIZE), -(19 + SIZE), 0)
     arucos_obj = dict()
     base = [(-SIZE/2, SIZE/2, 0), (SIZE/2, SIZE/2, 0), (SIZE/2, -SIZE/2, 0), (-SIZE/2, -SIZE/2, 0)]
-    arucos_obj[200] = [[c for c in points] for points in base]
-    arucos_obj[300] = [[(coord + displacement) for coord, displacement in zip(points, TL_DISP)] for points in base]
-    arucos_obj[500] = [[(coord + displacement) for coord, displacement in zip(points, TR_DISP)] for points in base]
-    arucos_obj[400] = [[(coord + displacement) for coord, displacement in zip(points, BR_DISP)] for points in base]
-    arucos_obj[600] = [[(coord + displacement) for coord, displacement in zip(points, BL_DISP)] for points in base]
+    arucos_obj[200] = [[c/1000. for c in points] for points in base]
+    arucos_obj[300] = [[(coord + displacement)/1000. for coord, displacement in zip(points, TL_DISP)] for points in base]
+    arucos_obj[500] = [[(coord + displacement)/1000. for coord, displacement in zip(points, TR_DISP)] for points in base]
+    arucos_obj[400] = [[(coord + displacement)/1000. for coord, displacement in zip(points, BR_DISP)] for points in base]
+    arucos_obj[600] = [[(coord + displacement)/1000. for coord, displacement in zip(points, BL_DISP)] for points in base]
 
     return [a for i in aruco_ids for a in arucos_obj[i]]
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
                 extrinsic_matrix = np.hstack((rotation_matrix, tvec))
                 world = np.dot(extrinsic_matrix,homogeneous_coords)
-                print(world)
+                print(world.tolist(), tvec.tolist())
                 cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 10, 2)
 
         cv2.imshow("i,", color_image)

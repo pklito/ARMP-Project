@@ -89,12 +89,14 @@ def detect_plate(frame):
 
 class CameraStreamer:
     def __init__(self):
+        self.WIDTH = 640
+        self.HEIGHT = 480
         # Initialize RealSense camera pipeline
         # self.cap = cv2.VideoCapture(2) # Intel's Realsense Camera is on my pc
         self.pipeline = rs.pipeline()
         config = rs.config()
-        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-        config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+        config.enable_stream(rs.stream.depth, self.WIDTH, self.HEIGHT, rs.format.z16, 30)
+        config.enable_stream(rs.stream.color, self.WIDTH, self.HEIGHT, rs.format.bgr8, 30)
         self.pipeline.start(config)
 
         # Create a lock to synchronize access to the frames

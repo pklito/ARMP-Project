@@ -5,6 +5,16 @@ from CameraStreamer import CameraStreamer
 arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
 arucoParams = cv2.aruco.DetectorParameters()
 
+WIDTH = 640
+#HEIGHT = 480
+#FOV_X = 70.7495
+HEIGHT = 360
+FOV_X = 58.0548
+FOV_Y = 43.5411
+
+Z_DIST = 0.5*WIDTH/np.tan(np.deg2rad(FOV_X/2))
+
+
 def get_aruco_corners(color_image):
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
     # if ids is None:
@@ -68,7 +78,7 @@ if __name__ == "__main__":
                 rotation_matrix, _ = cv2.Rodrigues(rvec)
 
                 # Define homogeneous coordinates for the pixel (x, y, 0)
-                homogeneous_coords = np.array([320,240, 0, 1])
+                homogeneous_coords = np.array([0,0,Z_DIST , 1])
 
                 extrinsic_matrix = np.hstack((rotation_matrix, tvec))
                 world = np.dot(extrinsic_matrix,homogeneous_coords)

@@ -97,7 +97,7 @@ def detect_plate(frame):
 class CameraStreamer:
     def __init__(self):
         self.WIDTH = 640
-        self.HEIGHT = 480
+        self.HEIGHT = 360
         # Initialize RealSense camera pipeline
         # self.cap = cv2.VideoCapture(2) # Intel's Realsense Camera is on my pc
         self.pipeline = rs.pipeline()

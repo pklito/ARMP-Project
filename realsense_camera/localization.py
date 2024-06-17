@@ -6,52 +6,21 @@ from CameraStreamer import CameraStreamer
 arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
 arucoParams = cv2.aruco.DetectorParameters()
 
+BALL_HEIGHT = 0.035
+
+## camera constants ##
 WIDTH = 640
 HEIGHT = 360
 FOV_X = 70.7495
 FOV_Y = 43.5411
 
-Z_DIST = 0.5*WIDTH/np.tan(np.deg2rad(FOV_X/2))
+dist_coeff = np.load("dist.npy")
+matrix_coeff = np.load("mtx.npy")
+matrix_coeff_inv = np.linalg.inv(matrix_coeff)
 
-import numpy as np
-
-def intersect_ray_with_plane(ray_origin, ray_direction, plane_point, plane_normal):
-    """
-    Calculate the intersection of a ray with a plane.
-
-    :param ray_origin: Origin of the ray (3D point) as a numpy array.
-    :param ray_direction: Direction of the ray (3D vector) as a numpy array.
-    :param plane_point: A point on the plane (3D point) as a numpy array.
-    :param plane_normal: Normal vector of the plane (3D vector) as a numpy array.
-    :return: Intersection point (3D point) as a numpy array, or None if no intersection.
-    """
-    # Ensure the direction vector is normalizedm
-    ray_direction = ray_direction / np.linalg.norm(ray_direction)
-    # Calculate the dot product of ray direction and plane normal
-    denom = np.dot(ray_direction, plane_normal)
-
-    # Check if the ray is parallel to the plane
-    if np.abs(denom) < 1e-6:
-        return None  # No intersection, the ray is parallel to the plane
-
-    # Calculate the parameter t for the ray equation
-    t = np.dot(plane_point - ray_origin, plane_normal) / denom
-
-    # Calculate the intersection point
-    intersection_point = ray_origin + t * ray_direction
-
-    return intersection_point
-
-
-
+## ARUCO HELPER FUNCTIONS ##
 def get_aruco_corners(color_image):
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
-    # if ids is None:
-    #     return None, None
-    # l = zip(ids,corners)
-    # for a,b in l:
-    #     if a[0] == 600:
-    #         return [a], [b]
     return ids, corners
 
 def get_object(aruco_ids):
@@ -73,11 +42,17 @@ def get_object(aruco_ids):
 
     return [a for i in aruco_ids for a in arucos_obj[i]]
 
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+## Unprojection function ##
+def getPixelOnPlane(pixel, rvec, tvec, z_height = BALL_HEIGHT):
+    uvcoord = np.array([pixel[0], pixel[1], 1])
+    rotation_matrix, _ = cv2.Rodrigues(rvec)
+    mat1 = rotation_matrix.T @ matrix_coeff_inv @ uvcoord
+    mat2 = rotation_matrix.T @ tvec
 
-dist_coeff = np.load("dist.npy")
-matrix_coeff = np.load("mtx.npy")
-matrix_coeff_inv = np.linalg.inv(matrix_coeff)
+    s = (z_height + mat2[2]) / mat1[2]
+    wccoord = rotation_matrix.T @ ((s * matrix_coeff_inv @ uvcoord) - np.ravel(tvec))
+    return wccoord
+
 if __name__ == "__main__":
     camera = CameraStreamer()
     loop = True
@@ -102,17 +77,12 @@ if __name__ == "__main__":
 
                 ### Get Plane rotation and translation ###
                 ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, matrix_coeff, dist_coeff)
-                rotation_matrix, _ = cv2.Rodrigues(rvec)
 
-                uvcoord = np.array([WIDTH/2, HEIGHT/2, 1])
-                mat1 = rotation_matrix.T @ matrix_coeff_inv @ uvcoord
-                mat2 = rotation_matrix.T @ tvec
+                if(ret):
+                    wcpoint = getPixelOnPlane((WIDTH/2,HEIGHT/2),rvec,tvec)
+                    print([round(a,3) for a in wcpoint])
 
-                s = (0 + mat2[2]) / mat1[2]
-                wcpoint = rotation_matrix.T @ ((s * matrix_coeff_inv @ uvcoord) - np.ravel(tvec))
-                print([round(a,3) for a in wcpoint], wcpoint.shape)
-
-                cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
+                    cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
 
         cv2.imshow("i,", color_image)
         key = cv2.waitKey(1) & 0xFF

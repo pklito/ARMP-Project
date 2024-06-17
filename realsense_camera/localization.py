@@ -105,9 +105,12 @@ if __name__ == "__main__":
                 rotation_matrix, _ = cv2.Rodrigues(rvec)
 
                 uvcoord = np.array([WIDTH/2, HEIGHT/2, 1])
-                mat1 = np.ravel(np.dot(rotation_matrix.T, np.ravel(np.dot(matrix_coeff_inv,uvcoord))))
-                print(mat1, mat1.shape)
+                mat1 = rotation_matrix.T @ matrix_coeff_inv @ uvcoord
+                mat2 = rotation_matrix.T @ tvec
 
+                s = (0 + mat2[2]) / mat1[2]
+                wcpoint = rotation_matrix.T @ ((s * matrix_coeff_inv @ uvcoord) - np.ravel(tvec))
+                print([round(a,3) for a in wcpoint], wcpoint.shape)
 
                 cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
 

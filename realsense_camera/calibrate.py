@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
    objp = np.zeros((14*5,3), np.float32)
-   objp[:,:2] = np.mgrid[0:14,0:5].T.reshape(-1,2)
+   objp[:,:2] = np.mgrid[0:14,0:5].T.reshape(-1,2) * 0.7 * 0.0254
 
    # Arrays to store object points and image points from all the images.
    objpoints = [] # 3d point in real world space

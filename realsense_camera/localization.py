@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from platformdirs import user_videos_dir
 from CameraStreamer import CameraStreamer
 
 arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
@@ -44,7 +45,7 @@ def intersect_ray_with_plane(ray_origin, ray_direction, plane_point, plane_norma
 
 
 def get_aruco_corners(color_image):
-    corners, ids, rejectedImgPoints = cv2.aruco.detectMar3kers(color_image, arucoDict, parameters=arucoParams)
+    corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
     # if ids is None:
     #     return None, None
     # l = zip(ids,corners)
@@ -76,7 +77,7 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 dist_coeff = np.load("dist.npy")
 matrix_coeff = np.load("mtx.npy")
-
+matrix_coeff_inv = np.linalg.inv(matrix_coeff)
 if __name__ == "__main__":
     camera = CameraStreamer()
     loop = True
@@ -102,23 +103,12 @@ if __name__ == "__main__":
                 ### Get Plane rotation and translation ###
                 ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, matrix_coeff, dist_coeff)
                 rotation_matrix, _ = cv2.Rodrigues(rvec)
-                extrinsic_matrix_inv = np.hstack((rotation_matrix,tvec))  #plate from camera frame
 
-                ### Convert pixel to plate world ###
-                px = WIDTH/2
-                py = HEIGHT/2
-                homogeneous_coords = np.array([px-WIDTH/2,py-HEIGHT/2,Z_DIST , 1])
+                uvcoord = np.array([WIDTH/2, HEIGHT/2, 1])
+                mat1 = np.ravel(np.dot(rotation_matrix.T, np.ravel(np.dot(matrix_coeff_inv,uvcoord))))
+                print(mat1, mat1.shape)
 
-                cam_ball_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,homogeneous_coords),-1))
-                cam_focal_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,np.array([0,0,0,1])),-1))
 
-                ### Calculate plane intersection ###
-                a = intersect_ray_with_plane(np.array(cam_focal_world), cam_ball_world - cam_focal_world, np.array([0,0,0]),np.array([0,0,1]))
-                #print(a)
-                # center = cv2.projectPoints(np.array([a]),rvec,tvec,matrix_coeff,dist_coeff)[0][0][0]
-                # print(center)
-                # cv2.circle(color_image,[int(x) for x in center.tolist()],4,[255,0,0])
-                # cv2.circle(color_image,[0],4,np.array([255,0,0]))
                 cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
 
         cv2.imshow("i,", color_image)

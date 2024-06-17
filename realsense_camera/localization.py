@@ -2,36 +2,12 @@ import cv2
 import numpy as np
 from CameraStreamer import CameraStreamer
 
-def store_images(camera):
-    camera = CameraStreamer()
-    count = 0
-    loop = True
-    while loop:
-        color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
-        if color_image is None:
-            continue
-        gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('test', gray)
-        key = cv2.waitKey(1) & 0xFF
-        ret, corners = cv2.findChessboardCorners(gray, (14,5), None)
-        if ret:
-            cv2.imwrite(f"realsense_camera/chessboard/{count}.png",color_image)
-            count += 1
-
-            if key == ord('q'):
-                cv2.destroyAllWindows()
-                loop = False
-            if count >= 251:
-                break
-
 arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
 arucoParams = cv2.aruco.DetectorParameters()
 
 WIDTH = 640
-#HEIGHT = 480
-#FOV_X = 70.7495
-HEIGHT = 480
-FOV_X = 58.0548
+HEIGHT = 360
+FOV_X = 70.7495
 FOV_Y = 43.5411
 
 Z_DIST = 0.5*WIDTH/np.tan(np.deg2rad(FOV_X/2))
@@ -68,7 +44,7 @@ def intersect_ray_with_plane(ray_origin, ray_direction, plane_point, plane_norma
 
 
 def get_aruco_corners(color_image):
-    corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
+    corners, ids, rejectedImgPoints = cv2.aruco.detectMar3kers(color_image, arucoDict, parameters=arucoParams)
     # if ids is None:
     #     return None, None
     # l = zip(ids,corners)
@@ -102,16 +78,14 @@ dist_coeff = np.load("dist.npy")
 matrix_coeff = np.load("mtx.npy")
 
 if __name__ == "__main__":
-    count = 0
     camera = CameraStreamer()
-    count = 0
     loop = True
     while loop:
         color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
         if color_image is None:
             continue
         gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('test', gray)
+        # cv2.imshow('test', gray)
         ids, corners = get_aruco_corners(color_image)
         if ids is not None:
             object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
@@ -128,7 +102,7 @@ if __name__ == "__main__":
                 ### Get Plane rotation and translation ###
                 ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, matrix_coeff, dist_coeff)
                 rotation_matrix, _ = cv2.Rodrigues(rvec)
-                extrinsic_matrix_inv = np.hstack((rotation_matrix.T,-tvec))
+                extrinsic_matrix_inv = np.hstack((rotation_matrix,tvec))  #plate from camera frame
 
                 ### Convert pixel to plate world ###
                 px = WIDTH/2
@@ -136,14 +110,14 @@ if __name__ == "__main__":
                 homogeneous_coords = np.array([px-WIDTH/2,py-HEIGHT/2,Z_DIST , 1])
 
                 cam_ball_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,homogeneous_coords),-1))
-                cam_focal_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,np.array([0,0,-Z_DIST,1])),-1))
+                cam_focal_world = np.ravel(np.reshape(np.dot(extrinsic_matrix_inv,np.array([0,0,0,1])),-1))
 
                 ### Calculate plane intersection ###
                 a = intersect_ray_with_plane(np.array(cam_focal_world), cam_ball_world - cam_focal_world, np.array([0,0,0]),np.array([0,0,1]))
-                print("a", a)
-                center = cv2.projectPoints(np.array([a]),rvec,tvec,matrix_coeff,dist_coeff)[0][0][0]
-                print(center)
-                cv2.circle(color_image,[int(x) for x in center.tolist()],4,[255,0,0])
+                #print(a)
+                # center = cv2.projectPoints(np.array([a]),rvec,tvec,matrix_coeff,dist_coeff)[0][0][0]
+                # print(center)
+                # cv2.circle(color_image,[int(x) for x in center.tolist()],4,[255,0,0])
                 # cv2.circle(color_image,[0],4,np.array([255,0,0]))
                 cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
 

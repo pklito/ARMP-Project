@@ -4,7 +4,16 @@ import numpy as np
 from PIL import Image
 import os
 import threading
+import signal
+import sys
 import cv2.aruco as aruco
+from localization import *
+def signal_handler(sig, frame, cam):
+    print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")
+    cam.stop()
+    cv2.destroyAllWindows()
+    sys.exit(0)
+
 
 # from robot_utils.kinematics import calculate_plate_center
 
@@ -173,6 +182,67 @@ class CameraStreamer:
             color_image_with_markers = color_image.copy()
         return None, color_image_with_markers
 
+    def localization_detection(self,):
+        try:
+            while True:
+                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
+                if color_image is None or depth_image is None:
+                    continue
+
+                if color_image.size == 0 or depth_image.size == 0:
+                    print("Can't receive frame (stream end?).")
+                    continue
+
+                positions = detect_object(color_image)
+                if len(positions) == 0:
+                    print('No object detected!')
+                    continue
+
+                x1, y1, x2, y2 = positions[0]
+                ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+
+                # gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+                ids, corners = get_aruco_corners(color_image)
+                wcpoints = (-1,-1,-1)
+                if ids is not None:
+                    object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
+                    pixel_pts = np.array([c for aruco in corners for c in aruco[0]], dtype=np.float32)
+                    if(len(object_pts) != len(pixel_pts)):
+                        print("Error, sizes", len(object_pts),len(pixel_pts))
+                    else:
+                        if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
+                            pixel_pts = pixel_pts[:, 0, :]
+
+                        if object_pts.size == 0 or pixel_pts.size == 0:
+                            return None
+
+                        ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, matrix_coeff, dist_coeff)
+
+                        if ret:
+                            wcpoint = getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
+                            print([round(a,3) for a in wcpoint])
+
+                            cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
+
+                positions = detect_object(color_image)
+                if len(positions) == 0:
+                    print('No object detected!')
+                    return None
+
+                color = (0, 255, 0)  # Green for ball
+                cv2.rectangle((color_image), (x1, y1), (x2, y2), color, 2)
+                cv2.circle((color_image), ball_center, 2 ,color,2)
+                cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+                images = np.hstack((color_image, depth_colormap))
+                cv2.imshow('RealSense Stream', images)
+
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+        finally:
+            self.stop()
+            cv2.destroyAllWindows()
+
     def stop(self):
         self.pipeline.stop()
         self.collect_thread.join()
@@ -216,11 +286,6 @@ class CameraStreamer:
 
     def run_object_detection(self):
         try:
-            # if not os.path.exists('vid'):
-            #     os.makedirs('vid')
-            # else:
-            #     for file in os.listdir('vid'):
-            #         os.remove(f'vid/{file}')
             while True:
                 color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = self.get_frames()
 
@@ -266,5 +331,7 @@ class CameraStreamer:
 
 if __name__ == '__main__':
     camera = CameraStreamer()
-    camera.run_object_detection()
+    signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame, camera)) # may not work properly
+    # camera.run_object_detection()
     # camera.stream()
+    camera.localization_detection()

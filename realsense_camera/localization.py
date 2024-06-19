@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-from platformdirs import user_videos_dir
-from CameraStreamer import CameraStreamer
 
 ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
 ARUCO_PARAMS = cv2.aruco.DetectorParameters()
@@ -53,39 +51,39 @@ def getPixelOnPlane(pixel, rvec, tvec, z_height = BALL_HEIGHT):
     wccoord = rotation_matrix.T @ ((s * CAMERA_MATRIX_INV @ uvcoord) - np.ravel(tvec))
     return wccoord
 
-if __name__ == "__main__":
-    camera = CameraStreamer()
-    loop = True
-    while loop:
-        color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
-        if color_image is None:
-            continue
-        gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
-        # cv2.imshow('test', gray)
-        ids, corners = get_aruco_corners(color_image)
-        if ids is not None:
-            object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
-            pixel_pts = np.array([c for aruco in corners for c in aruco[0]], dtype=np.float32)
-            if(len(object_pts)!=len(pixel_pts)):
-                print("Error, sizes", len(object_pts),len(pixel_pts))
-            else:
-                if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
-                    pixel_pts = pixel_pts[:, 0, :]
+# if __name__ == "__main__":
+#     camera = CameraStreamer()
+#     loop = True
+#     while loop:
+#         color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
+#         if color_image is None:
+#             continue
+#         gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+#         # cv2.imshow('test', gray)
+#         ids, corners = get_aruco_corners(color_image)
+#         if ids is not None:
+#             object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
+#             pixel_pts = np.array([c for aruco in corners for c in aruco[0]], dtype=np.float32)
+#             if(len(object_pts)!=len(pixel_pts)):
+#                 print("Error, sizes", len(object_pts),len(pixel_pts))
+#             else:
+#                 if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
+#                     pixel_pts = pixel_pts[:, 0, :]
 
-                if object_pts.size == 0 or pixel_pts.size == 0:
-                    continue
+#                 if object_pts.size == 0 or pixel_pts.size == 0:
+#                     continue
 
-                ### Get Plane rotation and translation ###
-                ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
+#                 ### Get Plane rotation and translation ###
+#                 ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 
-                if(ret):
-                    wcpoint = getPixelOnPlane((WIDTH/2,HEIGHT/2),rvec,tvec)
-                    print([round(a,3) for a in wcpoint])
+#                 if(ret):
+#                     wcpoint = getPixelOnPlane((WIDTH/2,HEIGHT/2),rvec,tvec)
+#                     print([round(a,3) for a in wcpoint])
 
-                    cv2.drawFrameAxes(color_image, CAMERA_MATRIX, CAMERA_DIST_COEFF, rvec, tvec, 0.026, 2)
+#                     cv2.drawFrameAxes(color_image, CAMERA_MATRIX, CAMERA_DIST_COEFF, rvec, tvec, 0.026, 2)
 
-        cv2.imshow("i,", color_image)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            cv2.destroyAllWindows()
-            loop = False
+#         cv2.imshow("i,", color_image)
+#         key = cv2.waitKey(1) & 0xFF
+#         if key == ord('q'):
+#             cv2.destroyAllWindows()
+#             loop = False

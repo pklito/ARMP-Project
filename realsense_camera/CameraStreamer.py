@@ -7,7 +7,7 @@ import threading
 import signal
 import sys
 import cv2.aruco as aruco
-from localization import *
+from realsense_camera.localization import *
 def signal_handler(sig, frame, cam):
     print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")
     cam.stop()
@@ -236,7 +236,7 @@ class CameraStreamer:
                             pixel_pts = pixel_pts[:, 0, :]
 
                         if object_pts.size == 0 or pixel_pts.size == 0:
-                            return None
+                            continue
 
                         ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 

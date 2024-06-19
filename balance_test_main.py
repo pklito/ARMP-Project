@@ -29,8 +29,8 @@ def get_ball_position(color_image):
             print("aruco corners not detected")
         return None
 
-    object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
-    pixel_pts = np.array([c for id, rect in zip(ids, corners) for c in rect[0] if id != 0], dtype=np.float32)
+    object_pts, pixel_pts = get_obj_pxl_points(ids, corners)
+
     if(len(object_pts) != len(pixel_pts)):
         if DEBUG:
             print("[Error] obj points, pixel points, ids: ", len(object_pts), len(pixel_pts), ids.tolist())

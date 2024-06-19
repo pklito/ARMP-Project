@@ -21,8 +21,9 @@ def get_aruco_corners(color_image):
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, ARUCO_DICT, parameters=ARUCO_PARAMS)
     return ids, corners
 
+VALID_ARUCOS = [200,300,400,500,600]
 def get_object(aruco_ids):
-    if not all(a in [200,300,400,500,600] for a in aruco_ids):
+    if not all(a in VALID_ARUCOS for a in aruco_ids):
         return []
     # milimeters
     SIZE = 52
@@ -39,6 +40,11 @@ def get_object(aruco_ids):
     arucos_obj[600] = [[(coord + displacement)/1000. for coord, displacement in zip(points, BL_DISP)] for points in base]
 
     return [a for i in aruco_ids for a in arucos_obj[i]]
+
+def get_obj_pxl_points(ids, corners):
+    object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
+    pixel_pts = np.array([c for id, rect in zip(ids, corners) for c in rect[0] if id in VALID_ARUCOS], dtype=np.float32)
+    return object_pts, pixel_pts
 
 ## Unprojection function ##
 def getPixelOnPlane(pixel, rvec, tvec, z_height = BALL_HEIGHT):

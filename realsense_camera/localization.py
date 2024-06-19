@@ -3,8 +3,8 @@ import numpy as np
 from platformdirs import user_videos_dir
 from CameraStreamer import CameraStreamer
 
-arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
-arucoParams = cv2.aruco.DetectorParameters()
+ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+ARUCO_PARAMS = cv2.aruco.DetectorParameters()
 
 BALL_HEIGHT = 0.035
 
@@ -14,13 +14,13 @@ HEIGHT = 360
 FOV_X = 70.7495
 FOV_Y = 43.5411
 
-dist_coeff = np.load("dist.npy")
-matrix_coeff = np.load("mtx.npy")
-matrix_coeff_inv = np.linalg.inv(matrix_coeff)
+CAMERA_DIST_COEFF = np.load("dist.npy")
+CAMERA_MATRIX = np.load("mtx.npy")
+CAMERA_MATRIX_INV = np.linalg.inv(CAMERA_MATRIX)
 
 ## ARUCO HELPER FUNCTIONS ##
 def get_aruco_corners(color_image):
-    corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
+    corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, ARUCO_DICT, parameters=ARUCO_PARAMS)
     return ids, corners
 
 def get_object(aruco_ids):
@@ -46,11 +46,11 @@ def get_object(aruco_ids):
 def getPixelOnPlane(pixel, rvec, tvec, z_height = BALL_HEIGHT):
     uvcoord = np.array([pixel[0], pixel[1], 1])
     rotation_matrix, _ = cv2.Rodrigues(rvec)
-    mat1 = rotation_matrix.T @ matrix_coeff_inv @ uvcoord
+    mat1 = rotation_matrix.T @ CAMERA_MATRIX_INV @ uvcoord
     mat2 = rotation_matrix.T @ tvec
 
     s = (z_height + mat2[2]) / mat1[2]
-    wccoord = rotation_matrix.T @ ((s * matrix_coeff_inv @ uvcoord) - np.ravel(tvec))
+    wccoord = rotation_matrix.T @ ((s * CAMERA_MATRIX_INV @ uvcoord) - np.ravel(tvec))
     return wccoord
 
 if __name__ == "__main__":
@@ -76,13 +76,13 @@ if __name__ == "__main__":
                     continue
 
                 ### Get Plane rotation and translation ###
-                ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, matrix_coeff, dist_coeff)
+                ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 
                 if(ret):
                     wcpoint = getPixelOnPlane((WIDTH/2,HEIGHT/2),rvec,tvec)
                     print([round(a,3) for a in wcpoint])
 
-                    cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
+                    cv2.drawFrameAxes(color_image, CAMERA_MATRIX, CAMERA_DIST_COEFF, rvec, tvec, 0.026, 2)
 
         cv2.imshow("i,", color_image)
         key = cv2.waitKey(1) & 0xFF

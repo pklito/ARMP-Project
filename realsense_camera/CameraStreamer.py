@@ -238,13 +238,13 @@ class CameraStreamer:
                         if object_pts.size == 0 or pixel_pts.size == 0:
                             return None
 
-                        ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, matrix_coeff, dist_coeff)
+                        ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 
                         if ret:
                             wcpoint = getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
                             print([round(a,3) for a in wcpoint])
 
-                            cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
+                            cv2.drawFrameAxes(color_image, CAMERA_MATRIX, CAMERA_DIST_COEFF, rvec, tvec, 0.026, 2)
 
                 color = (0, 255, 0)  # Green for ball
                 cv2.circle((color_image), ball_center, radius, color, 2) # the enclosing circle

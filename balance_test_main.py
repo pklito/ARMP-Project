@@ -10,23 +10,30 @@ from simple_pid import PID
 from realsense_camera.localization import get_aruco_corners, get_object, getPixelOnPlane
 from realsense_camera.constants import *
 
+DEBUG = True
 def get_ball_position(color_image):
     if color_image is None or color_image.size == 0:
         return None
 
     positions = detect_ball(color_image)
     if len(positions) == 0:
+        if DEBUG:
+            print("Ball not detected")
         return None
 
     ball_center, radius = positions[0]
 
     ids, corners = get_aruco_corners(color_image)
     if ids is None:
+        if DEBUG:
+            print("aruco corners not detected")
         return None
 
     object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
-    pixel_pts = np.array([c for aruco in corners for c in aruco[0]], dtype=np.float32)
+    pixel_pts = np.array([c for id, rect in zip(ids, corners) for c in rect[0] if id != 0], dtype=np.float32)
     if(len(object_pts) != len(pixel_pts)):
+        if DEBUG:
+            print("[Error] obj points, pixel points, ids: ", len(object_pts), len(pixel_pts), ids.tolist())
         return None
 
     if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
@@ -39,11 +46,14 @@ def get_ball_position(color_image):
 
     if ret:
         return getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
+    if DEBUG:
+            print("solvePNP failed!")
     return None
 
 
 print("initializing Robots")
 camera = CameraStreamer()
+signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame, camera))
 task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
@@ -59,23 +69,23 @@ print("start!")
 keep_moving = True
 not_started = True
 
-initial_pos = [0.44, -2.84, 0.0, -0.26, 1.12, -1.58]
+initial_pos = [0.01, -1.56, -0.01, -1.61, 1.56, 1.55]
 count = 0
 while keep_moving:
     color_image, _, _, _, _ = camera.get_frames()
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
 
-    if not task_state.output_int_register_0:
-        print("Not started yet", [round(q,2) for q in task_state.target_q])
-        continue
-    elif not_started:
-        not_started = True
-
     if not task_state or not cam_state:
         break
     task_robot.sendWatchdog(1)
     camera_robot.sendWatchdog(1)
+
+    if color_image is None or color_image.size == 0:
+        continue
+
+    cv2.waitKey(1)
+    cv2.imshow("name", color_image)
 
     current_task_config = task_state.target_q
     current_cam_config = cam_state.target_q
@@ -88,7 +98,7 @@ while keep_moving:
     pos = initial_pos.copy()
     pos[5] += pid_controller_x(-error[1])
     pos[3] += pid_controller_y(-error[0])
-    print(error)
+    print([round(a,3) for a in error])
     #task_robot.sendConfig(pos)
 
 

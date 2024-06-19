@@ -7,7 +7,7 @@ from RTDERobot import *
 from collections import deque
 from simple_pid import PID
 
-from realsense_camera.localization import get_aruco_corners, get_object, getPixelOnPlane
+from realsense_camera.localization import get_aruco_corners, get_object, getPixelOnPlane, get_obj_pxl_points
 from realsense_camera.constants import *
 
 DEBUG = True
@@ -29,7 +29,7 @@ def get_ball_position(color_image):
             print("aruco corners not detected")
         return None
 
-    object_pts, pixel_pts = get_obj_pxl_points(ids, corners)
+    object_pts, pixel_pts = get_obj_pxl_points([a[0] for a in ids.tolist()], corners)
 
     if(len(object_pts) != len(pixel_pts)):
         if DEBUG:
@@ -102,8 +102,8 @@ while keep_moving:
     error = ball_position - plate_center
 
     pos = initial_pos.copy()
-    pos[5] += pid_controller_x(error[0])
-    pos[3] += pid_controller_y(-error[1])
+    pos[5] += pid_controller_x(-error[1])
+    pos[3] += pid_controller_y(-error[0])
     print([round(a,3) for a in error])
     task_robot.sendConfig(pos)
 

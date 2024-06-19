@@ -1,5 +1,7 @@
 import numpy as np
 from math import sin, cos, atan2, acos, pi, sqrt, asin, atan
+from scipy.spatial.transform import Rotation as R
+
 
 # Define the tool length and DH matrices for different UR arms
 tool_length = 0.135  # [m]
@@ -76,6 +78,35 @@ def forward_kinematic_solution(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [
     transform = t01 * t12 * t23 * t34 * t45 * t56
     xyz_coords = np.array([transform[0,3],transform[1,3],transform[2,3]]) # xyz coordinates format
     return np.array([round(num, 4) for num in xyz_coords.tolist()])
+
+def forward_kinematic(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
+    """
+    Compute the forward kinematic solution for the given joint angles.
+
+    Parameters:
+    DH_matrix (numpy.matrix): The DH parameters matrix for the robot.
+    edges (numpy.matrix): The joint angles or displacements.
+
+    Returns:
+    tuple: The position (x, y, z) and orientation (rx, ry, rz) of the end-effector.
+    """
+    t01 = mat_transform_DH(DH_matrix, 1, edges)
+    t12 = mat_transform_DH(DH_matrix, 2, edges)
+    t23 = mat_transform_DH(DH_matrix, 3, edges)
+    t34 = mat_transform_DH(DH_matrix, 4, edges)
+    t45 = mat_transform_DH(DH_matrix, 5, edges)
+    t56 = mat_transform_DH(DH_matrix, 6, edges)
+
+    transform = t01 * t12 * t23 * t34 * t45 * t56
+
+    x, y, z = transform[0, 3], transform[1, 3], transform[2, 3]
+
+    rotation_matrix = transform[:3, :3]
+
+    r = R.from_matrix(rotation_matrix)
+    rx, ry, rz = r.as_rotvec()
+
+    return (round(x, 4), round(y, 4), round(z, 4), round(rx, 4), round(ry, 4), round(rz, 4))
 
 def forward_kinematic_matrix(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
     t01 = mat_transform_DH(DH_matrix, 1, edges)

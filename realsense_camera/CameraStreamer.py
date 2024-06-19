@@ -76,6 +76,30 @@ def detect_object(frame):
 
     return bounding_boxes
 
+def detect_ball(frame):
+    frame = cv2.GaussianBlur(frame, (17, 17), 0)
+    kernel = np.ones((5, 5), np.uint8)
+    frame = cv2.dilate(frame, kernel, iterations=1)
+
+    hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    lower_limit1, upper_limit1 = (0, 154, 146), (9,  255, 255)
+    lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255)
+
+    mask1 = cv2.inRange(hsv_image, lower_limit1, upper_limit1)
+    mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)
+    mask = cv2.bitwise_or(mask1, mask2)
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    bounding_circles = []
+    for contour in contours:
+        (x, y), radius = cv2.minEnclosingCircle(contour)
+        center = (int(x), int(y))
+        radius = int(radius)
+        bounding_circles.append((center, radius))
+    return bounding_circles
+
 def detect_plate(frame):
 
     frame = cv2.GaussianBlur(frame, (17, 17), 0)
@@ -193,15 +217,13 @@ class CameraStreamer:
                     print("Can't receive frame (stream end?).")
                     continue
 
-                positions = detect_object(color_image)
+                positions = detect_ball(color_image)
                 if len(positions) == 0:
                     print('No object detected!')
                     continue
 
-                x1, y1, x2, y2 = positions[0]
-                ball_center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+                ball_center, radius = positions[0]
 
-                # gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
                 ids, corners = get_aruco_corners(color_image)
                 wcpoints = (-1,-1,-1)
                 if ids is not None:
@@ -224,15 +246,10 @@ class CameraStreamer:
 
                             cv2.drawFrameAxes(color_image, matrix_coeff, dist_coeff, rvec, tvec, 0.026, 2)
 
-                positions = detect_object(color_image)
-                if len(positions) == 0:
-                    print('No object detected!')
-                    return None
-
                 color = (0, 255, 0)  # Green for ball
-                cv2.rectangle((color_image), (x1, y1), (x2, y2), color, 2)
-                cv2.circle((color_image), ball_center, 2 ,color,2)
-                cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                cv2.circle((color_image), ball_center, radius, color, 2) # the enclosing circle
+                cv2.circle((color_image), ball_center, 2 ,color,2) # a dot in the middle of the circle
+                cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (ball_center[0], ball_center[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
                 images = np.hstack((color_image, depth_colormap))
                 cv2.imshow('RealSense Stream', images)

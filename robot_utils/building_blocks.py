@@ -25,13 +25,31 @@ class Building_Blocks(object):
         self.p_bias = p_bias
         self.cost_weights = np.array([0.4, 0.3 ,0.2 ,0.1 ,0.07 ,0.05])
 
-    def sample(self, goal_conf) -> np.array:
+    def generate_upright_configuration(self, atol, conf_3 = 0, conf_4 = -np.pi, conf_5 = 0):
         conf = []
+        print("Sampling")
+        for joint, range in self.ur_params.mechanical_limits.items():
+            if joint == 3:
+                conf.append(random.uniform(conf_3 - atol, conf_3 + atol))
+            elif joint == 4:
+                conf.append(random.uniform(conf_4 - atol, conf_4 + atol))
+            elif joint == 5:
+                conf.append(random.uniform(conf_5 - atol,conf_5 + atol))
+            else:
+                conf.append(random.uniform(range[0], range[1]))
+        return conf
+
+    def sample(self, goal_conf, atol=5e-2) -> np.array:
         if random.random() < self.p_bias:
             return np.array(goal_conf)
-        for joint, range in self.ur_params.mechanical_limits.items():
-            conf.append(random.uniform(range[0], range[1]))
-        return np.array(conf)
+        # while True:
+        else:
+            # conf = []
+            # print("Sampling")
+            # for joint, range in self.ur_params.mechanical_limits.items():
+            #     conf.append(random.uniform(range[0], range[1]))
+            conf = self.generate_upright_configuration(atol, conf_3 = 0, conf_4 = -np.pi, conf_5 = 0)
+            return np.array(conf)
 
     def is_in_collision(self, conf) -> bool:
         """check for collision in given configuration, arm-arm and arm-obstacle
@@ -93,6 +111,37 @@ class Building_Blocks_UR5e(Building_Blocks):
 
 class Building_Blocks_UR3e(Building_Blocks):
     def is_in_collision(self, conf) -> bool:
-        # Implement UR3e-specific collision detection logic
-        return super().is_in_collision(conf)
+        """check for collision in given configuration, arm-arm and arm-obstacle
+        return True if in collision
+        @param conf - some configuration
+        """
+        global_sphere_coords = self.transform.conf2sphere_coords(conf)
+        # arm - arm collision
+        # for i in range(len(self.ur_params.ur_links) - 2):
+        #     for j in range(i + 2, len(self.ur_params.ur_links)):
+        #         spheres = global_sphere_coords[self.ur_params.ur_links[i]]
+        #         other_spheres = global_sphere_coords[self.ur_params.ur_links[j]]
+        #         for s in spheres:
+        #             for s2 in other_spheres:
+        #                 if sphere_collision(s[0:3], s2[0:3], self.ur_params.sphere_radius[self.ur_params.ur_links[i]], self.ur_params.sphere_radius[self.ur_params.ur_links[j]]):
+        #                     return True
+        # arm - obstacle collision
+        for joint, spheres in global_sphere_coords.items():
+            for sphere in spheres:
+                for obstacle in self.env.obstacles:
+                    if sphere_collision(sphere[0:3], obstacle, self.ur_params.sphere_radius[joint], self.env.radius):
+                        return True
+        # arm - floor collision
+        for joint, spheres in global_sphere_coords.items():
+            if joint == self.ur_params.ur_links[0]:
+                continue
+            for sphere in spheres:
+                if sphere[2] < self.ur_params.sphere_radius[joint]:
+                    return True
+        # x - axis limit
+        # for joint, spheres in global_sphere_coords.items():
+        #     for sphere in spheres:
+        #         if sphere[0] + self.ur_params.sphere_radius[joint] > 0.4:
+        #             return True
+        return False
 

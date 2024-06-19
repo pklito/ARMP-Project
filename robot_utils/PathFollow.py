@@ -80,7 +80,7 @@ class PathFollowStrict:
     def updateCurrentEdge(self, config, cutoff_radius = None):
         if cutoff_radius == None:
             cutoff_radius = self.EDGE_CUTOFF
-        
+
         if self.current_edge >= len(self.path)-1:
             return
         if np.linalg.norm(np.asarray(config) - self.path[self.current_edge + 1]) < cutoff_radius:

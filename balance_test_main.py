@@ -6,6 +6,27 @@ from realsense_camera.CameraStreamer import *
 from RTDERobot import *
 from collections import deque
 from simple_pid import PID
+import matplotlib.pyplot as plt
+debug_plot = []
+
+def my_signal_handler(sig, frame, plot, cam):
+    #print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")
+    print("plot: ", plot)
+    cam.stop()
+    cv2.destroyAllWindows()
+    times = [point[0] for point in debug_plot]
+    errors = [point[1] for point in debug_plot]
+
+    # Create the scatter plot
+    plt.scatter(times, errors)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Error')
+    plt.title('Time vs Error')
+    plt.grid(True)
+
+    # Show the plot
+    plt.show()
+    sys.exit(0)
 
 from realsense_camera.localization import get_aruco_corners, get_object, getPixelOnPlane, get_obj_pxl_points
 from realsense_camera.constants import *
@@ -53,14 +74,14 @@ def get_ball_position(color_image):
 
 print("initializing Robots")
 camera = CameraStreamer()
-signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame, camera))
+signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot))
 task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
-pid_controller_x = PID(Kp=2, Ki=0, Kd=0.0)
+pid_controller_x = PID(Kp=1.2, Ki=0, Kd=0.0)
 pid_controller_x.setpoint = 0
 
-pid_controller_y = PID(Kp=1.5, Ki=0, Kd=0.0)
+pid_controller_y = PID(Kp=0.6, Ki=0, Kd=0.0)
 pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)
@@ -68,9 +89,10 @@ plate_center = (0, 0, 0)
 print("start!")
 keep_moving = True
 not_started = True
-
+start_time = time()
 initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 count = 0
+signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot, camera)) # may not work properly
 while keep_moving:
     color_image, _, _, _, _ = camera.get_frames()
     task_state = task_robot.getState()
@@ -100,11 +122,10 @@ while keep_moving:
     if ball_position is None:
         continue
     error = ball_position - plate_center
+    debug_plot.append((time()-start_time, error[1]))
 
     pos = initial_pos.copy()
     pos[5] += pid_controller_x(-error[1])
     pos[3] += pid_controller_y(-error[0])
     print([round(a,3) for a in error])
     task_robot.sendConfig(pos)
-
-

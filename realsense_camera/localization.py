@@ -38,7 +38,7 @@ def get_object(aruco_ids):
     #     return []
     # milimeters]
     # print(VALID_ARUCOS[0])
-    return [p for a in aruco_ids for p in ARUCO_OBJ[a] if a in VALID_ARUCOS]
+    return [p for a in aruco_ids if a in VALID_ARUCOS for p in ARUCO_OBJ[a]]
 
 def get_obj_pxl_points(ids, corners):
     object_pts = np.array(get_object(ids), dtype=np.float32)

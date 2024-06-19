@@ -76,6 +76,12 @@ while keep_moving:
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
 
+    if not task_state.output_int_register_0:
+        print("Not started yet", [round(q,2) for q in task_state.target_q])
+        continue
+    elif not_started:
+        not_started = True
+
     if not task_state or not cam_state:
         break
     task_robot.sendWatchdog(1)
@@ -96,9 +102,9 @@ while keep_moving:
     error = ball_position - plate_center
 
     pos = initial_pos.copy()
-    pos[5] += pid_controller_x(-error[1])
-    pos[3] += pid_controller_y(-error[0])
+    pos[5] += pid_controller_x(error[0])
+    pos[3] += pid_controller_y(-error[1])
     print([round(a,3) for a in error])
-    #task_robot.sendConfig(pos)
+    task_robot.sendConfig(pos)
 
 

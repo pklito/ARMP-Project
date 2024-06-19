@@ -57,10 +57,10 @@ signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame, camer
 task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
-pid_controller_x = PID(Kp=1.5, Ki=0, Kd=0.5)
+pid_controller_x = PID(Kp=2, Ki=0, Kd=0.0)
 pid_controller_x.setpoint = 0
 
-pid_controller_y = PID(Kp=0.6, Ki=0, Kd=0.1)
+pid_controller_y = PID(Kp=1.5, Ki=0, Kd=0.0)
 pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)
@@ -69,7 +69,7 @@ print("start!")
 keep_moving = True
 not_started = True
 
-initial_pos = [0.01, -1.56, -0.01, -1.61, 1.56, 1.55]
+initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 count = 0
 while keep_moving:
     color_image, _, _, _, _ = camera.get_frames()
@@ -90,8 +90,8 @@ while keep_moving:
     if color_image is None or color_image.size == 0:
         continue
 
-    cv2.waitKey(1)
-    cv2.imshow("name", color_image)
+    # cv2.waitKey(1)
+    # cv2.imshow("name", color_image)
 
     current_task_config = task_state.target_q
     current_cam_config = cam_state.target_q

@@ -9,7 +9,7 @@ import sys
 import cv2.aruco as aruco
 from realsense_camera.localization import *
 def signal_handler(sig, frame, cam):
-    print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")
+    #print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")
     cam.stop()
     cv2.destroyAllWindows()
     sys.exit(0)
@@ -179,7 +179,8 @@ class CameraStreamer:
         return color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics
 
     def detect_arucos(self, color_image):
-        arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+        # arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+        arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         arucoParams = cv2.aruco.DetectorParameters()
         corners, ids, rejectedImgPoints = aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
         if ids is not None:
@@ -227,8 +228,7 @@ class CameraStreamer:
                 ids, corners = get_aruco_corners(color_image)
                 wcpoints = (-1,-1,-1)
                 if ids is not None:
-                    object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
-                    pixel_pts = np.array([c for aruco in corners for c in aruco[0]], dtype=np.float32)
+                    object_pts, pixel_pts = get_obj_pxl_points([a[0] for a in ids.tolist()], corners)
                     if(len(object_pts) != len(pixel_pts)):
                         print("Error, sizes", len(object_pts),len(pixel_pts))
                     else:
@@ -237,7 +237,6 @@ class CameraStreamer:
 
                         if object_pts.size == 0 or pixel_pts.size == 0:
                             continue
-
                         ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 
                         if ret:

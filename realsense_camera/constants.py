@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 
-ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+# ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 ARUCO_PARAMS = cv2.aruco.DetectorParameters()
 
 BALL_HEIGHT = 0.035

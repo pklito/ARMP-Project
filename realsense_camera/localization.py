@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 
-ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+# ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
+ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+
 ARUCO_PARAMS = cv2.aruco.DetectorParameters()
 
 BALL_HEIGHT = 0.035
@@ -21,28 +23,25 @@ def get_aruco_corners(color_image):
     corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, ARUCO_DICT, parameters=ARUCO_PARAMS)
     return ids, corners
 
-VALID_ARUCOS = [200,300,400,500,600]
-def get_object(aruco_ids):
-    if not all(a in VALID_ARUCOS for a in aruco_ids):
-        return []
-    # milimeters
-    SIZE = 52
-    TL_DISP = (-(73 + SIZE), -(9 + SIZE), 0)
-    TR_DISP = (-(73 + SIZE), 8 + SIZE , 0)
-    BR_DISP = ((58 + SIZE), (6.5 + SIZE), 0)
-    BL_DISP = ( (64 + SIZE), -(19 + SIZE), 0)
-    arucos_obj = dict()
-    base = [(-SIZE/2, SIZE/2, 0), (SIZE/2, SIZE/2, 0), (SIZE/2, -SIZE/2, 0), (-SIZE/2, -SIZE/2, 0)]
-    arucos_obj[200] = [[c/1000. for c in points] for points in base]
-    arucos_obj[300] = [[(coord + displacement)/1000. for coord, displacement in zip(points, TL_DISP)] for points in base]
-    arucos_obj[500] = [[(coord + displacement)/1000. for coord, displacement in zip(points, TR_DISP)] for points in base]
-    arucos_obj[400] = [[(coord + displacement)/1000. for coord, displacement in zip(points, BR_DISP)] for points in base]
-    arucos_obj[600] = [[(coord + displacement)/1000. for coord, displacement in zip(points, BL_DISP)] for points in base]
+import time
+np.floor(time.time())
+VALID_ARUCOS = [a for a in range(21)]
 
-    return [a for i in aruco_ids for a in arucos_obj[i]]
+SIZE = 20
+VERT_DISP = 10 + SIZE
+HOR_DISP = 40 + SIZE
+SQUARE_SHAPE = [(-SIZE/2, SIZE/2), (SIZE/2, SIZE/2), (SIZE/2, -SIZE/2), (-SIZE/2, -SIZE/2)]
+SHAPE = (3,7)
+ARUCO_OBJ = [[((HOR_DISP * (i) + d[0] - HOR_DISP) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*3)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
+def get_object(aruco_ids):
+    # if not all(a in VALID_ARUCOS for a in aruco_ids):
+    #     return []
+    # milimeters]
+    # print(VALID_ARUCOS[0])
+    return [p for a in aruco_ids for p in ARUCO_OBJ[a] if a in VALID_ARUCOS]
 
 def get_obj_pxl_points(ids, corners):
-    object_pts = np.array([a for i in ids for a in get_object([i[0]])], dtype=np.float32)
+    object_pts = np.array(get_object(ids), dtype=np.float32)
     pixel_pts = np.array([c for id, rect in zip(ids, corners) for c in rect[0] if id in VALID_ARUCOS], dtype=np.float32)
     return object_pts, pixel_pts
 

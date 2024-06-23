@@ -23,7 +23,10 @@ class RTDERobot:
 
     def __init__(self, ROBOT_HOST = "192.168.0.11", ROBOT_PORT = 30004, config_filename = "control_loop_configuration.xml"):
         # Load config files
-        conf = rtde_config.ConfigFile("src/Robot/" + config_filename)
+        try:
+            conf = rtde_config.ConfigFile(config_filename)
+        except:
+            conf = rtde_config.ConfigFile("src/Robot/" + config_filename)
         state_names, state_types = conf.get_recipe("state")
         setp_names, setp_types = conf.get_recipe("setp")
         watchdog_names, watchdog_types = conf.get_recipe("watchdog")

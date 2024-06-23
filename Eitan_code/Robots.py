@@ -59,7 +59,7 @@ class BaseRobot:
 
 
 class TaskRobot(BaseRobot):
-    ip = '192.168.0.11'
+    ip = '192.168.0.12'
     task_time = 54.968
 
     def __init__(self):

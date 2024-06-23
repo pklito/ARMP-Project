@@ -11,7 +11,7 @@ path = [[0.797, -2.788, -0.017, -0.379, -0.055, -1.566],
 #         [0.797, -2.788, -0.017, -0.379, -0.055, -1.566]]
 
 pathfollower = PathFollowStrict(path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
-task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
+task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
 keep_moving = True

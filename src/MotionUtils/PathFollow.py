@@ -36,7 +36,7 @@ def getEdgeProjection(config, edge):
 
     return projection, clamp(t, 0, 1), clamp(t_distance, 0, edge_length)
 
-def getClampedLookahead(point, target, lookahead_distance):
+def getClampedTarget(point, target, lookahead_distance):
     target_vector = np.asarray(target) - point
     target_distance = np.linalg.norm(target_vector)
     if target_distance <= 0.001:
@@ -66,13 +66,13 @@ class PathFollowStrict:
         self.PATH_LOOKAHEAD = path_lookahead
         self.EDGE_CUTOFF = EDGE_CUTOFF
 
-    # doesn't change self
-    def getLookaheadConfig(self, config, lookahead_distance = None):
+    # doesn't change self, returns point a certain distance forward from the projection
+    def getLookaheadData(self, config, lookahead_distance = None):
         if lookahead_distance == None:
             lookahead_distance = self.PATH_LOOKAHEAD
 
         if self.current_edge >= len(self.path)-1:
-            return np.asarray(self.path[-1])
+            return np.asarray(self.path[-1]), len(self.path)-1, 1  # P, e, t
 
         point = np.asarray(config)
         edge = self.path_edges[self.current_edge]
@@ -90,12 +90,11 @@ class PathFollowStrict:
             target = getPointFromT(self.path, self.current_edge, target_t)
 
         self._ret_target_t = target_t # For returning
-        return getClampedLookahead(point, target, lookahead_distance)
+        return target, self.current_edge, target_t
 
-    # Maintains previous functionality of getLookaheadConfig albiet more ugly implementation.
-    def getLookaheadAndT(self, config, lookahead_distance = None):
-        lookahead = self.getLookaheadConfig(config, lookahead_distance)
-        return lookahead, self.current_edge, self._ret_target_t
+    def getClampedLookaheadConfig(self, config, lookahead_distance = None):
+        target_conf, _, _ = self.getLookaheadData(config,lookahead_distance)
+        return getClampedTarget(config, target_conf, lookahead_distance)
 
     #Changes self
     def updateCurrentEdge(self, config, cutoff_radius = None):

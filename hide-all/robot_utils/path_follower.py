@@ -43,7 +43,7 @@ while keep_moving:
     robot.sendWatchdog(1)
 
     current_config = state.target_q
-    lookahead_config = pathfollower.getLookaheadConfig(current_config, 0.15 + 0.15*math.sin(time()*2))
+    lookahead_config = pathfollower.getClampedLookaheadConfig(current_config, 0.15 + 0.15*math.sin(time()*2))
     pathfollower.updateCurrentEdge(current_config)
     index = pathfollower.current_edge
     print(lookahead_config - current_config, index)

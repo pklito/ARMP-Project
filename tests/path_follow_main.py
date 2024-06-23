@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.MotionUtils.motionConstants.constants import *
 from src.Robot.RTDERobot import *
-from src.MotionUtils.PathFollow import PathFollowStrict
+import src.MotionUtils.PathFollow as PathFollow
 
 path = [[0.797, -2.788, -0.017, -0.379, -0.055, -1.566],
        [0.351, -2.031, -0.015, -1.383, 1.233, -1.548],
@@ -14,7 +14,7 @@ path = [[0.797, -2.788, -0.017, -0.379, -0.055, -1.566],
 # path = [[0.0, -1.571, 0.0, -1.571, 0.0, 0.0],
 #         [0.797, -2.788, -0.017, -0.379, -0.055, -1.566]]
 
-pathfollower = PathFollowStrict(path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
+pathfollower = PathFollow.PathFollowStrict(path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
 task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
@@ -29,7 +29,7 @@ while keep_moving:
 
     current_task_config = task_state.target_q
     current_cam_config = cam_state.target_q
-    lookahead_config = pathfollower.getLookaheadConfig(current_task_config)
+    lookahead_config = pathfollower.getClampedLookaheadConfig(current_task_config)
     pathfollower.updateCurrentEdge(current_task_config)
     index = pathfollower.current_edge
     print(lookahead_config - current_task_config, index)

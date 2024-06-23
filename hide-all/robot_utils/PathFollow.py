@@ -56,7 +56,7 @@ class PathFollowStrict:
         self.PATH_LOOKAHEAD = path_lookahead
         self.EDGE_CUTOFF = EDGE_CUTOFF
 
-    def getLookaheadConfig(self, config, lookahead_distance = None):
+    def getClampedLookaheadConfig(self, config, lookahead_distance = None):
         if lookahead_distance == None:
             lookahead_distance = self.PATH_LOOKAHEAD
 

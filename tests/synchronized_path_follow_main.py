@@ -1,21 +1,44 @@
 import sys
 import os
-
+import numpy as np
 # Append the parent directory of the current script's directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.MotionUtils.motionConstants.constants import *
 from src.Robot.RTDERobot import *
 import src.MotionUtils.PathFollow as PathFollow
 
-task_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
-               [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
-               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
+# task_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
+#                [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
+#                [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
 
-camera_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
-               [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
-               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
+# camera_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
+#                [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
+#                [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
 # path = [[0.0, -1.571, 0.0, -1.571, 0.0, 0.0],
 #         [0.797, -2.788, -0.017, -0.379, -0.055, -1.566]]
+
+task_path = [
+        [0, -np.pi/2, 0, -np.pi/2, 0, 0], # home - at this point the robots aren't in sync
+        # essentialy, until we pick the plate up we dont care for sync, for simplicity im assuming it's picked up right at the beginning
+
+        np.deg2rad([0, -90, 0, -90, 90, 270]), # 1
+        np.deg2rad([0, -102.59, -121.74, 45, 90, 270]), # 2
+        np.deg2rad([-21.54, -32.38, -76.96, 31.07, 64.77, 270]), # 3
+        np.deg2rad([-33.52, -100.82, -17.93, -61.07, 65.64, 270]), # 4
+        np.deg2rad([-100.68, -149.81, -18.76, -11.52, 105.02, 271.85]), # 5
+
+    ]
+
+camera_path = [
+    [0, -np.pi/2, 0, -np.pi/2, 0, 0], # home - at this point the robots aren't in sync
+    # essentialy, until we pick the plate up we dont care for sync, for simplicity im assuming it's picked up right at the beginning
+
+    np.deg2rad([0, -104.5, 0, -45, -80.81, 0]), # 1
+    np.deg2rad([0, -133.26, 23.48, -25.5, -79.45, 0]), # 2
+    np.deg2rad([0, -133.26, 23.48, -25.5, -79.45, 0]), # 3
+    np.deg2rad([-1.74, -97.97, 23.47, -53.84, -52.75, 0]), # 4
+    np.deg2rad([-1.74, -97.97, 23.47, -53.84, -52.75, 0]),# 5
+]
 
 task_follower = PathFollow.PathFollowStrict(task_path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
 

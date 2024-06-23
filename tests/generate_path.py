@@ -1,8 +1,8 @@
 import numpy as np
-from environment import Environment
-from UR_Params import UR5e_PARAMS, UR3e_PARAMS, Transform
-from planner import RRT_STAR
-from building_blocks import Building_Blocks_UR3e, Building_Blocks_UR5e
+from src.MotionUtils.environment import Environment
+from src.MotionUtils.UR_Params import UR5e_PARAMS, UR3e_PARAMS, Transform
+from src.MotionUtils.planner import RRT_STAR
+from src.MotionUtils.building_blocks import Building_Blocks_UR3e, Building_Blocks_UR5e
 
 def main():
     ur_params = UR3e_PARAMS(inflation_factor=1)

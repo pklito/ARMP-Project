@@ -11,7 +11,9 @@ task_path = [[0.797, -2.788, -0.017, -0.379, -0.055, -1.566],
        [0.351, -2.031, -0.015, -1.383, 1.233, -1.548],
        [0.291, -1.088, -0.012, -2.096, 1.335, -1.574]]
 
-camera_path = [[],[],[]]
+camera_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
+               [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
+               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
 # path = [[0.0, -1.571, 0.0, -1.571, 0.0, 0.0],
 #         [0.797, -2.788, -0.017, -0.379, -0.055, -1.566]]
 
@@ -37,7 +39,7 @@ while keep_moving:
     if (not task_state.output_int_register_0 or not cam_state.output_int_register_0) and not has_started:
         timer_print += 1
         if timer_print % 60 == 1:
-            print(" waiting for ", "task robot" if not task_state.output_int_register_0 else "", " camera_robot" if not cam_state.output_int_register_0 else "")
+            print(" waiting for ", "[task robot]" if not task_state.output_int_register_0 else "", " [camera_robot]" if not cam_state.output_int_register_0 else "")
             print("task config:", [round(q,2) for q in task_state.target_q])
             print("camera config:", [round(q,2) for q in cam_state.target_q])
     else:

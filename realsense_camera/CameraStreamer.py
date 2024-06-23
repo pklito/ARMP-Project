@@ -7,7 +7,7 @@ import threading
 import signal
 import sys
 import cv2.aruco as aruco
-from realsense_camera.localization import *
+# from localization import *
 def signal_handler(sig, frame, cam):
     #print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")
     cam.stop()
@@ -349,5 +349,5 @@ if __name__ == '__main__':
     camera = CameraStreamer()
     signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame, camera)) # may not work properly
     # camera.run_object_detection()
-    # camera.stream()
-    camera.localization_detection()
+    camera.stream()
+    # camera.localization_detection()

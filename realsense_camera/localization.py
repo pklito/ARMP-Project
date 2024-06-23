@@ -40,10 +40,11 @@ def get_object(aruco_ids):
     # print(VALID_ARUCOS[0])
     return [p for a in aruco_ids if a in VALID_ARUCOS for p in ARUCO_OBJ[a]]
 
+MAX_ARUCOS = 100
 def get_obj_pxl_points(ids, corners):
     object_pts = np.array(get_object(ids), dtype=np.float32)
     pixel_pts = np.array([c for id, rect in zip(ids, corners) for c in rect[0] if id in VALID_ARUCOS], dtype=np.float32)
-    return object_pts, pixel_pts
+    return object_pts[:min(len(object_pts), MAX_ARUCOS)], pixel_pts[:min(len(pixel_pts), MAX_ARUCOS)]
 
 ## Unprojection function ##
 def getPixelOnPlane(pixel, rvec, tvec, z_height = BALL_HEIGHT):

@@ -120,23 +120,14 @@ class UR3e_PARAMS(object):
             'wrist_3_link': [-np.pi, np.pi]
         }
 
-        # self.min_sphere_radius = {
-        #     'shoulder_link': 0.03,  # Adjusted from 0.06 to 0.03
-        #     'upper_arm_link': 0.025,  # Adjusted from 0.05 to 0.025
-        #     'forearm_link': 0.025,  # Adjusted from 0.05 to 0.025
-        #     'wrist_1_link': 0.02,  # Adjusted from 0.04 to 0.02
-        #     'wrist_2_link': 0.02,  # Adjusted from 0.04 to 0.02
-        #     'wrist_3_link': 0.02  # Adjusted from 0.04 to 0.02
-        # }
-
         self.min_sphere_radius = {
-            'shoulder_link': 0.02,  # Further tightened from 0.03 to 0.02
-            'upper_arm_link': 0.015,  # Further tightened from 0.025 to 0.015
-            'forearm_link': 0.015,  # Further tightened from 0.025 to 0.015
-            'wrist_1_link': 0.01,  # Further tightened from 0.02 to 0.01
-            'wrist_2_link': 0.01,  # Further tightened from 0.02 to 0.01
-            'wrist_3_link': 0.01  # Further tightened from 0.02 to 0.01
-        }
+                                    'shoulder_link':0.075,
+                                    'upper_arm_link':0.075,
+                                    'forearm_link':0.075,
+                                    'wrist_1_link':0.075,
+                                    'wrist_2_link':0.075,
+                                    'wrist_3_link':0.045
+                                }
 
         self.sphere_radius = {key: val * inflation_factor for key, val in self.min_sphere_radius.items()}
 

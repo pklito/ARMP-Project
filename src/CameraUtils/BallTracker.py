@@ -66,7 +66,7 @@ def detect_ball(frame):
 
 # Real-time tracking loop
 # camera = CameraStreamer()
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 tracker = BallTracker()
 
 while True:
@@ -75,7 +75,6 @@ while True:
         break
 
     bounding_circles = detect_ball(frame)
-
     if bounding_circles:
         x, y, radius = bounding_circles[0]
         tracker.update(x, y)

@@ -3,13 +3,14 @@ import os
 import math
 import numpy as np
 from time import time
-from PathFollow import PathFollowStrict
-from constants import *
-
 
 # Append the parent directory of the current script's directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from Robot.RTDERobot import RTDERobot
+
+from src.MotionUtils.PathFollow import PathFollowStrict
+from src.MotionUtils.motionConstants.constants import *
+from src.Robot.RTDERobot import RTDERobot
+
 
 # path = [[0.797, -2.788, -0.017, -0.379, -0.055, -1.566],
 #        [0.351, -2.031, -0.015, -1.383, 1.233, -1.548],
@@ -36,7 +37,7 @@ for conf in path:
     conf[5] = initial_pos[5]
 
 pathfollower = PathFollowStrict(path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
-robot = RTDERobot("192.168.0.11",config_filename="../control_loop_configuration.xml")
+robot = RTDERobot("192.168.0.11",config_filename="../Robot/control_loop_configuration.xml")
 
 keep_moving = True
 while keep_moving:

@@ -24,14 +24,15 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-sys.path.append("..")
-import logging
-from time import time
-from math import fmod
 import numpy as np
-from realsense_camera.CameraStreamer import *
-from RTDERobot import *
+import os
 from simple_pid import PID
+
+# Append the parent directory of the current script's directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.CameraUtils.CameraStreamer import *
+from src.Robot.RTDERobot import *
+
 
 # Config
 plate_center = (355, 220)

@@ -2,13 +2,18 @@
 from time import time
 from math import fmod
 import numpy as np
+import os
 import matplotlib.pyplot as plt
-from realsense_camera.CameraStreamer import *
-from RTDERobot import *
 from collections import deque
 from simple_pid import PID
 from urx import Robot
 from time import sleep
+
+# Append the parent directory of the current script's directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.CameraUtils.CameraStreamer import *
+from src.Robot.RTDERobot import *
+
 
 def my_signal_handler(sig, frame, cam):
     cam.stop()

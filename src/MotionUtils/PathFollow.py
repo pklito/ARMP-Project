@@ -1,6 +1,6 @@
 import numpy as np
 from math import fmod, modf
-from constants import *
+from motionConstants.constants import *
 
 def clamp(val, v_min, v_max):
     return min(v_max, max(v_min,val))

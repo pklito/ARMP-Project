@@ -1,8 +1,12 @@
-from robot_utils.PathFollow import PathFollow, PathFollowStrict
 import sys
 import os
-from RTDERobot import RTDERobot
-from robot_utils.constants import *
+
+# Append the parent directory of the current script's directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.MotionUtils.motionConstants.constants import *
+from src.Robot.RTDERobot import *
+from src.MotionUtils.PathFollow import PathFollowStrict
+
 path = [[0.797, -2.788, -0.017, -0.379, -0.055, -1.566],
        [0.351, -2.031, -0.015, -1.383, 1.233, -1.548],
        [0.291, -1.088, -0.012, -2.096, 1.335, -1.574]]

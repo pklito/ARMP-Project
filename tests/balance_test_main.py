@@ -1,12 +1,19 @@
-
+import numpy as np
+import os
 from time import time
 from math import fmod
-import numpy as np
-from realsense_camera.CameraStreamer import *
-from RTDERobot import *
 from collections import deque
 from simple_pid import PID
 import matplotlib.pyplot as plt
+
+# Append the parent directory of the current script's directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.CameraUtils.CameraStreamer import *
+from src.Robot.RTDERobot import *
+from src.CameraUtils.localization import get_aruco_corners, get_object, getPixelOnPlane, get_obj_pxl_points
+from src.CameraUtils.cameraConstants.constants import *
+
+
 debug_plot = []
 
 def my_signal_handler(sig, frame, plot, cam):
@@ -27,9 +34,6 @@ def my_signal_handler(sig, frame, plot, cam):
     # Show the plot
     plt.show()
     sys.exit(0)
-
-from realsense_camera.localization import get_aruco_corners, get_object, getPixelOnPlane, get_obj_pxl_points
-from realsense_camera.constants import *
 
 DEBUG = True
 def get_ball_position(color_image):

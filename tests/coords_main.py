@@ -1,11 +1,15 @@
 
+import numpy as np
+import cv2.aruco as aruco
+import os
 from time import time
 from math import fmod
-import numpy as np
-from realsense_camera.CameraStreamer import *
-from RTDERobot import *
-import robot_utils.kinematicsUtils as fk
-import cv2.aruco as aruco
+
+# Append the parent directory of the current script's directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.CameraUtils.CameraStreamer import *
+from src.MotionUtils import kinematicsUtils as fk
+from src.Robot.RTDERobot import *
 
 
 print("here")

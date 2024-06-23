@@ -14,7 +14,7 @@ if __name__ == '__main__':
    objpoints = [] # 3d point in real world space
    imgpoints = [] # 2d points in image plane.
 
-   images = glob.glob('./realsense_camera/chessboard/**1.png')
+   images = glob.glob('./chessboard/**1.png')
 
    gray = None
    for fname in images:
@@ -36,11 +36,11 @@ if __name__ == '__main__':
    print("calibarting")
    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
    print(mtx, dist)
-   np.save('mtx.npy',mtx)
-   np.save('dist.npy',dist)
+   np.save('./cameraConstants/mtx.npy',mtx)
+   np.save('./cameraConstants/dist.npy',dist)
 
    print("fixing")
-   img = cv2.imread('./realsense_camera/chessboard/0.png')
+   img = cv2.imread('./chessboard/0.png')
    h, w = img.shape[:2]
    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 
@@ -50,7 +50,6 @@ if __name__ == '__main__':
    print("cropping")
    x, y, w, h = roi
    dst = dst[y:y+h, x:x+w]
-   cv2.imwrite('0result.png', dst)
    cv2.imshow("test", dst)
 
    if len(objpoints) > 0 and len(imgpoints) > 0:
@@ -72,9 +71,9 @@ if __name__ == '__main__':
          print("Rotation Vector:\n", rvec)
          print("Translation Vector:\n", tvec)
          print("Rotation Matrix:\n", rotation_matrix)
-         np.save('rvec.npy',rvec)
-         np.save('tvec.npy',tvec)
-         np.save('rotation_matrix.npy', rotation_matrix)
+         np.save('./cameraConstants/rvec.npy',rvec)
+         np.save('./cameraConstants/tvec.npy',tvec)
+         np.save('./cameraConstants/rotation_matrix.npy', rotation_matrix)
       else:
          print("Not enough points for solvePnP.")
 

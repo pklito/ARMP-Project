@@ -7,6 +7,7 @@ from tkinter import *
 from tkinter import messagebox
 from PIL import Image, ImageTk
 from CameraStreamer import CameraStreamer
+# helpful with picking an appropriate mask for Ball detection
 
 # Author and version information
 __author__ = "Teeraphat Kullanankanjana"

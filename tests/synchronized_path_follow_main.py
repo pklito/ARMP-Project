@@ -7,9 +7,9 @@ from src.MotionUtils.motionConstants.constants import *
 from src.Robot.RTDERobot import *
 import src.MotionUtils.PathFollow as PathFollow
 
-task_path = [[0.797, -2.788, -0.017, -0.379, -0.055, -1.566],
-       [0.351, -2.031, -0.015, -1.383, 1.233, -1.548],
-       [0.291, -1.088, -0.012, -2.096, 1.335, -1.574]]
+task_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
+               [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
+               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
 
 camera_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
                [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
@@ -21,6 +21,10 @@ task_follower = PathFollow.PathFollowStrict(task_path, TASK_PATH_LOOKAHEAD, TASK
 
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
+
+def toView(conf, end = "\n"):
+    return [round(a, 2) for a in conf]
+
 
 timer_print = 0
 keep_moving = True
@@ -40,7 +44,7 @@ while keep_moving:
     # Wait for both robots to say they are waiting to start. (the programs are running)
     if (not task_state.output_int_register_0 or not cam_state.output_int_register_0) and not has_started:
         timer_print += 1
-        if timer_print % 60 == 1:
+        if timer_print % 120 == 1:
             print(" waiting for ", "[task robot]" if not task_state.output_int_register_0 else "", " [camera_robot]" if not cam_state.output_int_register_0 else "")
             print("task config:", [round(q,2) for q in task_state.target_q])
             print("camera config:", [round(q,2) for q in cam_state.target_q])
@@ -57,7 +61,6 @@ while keep_moving:
     # Follow camera path
     cam_lookahead_config = PathFollow.getClampedTarget(current_cam_config, PathFollow.getPointFromT(camera_path, _task_target_edge, _task_target_t), TASK_PATH_LOOKAHEAD)
     camera_robot.sendConfig(cam_lookahead_config)
-
     # Follow task path
     task_lookahead_config, target_edge, target_t = task_follower.getLookaheadData(current_task_config)
     task_follower.updateCurrentEdge(current_task_config)
@@ -65,4 +68,8 @@ while keep_moving:
 
     _task_target_edge = target_edge
     _task_target_t = target_t
+
+    print("new line", target_edge, target_t)
+    print("cam: ", toView(current_cam_config), toView(cam_lookahead_config))
+    print("task: ", toView(current_task_config), toView(task_lookahead_config))
 

@@ -18,29 +18,38 @@ camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configurat
 
 timer_print = 0
 keep_moving = True
+has_started = False
 while keep_moving:
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
     if not task_state or not cam_state:
+        print("Robot ", "task" if not task_state else "cam", " is not on!")
         break
 
-    if not task_state.output_int_register_0 or not cam_state.output_int_register_0:
+    task_robot.sendWatchdog(1)
+    camera_robot.sendWatchdog(1)
+
+    # Wait for both robots to say they are waiting to start. (the programs are running)
+    if (not task_state.output_int_register_0 or not cam_state.output_int_register_0) and not has_started:
         timer_print += 1
         if timer_print % 60 == 1:
             print(" waiting for ", "task robot" if not task_state.output_int_register_0 else "", " camera_robot" if not cam_state.output_int_register_0 else "")
             print("task config:", [round(q,2) for q in task_state.target_q])
             print("camera config:", [round(q,2) for q in cam_state.target_q])
-        continue
-    elif not_started:
-        not_started = True
+    else:
+        has_started = True
 
-    task_robot.sendWatchdog(1)
-    camera_robot.sendWatchdog(1)
+    # Has started ignores the flags once we are running ( once we do, the robots are no longer "waiting to start" )
+    if not has_started:
+        continue
 
     current_task_config = task_state.target_q
     current_cam_config = cam_state.target_q
+
+    # Follow task path
     lookahead_config, target_edge, target_t = task_follower.getLookaheadAndT(current_task_config)
     task_follower.updateCurrentEdge(current_task_config)
+
     index = task_follower.current_edge
 
 

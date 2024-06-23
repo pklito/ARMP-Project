@@ -56,6 +56,7 @@ class PathFollowStrict:
         self.PATH_LOOKAHEAD = path_lookahead
         self.EDGE_CUTOFF = EDGE_CUTOFF
 
+    # doesn't change self
     def getLookaheadConfig(self, config, lookahead_distance = None):
         if lookahead_distance == None:
             lookahead_distance = self.PATH_LOOKAHEAD
@@ -70,13 +71,17 @@ class PathFollowStrict:
         edge_length = np.linalg.norm(edge[1] - np.array(edge[0]))
 
         target = None
+        target_t = 0
         if edge_length <= 0.001:
             target = edge[1]
+            target_t = 1
         else:
-            target = self.getPointFromT(self.current_edge, clamp(t + lookahead_distance / edge_length, 0, 1))
+            target_t = clamp(t + lookahead_distance / edge_length, 0, 1)
+            target = self.getPointFromT(self.current_edge, target_t)
 
-        return getClampedLookahead(point, target, lookahead_distance)
+        return getClampedLookahead(point, target, lookahead_distance), self.current_edge , target_t
 
+    #Changes self
     def updateCurrentEdge(self, config, cutoff_radius = None):
         if cutoff_radius == None:
             cutoff_radius = self.EDGE_CUTOFF

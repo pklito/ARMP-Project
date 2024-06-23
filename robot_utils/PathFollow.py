@@ -44,12 +44,23 @@ def getClampedLookahead(point, target, lookahead_distance):
         return target
 
     return point + lookahead_distance * target_vector / target_distance
+
+def getPointFromT(path ,edge_num, t):
+        if edge_num >= len(path) - 1:
+            return np.array(path[-1])
+        p1 = np.asarray(path[edge_num])
+        p2 = np.asarray(path[edge_num + 1])
+
+        return (1-t) * p1 + t * p2
+
+
 class PathFollowStrict:
     path = None     #List of the path configurations
     path_edges = None       #List of edges I.E. pairs of points
     PATH_LOOKAHEAD = 0.3
     EDGE_CUTOFF = 0.3
     current_edge = 0
+    _ret_target_t = 0
     def __init__(self, path, path_lookahead = TASK_PATH_LOOKAHEAD, EDGE_CUTOFF = TASK_EDGE_CUTOFF):
         self.path = path
         self.path_edges = [edge for edge in zip(self.path, self.path[1:])]
@@ -77,9 +88,15 @@ class PathFollowStrict:
             target_t = 1
         else:
             target_t = clamp(t + lookahead_distance / edge_length, 0, 1)
-            target = self.getPointFromT(self.current_edge, target_t)
+            target = getPointFromT(self.path, self.current_edge, target_t)
 
-        return getClampedLookahead(point, target, lookahead_distance), self.current_edge , target_t
+        self._ret_target_t = target_t # For returning
+        return getClampedLookahead(point, target, lookahead_distance)
+
+    # Maintains previous functionality of getLookaheadConfig albiet more ugly implementation.
+    def getLookaheadAndT(self, config, lookahead_distance = None):
+        lookahead = self.getLookaheadConfig(config, lookahead_distance)
+        return lookahead, self.current_edge, self._ret_target_t
 
     #Changes self
     def updateCurrentEdge(self, config, cutoff_radius = None):
@@ -91,11 +108,4 @@ class PathFollowStrict:
         if np.linalg.norm(np.asarray(config) - self.path[self.current_edge + 1]) < cutoff_radius:
             self.current_edge += 1
 
-    def getPointFromT(self,edge_num, t):
-        if edge_num >= len(self.path_edges):
-            return np.array(self.path_edges[-1][1])
-        p1 = np.asarray(self.path_edges[edge_num][0])
-        p2 = np.asarray(self.path_edges[edge_num][1])
-
-        return (1-t) * p1 + t * p2
 

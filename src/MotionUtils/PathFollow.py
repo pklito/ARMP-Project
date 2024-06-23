@@ -39,9 +39,8 @@ def getEdgeProjection(config, edge):
 def getClampedTarget(point, target, lookahead_distance):
     target_vector = np.asarray(target) - point
     target_distance = np.linalg.norm(target_vector)
-    if target_distance <= 0.001:
+    if target_distance <= lookahead_distance:
         return target
-
     return point + lookahead_distance * target_vector / target_distance
 
 def getPointFromT(path ,edge_num, t):

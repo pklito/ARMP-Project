@@ -54,7 +54,7 @@ def get_ball_position(color_image):
 print("initializing Robots")
 camera = CameraStreamer()
 signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame, camera))
-task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
+task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
 pid_controller_x = PID(Kp=2, Ki=0, Kd=0.0)

@@ -85,11 +85,3 @@ class CameraStreamer:
         finally:
             self.stop()
             cv2.destroyAllWindows()
-
-    def stream_frames(self, color_image, depth_colormap):
-        if color_image is not None and depth_colormap is not None:
-            images = np.hstack((color_image, depth_colormap))
-            cv2.imshow('RealSense Color and Depth Stream', images)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                self.stop()
-                cv2.destroyAllWindows()

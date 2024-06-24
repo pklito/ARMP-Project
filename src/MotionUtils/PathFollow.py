@@ -93,12 +93,14 @@ class PathFollowStrict:
         self._ret_target_t = target_t # For returning
         return target, self.current_edge, target_t
 
-    def getClampedLookaheadConfig(self, config, lookahead_distance = None):
+    def getClampedLookaheadConfig(self, config, lookahead_distance = None, clamp_distance = None):
         if lookahead_distance == None:
             lookahead_distance = self.PATH_LOOKAHEAD
+        if clamp_distance is None:
+            clamp_distance = lookahead_distance
 
         target_conf, _, _ = self.getLookaheadData(config,lookahead_distance)
-        return getClampedTarget(config, target_conf, lookahead_distance)
+        return getClampedTarget(config, target_conf, clamp_distance)
 
     #Changes self
     def updateCurrentEdge(self, config, cutoff_radius = None):

@@ -21,7 +21,7 @@ class RTDERobot:
     watchdog = None
     con = None
 
-    def __init__(self, ROBOT_HOST = "192.168.0.11", ROBOT_PORT = 30004, config_filename = "control_loop_configuration.xml"):
+    def __init__(self, ROBOT_HOST = "192.168.0.12", ROBOT_PORT = 30004, config_filename = "control_loop_configuration.xml"):
         # Load config files
         try:
             conf = rtde_config.ConfigFile(config_filename)

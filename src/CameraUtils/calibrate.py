@@ -3,6 +3,10 @@ import cv2
 import os
 import glob
 
+"""
+This python file takes some of the images from chessboard/*.png and saves dist.npy, mtx.npy
+these are matrices that are useful for camera intrinsics
+"""
 if __name__ == '__main__':
    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 

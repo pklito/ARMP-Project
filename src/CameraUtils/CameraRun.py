@@ -76,7 +76,7 @@ def run_object_detection(camera):
                     center_y = (y1 + y2) // 2
                     depth_value = depth_frame.get_distance(center_x, center_y)
                     distance_meters = depth_value * 1000  # Convert to millimeters
-                    camera_world_coords = get_world_position_from_camera(center_x, center_y)
+                    camera_world_coords = get_world_position_from_camera(center_x, center_y, depth_frame_input=depth_frame)
 
                     if bbox in object_bounding_boxes:
                         color = (0, 255, 0)  # Green for ball
@@ -98,3 +98,6 @@ def run_object_detection(camera):
         finally:
             camera.stop()
             cv2.destroyAllWindows()
+
+def drawBothFrames(camera):
+    camera.stream()

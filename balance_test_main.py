@@ -90,7 +90,7 @@ while keep_moving:
     current_task_config = task_state.target_q
     current_cam_config = cam_state.target_q
 
-    ball_position = get_ball_position(color_image)
+    ball_position = get_ball_position(color_image,DEBUG=True)
     error = (0,0)
     if ball_position is None:
         camera_failed_counter += 1

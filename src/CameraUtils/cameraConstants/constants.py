@@ -13,6 +13,6 @@ HEIGHT = 360
 FOV_X = 70.7495
 FOV_Y = 43.5411
 
-CAMERA_DIST_COEFF = np.load("dist.npy")
-CAMERA_MATRIX = np.load("mtx.npy")
+CAMERA_DIST_COEFF = np.load("src/cameraUtils/cameraConstants/dist.npy")
+CAMERA_MATRIX = np.load("src/cameraUtils/cameraConstants/mtx.npy")
 CAMERA_MATRIX_INV = np.linalg.inv(CAMERA_MATRIX)

@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import time
-from cameraConstants.constants import *
+from .cameraConstants.constants import *
 
 
 # ARUCO_DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)

@@ -7,7 +7,7 @@ import signal
 import sys
 import cv2.aruco as aruco
 from PIL import Image
-from localization import *
+from src.CameraUtils.localization import *
 
 def signal_handler(sig, frame, cam):
     #print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")

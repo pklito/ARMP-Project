@@ -5,6 +5,7 @@ from math import fmod
 from collections import deque
 from simple_pid import PID
 import matplotlib.pyplot as plt
+import sys
 
 # Append the parent directory of the current script's directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -2,18 +2,21 @@ import sys
 import os
 
 # Append the parent directory of the current script's directory to sys.path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.MotionUtils.motionConstants.constants import *
 from src.Robot.RTDERobot import *
 import src.MotionUtils.PathFollow as PathFollow
 
+"""Path follower that maintains the camera runs the same path points as the task robot.
+    Requires both robots to use 'rtde_synced_servoj.urp'"""
 task_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
                [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
-               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
+               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0],
+               [0.07, -1.94, 1.91, -2.97, -0.85, -0.16]]
 
 camera_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
                [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
-               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0]]
+               [0.08, -2.13, 0.97, -1.99, 0.1, -0.0],
+               [-0.9, -2.62, 0.77, -1.55, 0.99, 0.0]]
 
 task_follower = PathFollow.PathFollowStrict(task_path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
 
@@ -36,17 +39,21 @@ while keep_moving:
         print("Robot ", "task (or both)" if not task_state else "cam", " is not on!")
         break
 
-    task_robot.sendWatchdog(1)
-    camera_robot.sendWatchdog(1)
-
     # Wait for both robots to say they are waiting to start. (the programs are running)
-    if (not task_state.output_int_register_0 or not cam_state.output_int_register_0) and not has_started:
+    if (task_state.output_int_register_0 != 2 or cam_state.output_int_register_0 !=2) and not has_started:
+        task_robot.sendWatchdog(1)
+        camera_robot.sendWatchdog(1)
+
         timer_print += 1
         if timer_print % 120 == 1:
-            print(" waiting for ", "[task robot]" if not task_state.output_int_register_0 else "", " [camera_robot]" if not cam_state.output_int_register_0 else "")
+            print(" waiting for ", "[task robot]" if task_state.output_int_register_0 != 2 else "", " [camera_robot]" if cam_state.output_int_register_0 != 2 else "")
             print("task config:", [round(q,2) for q in task_state.target_q])
             print("camera config:", [round(q,2) for q in cam_state.target_q])
     else:
+        # Running!
+        task_robot.sendWatchdog(2)
+        camera_robot.sendWatchdog(2)
+
         has_started = True
 
     # Has started ignores the flags once we are running ( once we do, the robots are no longer "waiting to start" )

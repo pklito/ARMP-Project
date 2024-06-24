@@ -8,10 +8,11 @@ import matplotlib.pyplot as plt
 import sys
 
 # Append the parent directory of the current script's directory to sys.path
-from src.CameraUtils.CameraStreamer import *
+from src.CameraUtils.CameraStreamer import CameraStreamer, signal
 from src.Robot.RTDERobot import *
 from src.CameraUtils.localization import get_aruco_corners, get_object, getPixelOnPlane, get_obj_pxl_points
 from src.CameraUtils.cameraConstants.constants import *
+from src.CameraUtils.CameraFunctions import *
 
 
 debug_plot = []

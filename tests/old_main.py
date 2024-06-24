@@ -32,6 +32,7 @@ from simple_pid import PID
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.CameraUtils.CameraStreamer import *
 from src.Robot.RTDERobot import *
+from src.CameraUtils.CameraFunctions import *
 
 
 # Config

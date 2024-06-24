@@ -17,31 +17,12 @@ from src.CameraUtils.CameraFunctions import *
 
 debug_plot = []
 
-def my_signal_handler(sig, frame, plot, cam):
-    #print("Ctrl-C detected. Stopping camera stream and closing OpenCV windows...")
-    print("plot: ", plot)
-    cam.stop()
-    cv2.destroyAllWindows()
-    times = [point[0] for point in debug_plot]
-    errors = [point[1] for point in debug_plot]
-
-    # Create the scatter plot
-    plt.scatter(times, errors)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Error')
-    plt.title('Time vs Error')
-    plt.grid(True)
-
-    # Show the plot
-    plt.show()
-    sys.exit(0)
-
 DEBUG = True
 
 
 print("initializing Robots")
-camera = CameraStreamer()
-signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot))
+camera = CameraStreamer(no_depth=True)
+# signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot))
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
@@ -61,7 +42,7 @@ not_started = True
 start_time = time()
 initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 camera_failed_counter = 0
-signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot, camera)) # may not work properly
+# signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot, camera)) # may not work properly
 while keep_moving:
     color_image, _, _, _, _, Is_image_new = camera.get_frames()
     task_state = task_robot.getState()

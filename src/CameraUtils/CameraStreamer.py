@@ -49,18 +49,21 @@ class CameraStreamer:
             with self.lock:
                 if self.no_depth:
                     self.depth_frame = None
+                    self.depth_image = None
+                    self.depth_colormap = None
+                    self.depth_intrinsics = None
                 else:
                     self.depth_frame = frames.get_depth_frame()
+                    self.depth_image = np.asanyarray(self.depth_frame.get_data())
+                    self.depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(self.depth_image, alpha=0.03), cv2.COLORMAP_JET)
+                    self.depth_intrinsics = self.depth_frame.profile.as_video_stream_profile().intrinsics
 
                 color_frame = frames.get_color_frame()
 
                 if (not self.depth_frame and not self.no_depth) or (not color_frame):
                     continue
 
-                self.depth_image = np.asanyarray(self.depth_frame.get_data())
-                self.depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(self.depth_image, alpha=0.03), cv2.COLORMAP_JET)
                 self.color_image = np.asanyarray(color_frame.get_data())
-                self.depth_intrinsics = self.depth_frame.profile.as_video_stream_profile().intrinsics
                 self.is_new = True
 
     def get_frames(self):

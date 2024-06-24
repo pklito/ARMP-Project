@@ -24,3 +24,4 @@ Our next goals are:
 - Ailing sudden jitters and shakes the robot makes when it is scared and hardly sees the ball
 - improving the balancing PID quite a bit more.
 
+Work hours: 16:35 - 20:58

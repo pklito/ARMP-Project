@@ -5,6 +5,7 @@ import os
 from src.MotionUtils.motionConstants.constants import *
 from src.Robot.RTDERobot import *
 import src.MotionUtils.PathFollow as PathFollow
+import numpy as np
 
 """Path follower that maintains the camera runs the same path points as the task robot.
     Requires both robots to use 'rtde_synced_servoj.urp'"""
@@ -14,7 +15,7 @@ task_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
                [0.07, -1.94, 1.91, -2.97, -0.85, -0.16]]
 
 camera_path = [[0.0, -1.57, 0.0, -1.57, 0.0, 0.0],
-               [0.0, -1.97, 0.0, -0.91, -0.98, -0.0],
+               [0.75, -2.59, 0.77, -1.55, 0.99, 0.0],
                [0.08, -2.13, 0.97, -1.99, 0.1, -0.0],
                [-0.9, -2.62, 0.77, -1.55, 0.99, 0.0]]
 
@@ -25,6 +26,14 @@ camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configurat
 
 def toView(conf, end = "\n"):
     return [round(a, 2) for a in conf]
+
+# TEMP
+def shortenLookahead(lookahead, other_robot_loc, other_robot_target):
+    """decrease lookahead based on the other robots position
+       [!] DO NOT DECREASE CLAMP!!! otherwise both robots will simply deadlock"""
+    other_distance_squared = np.dot(other_robot_loc - other_robot_target, other_robot_loc - other_robot_target)
+    shorten = 0.75 / (other_distance_squared + 0.001)
+    return PathFollow.clamp(shorten * lookahead ,0 , lookahead)
 
 
 timer_print = 0
@@ -67,7 +76,8 @@ while keep_moving:
     cam_lookahead_config = PathFollow.getClampedTarget(current_cam_config, PathFollow.getPointFromT(camera_path, _task_target_edge, _task_target_t), TASK_PATH_LOOKAHEAD)
     camera_robot.sendConfig(cam_lookahead_config)
     # Follow task path
-    task_lookahead_config, target_edge, target_t = task_follower.getLookaheadData(current_task_config)
+    shortened_lookahead = shortenLookahead(TASK_PATH_LOOKAHEAD, current_cam_config, cam_lookahead_config)
+    task_lookahead_config, target_edge, target_t = task_follower.getLookaheadData(current_task_config,lookahead_distance=shortened_lookahead)
     task_follower.updateCurrentEdge(current_task_config)
     task_robot.sendConfig(PathFollow.getClampedTarget(current_task_config, task_lookahead_config, TASK_PATH_LOOKAHEAD))
 

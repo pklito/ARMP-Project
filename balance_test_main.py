@@ -26,10 +26,10 @@ camera = CameraStreamer(no_depth=True)
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
-pid_controller_x = PID(Kp=0.5, Ki=0, Kd=0.5)
+pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.321)
 pid_controller_x.setpoint = 0
 
-pid_controller_y = PID(Kp=0.3, Ki=0, Kd=0.3)
+pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.16)
 pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)
@@ -48,6 +48,10 @@ while keep_moving:
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
 
+    if not task_state or not cam_state:
+        print("robot disconnected!")
+        break
+
     if not task_state.output_int_register_0:
         print("Not started yet", [round(q,2) for q in task_state.target_q])
         continue
@@ -60,7 +64,7 @@ while keep_moving:
     camera_robot.sendWatchdog(1)
 
     if not Is_image_new:
-        print("Old image!")
+        #print("Old image!")
         continue
     if color_image is None or color_image.size == 0:
         continue
@@ -71,13 +75,13 @@ while keep_moving:
     current_task_config = task_state.target_q
     current_cam_config = cam_state.target_q
 
-    ball_position = get_ball_position(color_image,DEBUG=True)
+    ball_position = get_ball_position(color_image,DEBUG=False)
     error = (0,0)
     if ball_position is None:
         camera_failed_counter += 1
         if camera_failed_counter < CAMERA_FAILED_MAX:
             continue
-        print("camera failed for ", camera_failed_counter, " frames")
+        #print("camera failed for ", camera_failed_counter, " frames")
     else:
         camera_failed_counter = 0
         error = ball_position - plate_center
@@ -87,5 +91,5 @@ while keep_moving:
     pos = initial_pos.copy()
     pos[5] += pid_controller_x(-error[1])
     pos[3] += pid_controller_y(-error[0])
-    print([round(a,3) for a in error])
+    #print([round(a,3) for a in error])
     task_robot.sendConfig(pos)

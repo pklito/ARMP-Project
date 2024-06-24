@@ -1,0 +1,26 @@
+24/06/2024
+
+Todays goals were optimizing the speed of the code.
+We had felt in the previous session that the robot reacts to the ball too slowly.
+We ran a simplified test at the start of the project that seemed to react at a decent time,
+so we knew there is some improvement we could do on our end.
+
+Our options were A. The PID isn't tuned well, which gives the impression that the reaction is too slow,
+B. the solvePNP steps, ball recognition steps are just unoptimized spagetti. or C. the realsense pipeline is just slow.
+
+We found several hurt points that significantly improved performance today.
+First, we bounded our streams framerate to 30. uncapping this decreased the amount of loops where we use the same frame.
+Secondly, we added a flag which is only on the first time we take the frames from the camera thread, and if it's off, we simply continue. This tremendously improved performance. we were no longer wasting runtime loops on old images.
+
+We also reorganized all of the code and stripped classes down to their useful core, something we should have done a lot sooner.
+
+
+Looking forward, we are considering performance boosts by turning off streaming the depth feed, since our current algorithm doesn't use it. We are also considering looking deeper into the stream configuration and the resolution for further improvements. We also haven't fully looked into the speed of our vision implementations, which might still be obtuse(? slow).
+
+
+Our next goals are:
+- balancing along a line, and then more complicated paths
+- improving plate recognition at sharper angles by placing arucos on the sides
+- Ailing sudden jitters and shakes the robot makes when it is scared and hardly sees the ball
+- improving the balancing PID quite a bit more.
+

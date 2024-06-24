@@ -82,7 +82,7 @@ for index, task_config, cam_config in enumerate(zip(ur3e_path, ur5e_path)):
     while (index > 0) and ((dist(task_robot.getj(), task_config) > 0.1) or (dist(camera_robot.getj(), cam_config) > 0.1)):
             pass
 
-    color_image, _, _, _, _ = camera.get_frames()
+    color_image, _, _, _, _, is_new_image = camera.get_frames()
 
     if color_image is None or color_image.size == 0:
         continue

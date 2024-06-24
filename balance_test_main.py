@@ -99,7 +99,7 @@ initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 count = 0
 signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot, camera)) # may not work properly
 while keep_moving:
-    color_image, _, _, _, _ = camera.get_frames()
+    color_image, _, _, _, _, _ = camera.get_frames()
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
 

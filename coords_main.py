@@ -26,7 +26,7 @@ def get_world_position_from_buffers(pixel_x, pixel_y, depth_frame, depth_intrins
     return np.array(ball_position)
 
 def get_position():
-    color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
+    color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
     if color_image is None or depth_image is None:
         # print("None Frames")
         return None  # Return None to indicate an error state

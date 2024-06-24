@@ -37,6 +37,7 @@ class CameraStreamer:
         self.depth_frame = None
         self.depth_colormap = None
         self.depth_intrinsics = None
+        self.is_new = False
 
     def collect_frames(self):
         while True:
@@ -52,16 +53,19 @@ class CameraStreamer:
                 self.depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(self.depth_image, alpha=0.03), cv2.COLORMAP_JET)
                 self.color_image = np.asanyarray(color_frame.get_data())
                 self.depth_intrinsics = self.depth_frame.profile.as_video_stream_profile().intrinsics
+                self.is_new = True
 
     def get_frames(self):
         with self.lock:
-            color_image = (self.color_image).copy() if self.color_image is not None else None
-            depth_image = (self.depth_image).copy() if self.depth_image is not None else None
-            depth_frame = (self.depth_frame)
-            depth_colormap = (self.depth_colormap)
-            depth_intrinsics = (self.depth_intrinsics)
+            color_image = self.color_image
+            depth_image = self.depth_image
+            depth_frame = self.depth_frame
+            depth_colormap = self.depth_colormap
+            depth_intrinsics = self.depth_intrinsics
+            was_new = self.is_new
+            self.is_new = False
 
-        return color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics
+        return color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, was_new
 
 
     def stop(self):
@@ -71,7 +75,7 @@ class CameraStreamer:
     def stream(self):
         try:
             while True:
-                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = self.get_frames()
+                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = self.get_frames()
                 if color_image is not None and depth_colormap is not None:
                     images = np.hstack((color_image, depth_colormap))
                     cv2.imshow('RealSense Color and Depth Stream', images)

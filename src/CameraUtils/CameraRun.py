@@ -6,7 +6,7 @@ from src.CameraUtils.CameraFunctions import detect_ball, detect_object, get_worl
 def localization_detection(camera):
         try:
             while True:
-                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
+                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
                 if color_image is None or depth_image is None:
                     continue
 
@@ -59,7 +59,7 @@ def localization_detection(camera):
 def run_object_detection(camera):
         try:
             while True:
-                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics = camera.get_frames()
+                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
 
                 if color_image is None or depth_image is None:
                     continue

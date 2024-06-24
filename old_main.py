@@ -58,7 +58,7 @@ pid_controller_y.setpoint = 0
 camera = CameraStreamer()
 
 def get_error():
-    color_image, depth_image, depth_frame, depth_map = camera.get_frames()
+    color_image, depth_image, depth_frame, depth_map, _, _ = camera.get_frames()
     if color_image.size == 0 or depth_image.size == 0:
         print("Can't receive frame (stream end?).")
         return None  # Return None to indicate an error state

@@ -21,7 +21,7 @@ class CameraStreamer:
         self.pipeline = rs.pipeline()
         config = rs.config()
         config.enable_stream(rs.stream.depth, self.WIDTH, self.HEIGHT, rs.format.z16, 30)
-        config.enable_stream(rs.stream.color, self.WIDTH, self.HEIGHT, rs.format.bgr8, 30)
+        config.enable_stream(rs.stream.color, self.WIDTH, self.HEIGHT, rs.format.bgr8, 0)
         self.pipeline.start(config)
 
         # Create a lock to synchronize access to the frames

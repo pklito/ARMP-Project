@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import sys
 
 # Append the parent directory of the current script's directory to sys.path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.CameraUtils.CameraStreamer import *
 from src.Robot.RTDERobot import *
 from src.CameraUtils.localization import get_aruco_corners, get_object, getPixelOnPlane, get_obj_pxl_points

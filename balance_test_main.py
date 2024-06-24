@@ -53,15 +53,17 @@ pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)
 
+CAMERA_FAILED_MAX = 5
+
 print("start!")
 keep_moving = True
 not_started = True
 start_time = time()
 initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
-count = 0
+camera_failed_counter = 0
 signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot, camera)) # may not work properly
 while keep_moving:
-    color_image, _, _, _, _, _ = camera.get_frames()
+    color_image, _, _, _, _, Is_image_new = camera.get_frames()
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
 
@@ -76,6 +78,9 @@ while keep_moving:
     task_robot.sendWatchdog(1)
     camera_robot.sendWatchdog(1)
 
+    if not Is_image_new:
+        print("Old image!")
+        continue
     if color_image is None or color_image.size == 0:
         continue
 
@@ -86,9 +91,16 @@ while keep_moving:
     current_cam_config = cam_state.target_q
 
     ball_position = get_ball_position(color_image)
+    error = (0,0)
     if ball_position is None:
-        continue
-    error = ball_position - plate_center
+        camera_failed_counter += 1
+        if camera_failed_counter < CAMERA_FAILED_MAX:
+            continue
+        print("camera failed for ", camera_failed_counter, " frames")
+    else:
+        camera_failed_counter = 0
+        error = ball_position - plate_center
+
     debug_plot.append((time()-start_time, error[0]))
 
     pos = initial_pos.copy()

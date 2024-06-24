@@ -14,7 +14,7 @@ from src.Robot.RTDERobot import *
 
 print("here")
 camera = CameraStreamer()
-task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
+task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
 def get_world_position_from_buffers(pixel_x, pixel_y, depth_frame, depth_intrinsic):

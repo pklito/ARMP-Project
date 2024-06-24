@@ -37,7 +37,7 @@ for conf in path:
     conf[5] = initial_pos[5]
 
 pathfollower = PathFollowStrict(path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
-robot = RTDERobot("192.168.0.11",config_filename="../Robot/control_loop_configuration.xml")
+robot = RTDERobot("192.168.0.12",config_filename="../Robot/control_loop_configuration.xml")
 
 keep_moving = True
 while keep_moving:

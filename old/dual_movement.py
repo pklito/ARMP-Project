@@ -22,12 +22,12 @@ def my_signal_handler(sig, frame, cam):
 
 print("initializing Robots")
 camera = CameraStreamer()
-# task_robot = RTDERobot("192.168.0.11",config_filename="control_loop_configuration.xml")
+# task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 # camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 task_robot, camera_robot = None, None
 while task_robot is None:
     try:
-        task_robot = Robot('192.168.0.11', use_rt=True)
+        task_robot = Robot('192.168.0.12', use_rt=True)
     except:
         print('Cannot connect to Task robot. Retrying...')
         sleep(5)

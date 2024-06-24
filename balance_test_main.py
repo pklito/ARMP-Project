@@ -37,44 +37,6 @@ def my_signal_handler(sig, frame, plot, cam):
     sys.exit(0)
 
 DEBUG = True
-def get_ball_position(color_image):
-    if color_image is None or color_image.size == 0:
-        return None
-
-    positions = detect_ball(color_image)
-    if len(positions) == 0:
-        if DEBUG:
-            print("Ball not detected")
-        return None
-
-    ball_center, radius = positions[0]
-
-    ids, corners = get_aruco_corners(color_image)
-    if ids is None:
-        if DEBUG:
-            print("aruco corners not detected")
-        return None
-
-    object_pts, pixel_pts = get_obj_pxl_points([a[0] for a in ids.tolist()], corners)
-
-    if(len(object_pts) != len(pixel_pts)):
-        if DEBUG:
-            print("[Error] obj points, pixel points, ids: ", len(object_pts), len(pixel_pts), ids.tolist())
-        return None
-
-    if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
-        pixel_pts = pixel_pts[:, 0, :]
-
-    if object_pts.size == 0 or pixel_pts.size == 0:
-        return None
-
-    ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
-
-    if ret:
-        return getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
-    if DEBUG:
-            print("solvePNP failed!")
-    return None
 
 
 print("initializing Robots")

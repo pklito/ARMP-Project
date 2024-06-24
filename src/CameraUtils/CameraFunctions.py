@@ -2,6 +2,8 @@
 import cv2
 import numpy as np
 import pyrealsense2 as rs
+from src.CameraUtils.cameraConstants.constants import CAMERA_MATRIX, CAMERA_DIST_COEFF
+from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
 
 """These are functions which use the color buffer that do image recognition
    Namely, aruco detection, ball detection, plate detection, etc."""
@@ -126,3 +128,43 @@ def get_world_position_from_camera(pixel_x, pixel_y, depth_frame_input):
         # Convert pixel coordinates to world coordinates (from the Camera's Perspective!)
         ball_position = rs.rs2_deproject_pixel_to_point(depth_intrinsics, [pixel_x, pixel_y], depth)
         return np.array(ball_position)
+
+
+def get_ball_position(color_image, DEBUG = False):
+    if color_image is None or color_image.size == 0:
+        return None
+
+    positions = detect_ball(color_image)
+    if len(positions) == 0:
+        if DEBUG:
+            print("Ball not detected")
+        return None
+
+    ball_center, radius = positions[0]
+
+    ids, corners = get_aruco_corners(color_image)
+    if ids is None:
+        if DEBUG:
+            print("aruco corners not detected")
+        return None
+
+    object_pts, pixel_pts = get_obj_pxl_points([a[0] for a in ids.tolist()], corners)
+
+    if(len(object_pts) != len(pixel_pts)):
+        if DEBUG:
+            print("[Error] obj points, pixel points, ids: ", len(object_pts), len(pixel_pts), ids.tolist())
+        return None
+
+    if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
+        pixel_pts = pixel_pts[:, 0, :]
+
+    if object_pts.size == 0 or pixel_pts.size == 0:
+        return None
+
+    ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
+
+    if ret:
+        return getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
+    if DEBUG:
+            print("solvePNP failed!")
+    return None

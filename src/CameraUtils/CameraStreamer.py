@@ -13,14 +13,18 @@ def signal_handler(sig, frame, cam):
 
 
 class CameraStreamer:
-    def __init__(self):
+    def __init__(self, no_depth=True):
         self.WIDTH = 640
         self.HEIGHT = 360
         # Initialize RealSense camera pipeline
         # self.cap = cv2.VideoCapture(2) # Intel's Realsense Camera is on my pc
         self.pipeline = rs.pipeline()
         config = rs.config()
-        config.enable_stream(rs.stream.depth, self.WIDTH, self.HEIGHT, rs.format.z16, 30)
+        self.no_depth = no_depth
+        if no_depth:
+            config.disable_stream(rs.stream.depth)
+        else:
+            config.enable_stream(rs.stream.depth, self.WIDTH, self.HEIGHT, rs.format.z16, 30)
         config.enable_stream(rs.stream.color, self.WIDTH, self.HEIGHT, rs.format.bgr8, 0)
         self.pipeline.start(config)
 
@@ -43,10 +47,14 @@ class CameraStreamer:
         while True:
             frames = self.pipeline.wait_for_frames()
             with self.lock:
-                self.depth_frame = frames.get_depth_frame()
+                if self.no_depth:
+                    self.depth_frame = None
+                else:
+                    self.depth_frame = frames.get_depth_frame()
+
                 color_frame = frames.get_color_frame()
 
-                if not self.depth_frame or not color_frame:
+                if (not self.depth_frame and not self.no_depth) or (not color_frame):
                     continue
 
                 self.depth_image = np.asanyarray(self.depth_frame.get_data())

@@ -15,8 +15,8 @@ def getEdgeProjection(config, edge):
 
     # Get a vector of the given path edge
     edge_vector = p2 - p1
-    edge_length = np.linalg.norm(edge_vector)
-    if edge_length <= 0.001:
+    edge_length_squared = np.dot(edge_vector,edge_vector)
+    if edge_length_squared <= 0.001:
         return p2, 1
 
     # Vector from path start to current point
@@ -24,7 +24,7 @@ def getEdgeProjection(config, edge):
 
     # T is the fraction along the path the projection is on.
     t_distance = edge_vector.dot(point_vector)
-    t = t_distance / (edge_length**2)
+    t = t_distance / edge_length_squared
 
     projection = None
     if(t < 0):

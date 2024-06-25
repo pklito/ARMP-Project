@@ -28,12 +28,20 @@ def calculateShorterLookahead(lookahead, other_robot_loc, other_robot_target):
 
 task_path = [[-0.129, -1.059, -1.229, -0.875, 1.716, 1.523],
              [0.3, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [-0.3, -1.059, -1.229, -0.875, 1.716, 1.523],
+             [-0.4, -1.059, -1.229, -0.875, 1.716, 1.523],
+             [0.3, -1.059, -1.229, -0.875, 1.716, 1.523],
+             [-0.4, -1.059, -1.229, -0.875, 1.716, 1.523],
+             [0.3, -1.059, -1.229, -0.875, 1.716, 1.523],
+             [-0.4, -1.059, -1.229, -0.875, 1.716, 1.523],
              [0.3, -1.059, -1.229, -0.875, 1.716, 1.523]]
 
 camera_path = [[-0.01, -1.653, 0.0, -0.572, -1.399, 0.0],
                [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [0.3, -1.653, 0.0, -0.572, -1.399, 0.0],
+               [0.4, -1.653, 0.0, -0.572, -1.399, 0.0],
+               [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0],
+               [0.4, -1.653, 0.0, -0.572, -1.399, 0.0],
+               [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0],
+               [0.4, -1.653, 0.0, -0.572, -1.399, 0.0],
                [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0]]
 
 SLOW_LOOKAHEAD = 0.1
@@ -122,11 +130,10 @@ while keep_moving:
 
     # # Get lookaheads # #
     cam_lookahead_config = PathFollow.getClampedTarget(current_cam_config, PathFollow.getPointFromT(camera_path, _task_target_edge, _task_target_t), SLOW_CLAMP)
-    shortened_lookahead = calculateShorterLookahead(TASK_PATH_LOOKAHEAD, current_cam_config, cam_lookahead_config)
-
+    shortened_lookahead = calculateShorterLookahead(SLOW_LOOKAHEAD, current_cam_config, cam_lookahead_config)
+    if camera_failed_counter > CAMERA_FAILED_MAX:
+        shortened_lookahead = 0
     task_lookahead_config, target_edge, target_t = task_follower.getLookaheadData(current_task_config,lookahead_distance=shortened_lookahead)
-    print("shortened distance", shortened_lookahead)
-    print("configs", task_lookahead_config, toView(current_task_config))
     _task_target_edge = target_edge
     _task_target_t = target_t
 
@@ -135,9 +142,9 @@ while keep_moving:
     current_ideal_task_config = current_task_config.copy()  # ignore the pid joints.
     current_ideal_task_config[3] = task_lookahead_config[3]
     current_ideal_task_config[5] = task_lookahead_config[5]
-    task_follower.updateCurrentEdge(current_task_config)
+    task_follower.updateCurrentEdge(current_ideal_task_config)
 
-    task_config = PathFollow.getClampedTarget(current_task_config, task_lookahead_config, SLOW_CLAMP) #ideal? maybe real?
+    task_config = PathFollow.getClampedTarget(current_ideal_task_config, task_lookahead_config, SLOW_CLAMP).copy() #ideal? maybe real?
     task_config[3] += last_offsets[0]
     task_config[5] += last_offsets[1]
 

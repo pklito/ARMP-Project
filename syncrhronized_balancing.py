@@ -41,8 +41,9 @@ SLOW_EDGE_CUTOFF = 0.05
 SLOW_CLAMP = 0.1
 
 task_follower = PathFollow.PathFollowStrict(task_path, SLOW_LOOKAHEAD, SLOW_EDGE_CUTOFF)
-print("initializing Robots")
+print("Starting Camera")
 camera = CameraStreamer(no_depth=True)
+print("Initializing robots")
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
@@ -63,6 +64,7 @@ keep_moving = True
 has_started = False
 _task_target_t = 0
 _task_target_edge = 0
+camera_failed_counter = 0
 # initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 
 last_offsets = (0,0)
@@ -123,17 +125,19 @@ while keep_moving:
     shortened_lookahead = calculateShorterLookahead(TASK_PATH_LOOKAHEAD, current_cam_config, cam_lookahead_config)
 
     task_lookahead_config, target_edge, target_t = task_follower.getLookaheadData(current_task_config,lookahead_distance=shortened_lookahead)
-
+    print("shortened distance", shortened_lookahead)
+    print("configs", task_lookahead_config, toView(current_task_config))
     _task_target_edge = target_edge
     _task_target_t = target_t
 
+    print("path:", _task_target_edge, _task_target_t)
     # # Follow the paths. # #
     current_ideal_task_config = current_task_config.copy()  # ignore the pid joints.
     current_ideal_task_config[3] = task_lookahead_config[3]
     current_ideal_task_config[5] = task_lookahead_config[5]
-    task_follower.updateCurrentEdge(current_ideal_task_config)
+    task_follower.updateCurrentEdge(current_task_config)
 
-    task_config = PathFollow.getClampedTarget(current_ideal_task_config, task_lookahead_config, SLOW_CLAMP) #ideal? maybe real?
+    task_config = PathFollow.getClampedTarget(current_task_config, task_lookahead_config, SLOW_CLAMP) #ideal? maybe real?
     task_config[3] += last_offsets[0]
     task_config[5] += last_offsets[1]
 

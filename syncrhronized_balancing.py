@@ -16,7 +16,7 @@ def toView(conf, end = "\n"):
     return [round(a, 2) for a in conf]
 
 # TEMP
-def shortenLookahead(lookahead, other_robot_loc, other_robot_target):
+def calculateShorterLookahead(lookahead, other_robot_loc, other_robot_target):
     """decrease lookahead based on the other robots position
        [!] DO NOT DECREASE CLAMP!!! otherwise both robots will simply deadlock"""
     other_distance_squared = np.dot(other_robot_loc - other_robot_target, other_robot_loc - other_robot_target)
@@ -65,6 +65,7 @@ _task_target_t = 0
 _task_target_edge = 0
 # initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 
+last_offsets = (0,0)
 while keep_moving:
     color_image, _, _, _, _, Is_image_new = camera.get_frames()
     task_state = task_robot.getState()
@@ -95,40 +96,46 @@ while keep_moving:
     if not has_started:
         continue
 
-    if not Is_image_new:
-        print("Old image!")
-        continue
-    if color_image is None or color_image.size == 0:
-        continue
-
     current_task_config = task_state.target_q
     current_cam_config = cam_state.target_q
 
-    ball_position = get_ball_position(color_image,DEBUG=False)
-    error = (0,0)
-    if ball_position is None:
-        camera_failed_counter += 1
-        if camera_failed_counter < CAMERA_FAILED_MAX:
-            continue
-        print("camera failed for ", camera_failed_counter, " frames")
+    # We want to read a new ball reading. but skip if the image is old, the ball isn't seen, and many other reasons.
+    error = None
+    if Is_image_new and color_image is not None and color_image.size != 0:
+        ball_position = get_ball_position(color_image,DEBUG=False)
+        if ball_position is None:           # no point in reading screen
+            camera_failed_counter += 1
+            if camera_failed_counter > CAMERA_FAILED_MAX:
+                error = (0,0)
+        else:                               # read new position
+            camera_failed_counter = 0
+            error = ball_position - plate_center
+
+    # If we didn't get new errors, use the last offsets. else, calculate new ones
+    if error is None:
+        pass
     else:
-        camera_failed_counter = 0
-        error = ball_position - plate_center
+        #calculate new PID readings
+        last_offsets = (pid_controller_y(-error[0]), pid_controller_x(-error[1]))
 
-    # Follow camera path
+    # # Get lookaheads # #
     cam_lookahead_config = PathFollow.getClampedTarget(current_cam_config, PathFollow.getPointFromT(camera_path, _task_target_edge, _task_target_t), SLOW_CLAMP)
-    shortened_lookahead = shortenLookahead(TASK_PATH_LOOKAHEAD, current_cam_config, cam_lookahead_config)
+    shortened_lookahead = calculateShorterLookahead(TASK_PATH_LOOKAHEAD, current_cam_config, cam_lookahead_config)
 
-    # Follow task path
     task_lookahead_config, target_edge, target_t = task_follower.getLookaheadData(current_task_config,lookahead_distance=shortened_lookahead)
-    task_follower.updateCurrentEdge(current_task_config)
 
     _task_target_edge = target_edge
     _task_target_t = target_t
 
-    task_config = PathFollow.getClampedTarget(current_task_config, task_lookahead_config, SLOW_CLAMP)
-    task_config[5] += pid_controller_x(-error[1])
-    task_config[3] += pid_controller_y(-error[0])
+    # # Follow the paths. # #
+    current_ideal_task_config = current_task_config.copy()  # ignore the pid joints.
+    current_ideal_task_config[3] = task_lookahead_config[3]
+    current_ideal_task_config[5] = task_lookahead_config[5]
+    task_follower.updateCurrentEdge(current_ideal_task_config)
+
+    task_config = PathFollow.getClampedTarget(current_ideal_task_config, task_lookahead_config, SLOW_CLAMP) #ideal? maybe real?
+    task_config[3] += last_offsets[0]
+    task_config[5] += last_offsets[1]
 
     camera_robot.sendConfig(cam_lookahead_config)
     task_robot.sendConfig(task_config)

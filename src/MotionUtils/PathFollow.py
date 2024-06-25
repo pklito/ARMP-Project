@@ -17,14 +17,14 @@ def getEdgeProjection(config, edge):
     edge_vector = p2 - p1
     edge_length = np.linalg.norm(edge_vector)
     if edge_length <= 0.001:
-        return p2, 1, edge_length
+        return p2, 1
 
     # Vector from path start to current point
     point_vector = point - p1
 
     # T is the fraction along the path the projection is on.
     t_distance = edge_vector.dot(point_vector)
-    t = t_distance / edge_length
+    t = t_distance / (edge_length**2)
 
     projection = None
     if(t < 0):
@@ -33,8 +33,7 @@ def getEdgeProjection(config, edge):
         projection = p2
     else:
         projection = t*edge_vector + p1
-
-    return projection, clamp(t, 0, 1), clamp(t_distance, 0, edge_length)
+    return projection, clamp(t, 0, 1)
 
 def getClampedTarget(point, target, lookahead_distance):
     if lookahead_distance < 0.00001:
@@ -77,7 +76,7 @@ class PathFollowStrict:
         point = np.asarray(config)
         edge = self.path_edges[self.current_edge]
 
-        proj, t, t_dist = getEdgeProjection(config, edge)
+        proj, t = getEdgeProjection(config, edge)
         edge_length = np.linalg.norm(edge[1] - np.array(edge[0]))
 
         target = None

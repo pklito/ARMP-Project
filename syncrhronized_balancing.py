@@ -26,23 +26,17 @@ def calculateShorterLookahead(lookahead, other_robot_loc, other_robot_target):
 """Path follower that maintains the camera runs the same path points as the task robot.
     Requires both robots to use 'rtde_synced_servoj.urp'"""
 
-task_path = [[-0.129, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [0.3, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [-0.4, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [0.3, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [-0.4, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [0.3, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [-0.4, -1.059, -1.229, -0.875, 1.716, 1.523],
-             [0.3, -1.059, -1.229, -0.875, 1.716, 1.523]]
+task_path = [[0.3, -1.059, -1.229, -0.874, 1.716, 1.523],
+             [-0.406, -1.349, -1.227, -0.598, 1.3, 1.575],
+             [-0.619, -2.458, -1.248, 0.568, 1.566, 1.555],
+             [0.237, -1.844, -1.927, 0.597, 1.566, 1.555],
+             [0.3, -1.059, -1.229, -0.874, 1.716, 1.523]]
 
-camera_path = [[-0.01, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [0.4, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [0.4, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [0.4, -1.653, 0.0, -0.572, -1.399, 0.0],
-               [-0.3, -1.653, 0.0, -0.572, -1.399, 0.0]]
+camera_path = [[-0.03, -1.745, 0.1, -0.572, -1.753, 0.0],
+                [0.681, -1.67, 0.191, -0.733, -1.753, 0.0],
+               [1.24, -1.981, 1.089, -1.144, -1.753, 0.319],
+               [0.937, -2.381, 1.038, -0.573, -2.043, 0.445],
+               [-0.03, -1.745, 0.1, -0.572, -1.753, 0.0]]
 
 SLOW_LOOKAHEAD = 0.1
 SLOW_EDGE_CUTOFF = 0.05
@@ -55,10 +49,10 @@ print("Initializing robots")
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
-pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.321)
+pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.321,output_limits=(-0.4,0.4))
 pid_controller_x.setpoint = 0
 
-pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.16)
+pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.16,output_limits=(-0.3,0.3))
 pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)

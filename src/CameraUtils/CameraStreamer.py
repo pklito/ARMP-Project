@@ -13,7 +13,7 @@ def signal_handler(sig, frame, cam):
 
 
 class CameraStreamer:
-    def __init__(self, no_depth=True):
+    def __init__(self, no_depth=False):
         self.WIDTH = 640
         self.HEIGHT = 360
         # Initialize RealSense camera pipeline

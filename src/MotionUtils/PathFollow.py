@@ -60,7 +60,6 @@ class PathFollowStrict:
     PATH_LOOKAHEAD = 0.3
     EDGE_CUTOFF = 0.3
     current_edge = 0
-    _ret_target_t = 0
     def __init__(self, path, path_lookahead = TASK_PATH_LOOKAHEAD, EDGE_CUTOFF = TASK_EDGE_CUTOFF):
         self.path = path
         self.path_edges = [edge for edge in zip(self.path, self.path[1:])]
@@ -90,7 +89,6 @@ class PathFollowStrict:
             target_t = clamp(t + lookahead_distance / edge_length, 0, 1)
             target = getPointFromT(self.path, self.current_edge, target_t)
 
-        self._ret_target_t = target_t # For returning
         return target, self.current_edge, target_t
 
     def getClampedLookaheadConfig(self, config, lookahead_distance = None, clamp_distance = None):

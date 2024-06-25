@@ -82,8 +82,8 @@ while keep_moving:
     cam_state = camera_robot.getState()
 
     if not task_state or not cam_state:
-        print("Robot ", "task (or both)" if not task_state else "cam", " is not on!")
-        break
+        print("Robot ", "[task] " if not task_state else "", "[camera] " if not cam_state else "","is off!")
+        continue
 
     # Wait for both robots to say they are waiting to start. (the programs are running)
     if (task_state.output_int_register_0 != 2 or cam_state.output_int_register_0 !=2) and not has_started:

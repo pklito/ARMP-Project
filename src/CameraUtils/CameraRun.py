@@ -16,10 +16,9 @@ def localization_detection(camera):
 
                 positions = detect_ball(color_image)
                 if len(positions) == 0:
-                    print('No object detected!')
-                    continue
-
-                ball_center, radius = positions[0]
+                    ball_center, radius = None, None
+                else:
+                    ball_center, radius = positions[0]
 
                 ids, corners = get_aruco_corners(color_image)
                 wcpoints = (-1,-1,-1)
@@ -36,15 +35,17 @@ def localization_detection(camera):
                         ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 
                         if ret:
-                            wcpoint = getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
-                            print([round(a,3) for a in wcpoint])
+                            if ball_center is not None:
+                                wcpoint = getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
+                                print([round(a,3) for a in wcpoint])
 
                             cv2.drawFrameAxes(color_image, CAMERA_MATRIX, CAMERA_DIST_COEFF, rvec, tvec, 0.026, 2)
 
                 color = (0, 255, 0)  # Green for ball
-                cv2.circle((color_image), ball_center, radius, color, 2) # the enclosing circle
-                cv2.circle((color_image), ball_center, 2 ,color,2) # a dot in the middle of the circle
-                cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (ball_center[0], ball_center[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                if ball_center is not None:
+                    cv2.circle((color_image), ball_center, radius, color, 2) # the enclosing circle
+                    cv2.circle((color_image), ball_center, 2 ,color,2) # a dot in the middle of the circle
+                    cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (ball_center[0], ball_center[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
                 images = np.hstack((color_image, depth_colormap))
                 cv2.imshow('RealSense Stream', images)

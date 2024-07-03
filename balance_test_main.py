@@ -26,10 +26,10 @@ camera = CameraStreamer(no_depth=True)
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
-pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.321)
+pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.321,output_limits=(-0.4,0.4))
 pid_controller_x.setpoint = 0
 
-pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.16)
+pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.16,output_limits=(-0.3,0.3))
 pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)
@@ -40,7 +40,7 @@ print("start!")
 keep_moving = True
 not_started = True
 start_time = time()
-initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
+initial_pos = [-0.16, -2.78, 2.26, -2.62, -1.6, 1.56]
 camera_failed_counter = 0
 # signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot, camera)) # may not work properly
 while keep_moving:
@@ -90,6 +90,6 @@ while keep_moving:
 
     pos = initial_pos.copy()
     pos[5] += pid_controller_x(-error[1])
-    pos[3] += pid_controller_y(-error[0])
+    pos[3] += pid_controller_y(error[0])
     #print([round(a,3) for a in error])
     task_robot.sendConfig(pos)

@@ -1,7 +1,7 @@
 import src.LogGenerator
 from time import time
-a = src.LogGenerator.LogGenerator(logfile="test.log",consoleLevel=0)
-a.log("start")
+a = src.LogGenerator.LoggerGenerator(logfile="test.log",consoleLevel=0)
+a.debug("start")
 
 last_time = 0
 while True:

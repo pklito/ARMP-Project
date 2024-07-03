@@ -25,25 +25,25 @@ class Building_Blocks(object):
         self.p_bias = p_bias
         self.cost_weights = np.array([0.4, 0.3 ,0.2 ,0.1 ,0.07 ,0.05])
 
-    def generate_upright_configuration(self, atol, conf_3 = 0, conf_4 = -np.pi, conf_5 = 0):
-        conf = []
-        print("Sampling")
-        for joint, range in self.ur_params.mechanical_limits.items():
-            if joint == 3:
-                conf.append(random.uniform(conf_3 - atol, conf_3 + atol))
-            elif joint == 4:
-                conf.append(random.uniform(conf_4 - atol, conf_4 + atol))
-            elif joint == 5:
-                conf.append(random.uniform(conf_5 - atol,conf_5 + atol))
-            else:
-                conf.append(random.uniform(range[0], range[1]))
-        return conf
+    def generate_upright_configuration(self,low, high):
+        c0 = np.random.uniform(low, high)
+        c1 = np.random.uniform(low, high)
+        c2 = np.random.uniform(low, high)
 
-    def sample(self, goal_conf, atol=5e-2) -> np.array:
+        bias = (np.deg2rad(0), np.deg2rad(-2.5))
+        c3 = -(c1 + c2) + bias[1] - np.pi
+
+        c4 = np.random.choice([-np.pi/2, np.pi/2])
+
+        c5 = np.pi/2
+
+        return [c0, c1, c2, c3, c4, c5]
+
+    def sample(self, goal_conf) -> np.array:
         if random.random() < self.p_bias:
             return np.array(goal_conf)
         else:
-            conf = self.generate_upright_configuration(atol, conf_3 = 0, conf_4 = -np.pi, conf_5 = 0)
+            conf = self.generate_upright_configuration(low=(-np.pi), high=(np.pi))
             return np.array(conf)
 
     def is_in_collision(self, conf) -> bool:

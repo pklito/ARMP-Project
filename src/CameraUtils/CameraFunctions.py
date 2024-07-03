@@ -4,7 +4,8 @@ import numpy as np
 import pyrealsense2 as rs
 from src.CameraUtils.cameraConstants.constants import CAMERA_MATRIX, CAMERA_DIST_COEFF
 from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
-
+import logging
+logger = logging.getLogger("LogGenerator")
 """These are functions which use the color buffer that do image recognition
    Namely, aruco detection, ball detection, plate detection, etc."""
 def calculate_similarity(color1, color2):
@@ -137,23 +138,20 @@ def get_ball_position(color_image, DEBUG = False):
 
     positions = detect_ball(color_image)
     if len(positions) == 0:
-        if DEBUG:
-            print("Ball not detected")
+        logger.error("ball position not detected")
         return None
 
     ball_center, radius = positions[0]
-
+    logger.debug(f"Ball position: {ball_center}, radius: {radius}, total_found: {len(positions)}")
     ids, corners = get_aruco_corners(color_image)
     if ids is None:
-        if DEBUG:
-            print("aruco corners not detected")
+        logger.error("no aruco corners found")
         return None
-
+    logger.debug(f"aruco ids: {ids}")
     object_pts, pixel_pts = get_obj_pxl_points([a[0] for a in ids.tolist()], corners)
 
     if(len(object_pts) != len(pixel_pts)):
-        if DEBUG:
-            print("[Error] obj points, pixel points, ids: ", len(object_pts), len(pixel_pts), ids.tolist())
+        logger.error(f"[Error] obj points {len(object_pts)}, pixel points {len(pixel_pts)}, ids: {ids.tolist()}")
         return None
 
     if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
@@ -165,7 +163,6 @@ def get_ball_position(color_image, DEBUG = False):
     ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 
     if ret:
+        logger.error("SolvePnP failed")
         return getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
-    if DEBUG:
-            print("solvePNP failed!")
     return None

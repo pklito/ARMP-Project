@@ -6,7 +6,7 @@ import os, sys
 from tkinter import *
 from tkinter import messagebox
 from PIL import Image, ImageTk
-from CameraStreamer import CameraStreamer
+# from CameraStreamer import CameraStreamer
 """
 helpful python script for picking an appropriate mask for Ball detection.
 basically HSV color picker, from camera feed
@@ -30,9 +30,9 @@ class HSVRangeFinder:
         self.window.title('HSV Range Finder')
         self.window.resizable(0, 0)
 
-        self.wrapper = CameraStreamer()
+        # self.wrapper = CameraStreamer()
         # Initialize video capture using OpenCV
-        self.cap = self.wrapper.cap
+        self.cap = cv2.VideoCapture(2)
 
         # --- Camera Frames ---
 
@@ -349,7 +349,7 @@ class HSVRangeFinder:
     # Method to start the application
     def run(self):
         # Create an OpenCV video capture object
-        self.cap = self.wrapper.cap
+        self.cap = cv2.VideoCapture(2)
 
         # Start updating the frame
         self.update_frame()

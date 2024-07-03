@@ -3,13 +3,54 @@ import numpy as np
 from src.CameraUtils.cameraConstants.constants import *
 from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
 from src.CameraUtils.CameraFunctions import detect_arucos, detect_ball, detect_object, get_world_position_from_camera
-def localization_detection(camera):
-        try:
-            while True:
-                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
-                if color_image is None or depth_image is None:
-                    continue
-from src.CameraUtils.CameraFunctions import detect_ball, detect_object, get_world_position_from_camera
+
+def _localization_detection(camera):
+    color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
+    if color_image is None or depth_image is None:
+        return True
+
+    if color_image.size == 0 or depth_image.size == 0:
+        print("Can't receive frame (stream end?).")
+        return True
+
+    positions = detect_ball(color_image)
+    if len(positions) == 0:
+        ball_center, radius = None, None
+    else:
+        ball_center, radius = positions[0]
+
+    ids, corners = get_aruco_corners(color_image)
+    wcpoints = (-1,-1,-1)
+    if ids is not None:
+        object_pts, pixel_pts = get_obj_pxl_points([a[0] for a in ids.tolist()], corners)
+        if(len(object_pts) != len(pixel_pts)):
+            print("Error, sizes", len(object_pts),len(pixel_pts))
+        else:
+            if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
+                pixel_pts = pixel_pts[:, 0, :]
+
+            if object_pts.size == 0 or pixel_pts.size == 0:
+                return True
+            ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
+
+            if ret:
+                if ball_center is not None:
+                    wcpoint = getPixelOnPlane((ball_center[0], ball_center[1]),rvec,tvec)
+                    print([round(a,3) for a in wcpoint])
+
+                cv2.drawFrameAxes(color_image, CAMERA_MATRIX, CAMERA_DIST_COEFF, rvec, tvec, 0.026, 2)
+
+    color = (0, 255, 0)  # Green for ball
+    if ball_center is not None:
+        cv2.circle((color_image), ball_center, radius, color, 2) # the enclosing circle
+        cv2.circle((color_image), ball_center, 2 ,color,2) # a dot in the middle of the circle
+        cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (ball_center[0], ball_center[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+    images = np.hstack((color_image, depth_colormap))
+    cv2.imshow('RealSense Stream', images)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        return False
 
 def _localization_detection(camera):
     color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()

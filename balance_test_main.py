@@ -6,7 +6,7 @@ from collections import deque
 from simple_pid import PID
 import matplotlib.pyplot as plt
 import sys
-
+from src.LogGenerator import LoggerGenerator
 # Append the parent directory of the current script's directory to sys.path
 from src.CameraUtils.CameraStreamer import CameraStreamer, signal
 from src.Robot.RTDERobot import *
@@ -18,9 +18,9 @@ from src.CameraUtils.CameraFunctions import *
 debug_plot = []
 
 DEBUG = True
+logger = LoggerGenerator("debug.log", consoleLevel=10)
 
-
-print("initializing Robots")
+logger.info("Connecting to camera")
 camera = CameraStreamer(no_depth=True)
 # signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot))
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
@@ -36,11 +36,13 @@ plate_center = (0, 0, 0)
 
 CAMERA_FAILED_MAX = 5
 
-print("start!")
+logger.info("starting")
 keep_moving = True
 not_started = True
 start_time = time()
-initial_pos = [-0.16, -2.78, 2.26, -2.62, -1.6, 1.56]
+# initial_pos = [-0.16, -2.78, 2.26, -2.62, -1.6, 1.56]
+initial_pos = [3.14, -2.78, 2.26, -2.638, -1.6, 1.567]
+
 camera_failed_counter = 0
 # signal.signal(signal.SIGINT, lambda sig, frame: my_signal_handler(sig, frame, debug_plot, camera)) # may not work properly
 while keep_moving:
@@ -92,4 +94,5 @@ while keep_moving:
     pos[5] += pid_controller_x(-error[1])
     pos[3] += pid_controller_y(error[0])
     #print([round(a,3) for a in error])
+    logger.debug([round(a,3) for a in error])
     task_robot.sendConfig(pos)

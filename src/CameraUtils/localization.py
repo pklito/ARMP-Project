@@ -16,7 +16,7 @@ VERT_DISP = 23 + SIZE
 HOR_DISP = 23 + SIZE
 SQUARE_SHAPE = [(-SIZE/2, SIZE/2), (SIZE/2, SIZE/2), (SIZE/2, -SIZE/2), (-SIZE/2, -SIZE/2)]
 SHAPE = (3,4)
-ARUCO_OBJ = [[((HOR_DISP * (i) + d[0] - HOR_DISP) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*3)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
+ARUCO_OBJ = [[((HOR_DISP * (i) + d[0] - HOR_DISP*(SHAPE[0]-1)/2) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*(SHAPE[1]-1)/2)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
 
 
 ## ARUCO HELPER FUNCTIONS ##

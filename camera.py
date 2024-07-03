@@ -5,6 +5,7 @@ from src.CameraUtils.CameraStreamer import CameraStreamer
 if __name__ == "__main__":
     camera = CameraStreamer()
     # drawBothFrames(camera)
-    while True:
-        draw_arucos(camera)
+    # ret = True
+    # while ret is not None:
+    #     ret = draw_arucos(camera)
     localization_detection(camera)

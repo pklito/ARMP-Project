@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import pyrealsense2 as rs
 from src.CameraUtils.cameraConstants.constants import CAMERA_MATRIX, CAMERA_DIST_COEFF
-from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane, draw_detected_arucos
+from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
 
 """These are functions which use the color buffer that do image recognition
    Namely, aruco detection, ball detection, plate detection, etc."""
@@ -85,6 +85,8 @@ def detect_arucos(color_image):
             cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(255,0,0),2)
             key = cv2.waitKey(1)
             cv2.imshow("aruco_detected.jpg", color_image_with_markers)
+            if key == ord('q'):
+                return None, None
             return avg_center, color_image_with_markers
         else:
             print("No arucos detected")

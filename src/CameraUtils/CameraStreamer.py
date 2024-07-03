@@ -21,6 +21,7 @@ class CameraStreamer:
         self.pipeline = rs.pipeline()
         config = rs.config()
         self.no_depth = no_depth
+        self.running = True
         if no_depth:
             config.disable_stream(rs.stream.depth)
         else:
@@ -44,7 +45,7 @@ class CameraStreamer:
         self.is_new = False
 
     def collect_frames(self):
-        while True:
+        while self.running:
             frames = self.pipeline.wait_for_frames()
             with self.lock:
                 if self.no_depth:
@@ -80,6 +81,7 @@ class CameraStreamer:
 
 
     def stop(self):
+        self.running = False
         self.pipeline.stop()
         self.collect_thread.join()
 

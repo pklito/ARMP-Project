@@ -3,7 +3,6 @@ import numpy as np
 from src.CameraUtils.cameraConstants.constants import *
 from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
 from src.CameraUtils.CameraFunctions import detect_arucos, detect_ball, detect_object, get_world_position_from_camera
-
 def _localization_detection(camera):
     color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
     if color_image is None or depth_image is None:
@@ -98,17 +97,17 @@ def _localization_detection(camera):
     cv2.imshow('RealSense Stream', images)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        return False
+        camera.stop()
+        cv2.destroyAllWindows()
 
 def localization_detection(camera):
         try:
             while True:
                 ret = _localization_detection(camera)
                 if not ret:
-                    break
+                    continue
         finally:
-            camera.stop()
-            cv2.destroyAllWindows()
+            pass
 
 
 def run_object_detection(camera):

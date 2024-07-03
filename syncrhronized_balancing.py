@@ -2,7 +2,7 @@ import sys
 import os
 import numpy as np
 from simple_pid import PID
-from src.LogGenerator import LogGenerator
+from src.LogGenerator import LoggerGenerator
 import time
 import datetime
 # Append the parent directory of the current script's directory to sys.path
@@ -51,7 +51,7 @@ SLOW_LOOKAHEAD = 0.1
 SLOW_EDGE_CUTOFF = 0.05
 SLOW_CLAMP = 0.1
 curr_time = datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
-logger = LogGenerator(logfile=f"synchronized_balancing_{curr_time}.log", consoleLevel=20)
+logger = LoggerGenerator(logfile=f"synchronized_balancing_{curr_time}.log", consoleLevel=20)
 task_follower = PathFollow.PathFollowStrict(task_path, SLOW_LOOKAHEAD, SLOW_EDGE_CUTOFF)
 logger.info("Starting Camera")
 camera = CameraStreamer(no_depth=True)

@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import pyrealsense2 as rs
 from src.CameraUtils.cameraConstants.constants import CAMERA_MATRIX, CAMERA_DIST_COEFF
-from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
+from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane, draw_detected_arucos
 
 """These are functions which use the color buffer that do image recognition
    Namely, aruco detection, ball detection, plate detection, etc."""
@@ -64,8 +64,11 @@ def detect_ball(frame):
 def detect_arucos(color_image):
         """Detects arucos       [!] uses cv2.imwrite("aruco_detected.jpg")"""
 
-        # arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL)
-        arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        if color_image is None or color_image.size == 0:
+            print("Error: The image is empty or not loaded correctly.")
+            return None, None
+
+        arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_1000)
         arucoParams = cv2.aruco.DetectorParameters()
         corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
         if ids is not None:
@@ -74,18 +77,14 @@ def detect_arucos(color_image):
             centers = []
             for id, corner in zip(ids, corners):
                 print("id: " + str(id))
-                # Corner order: [top-left, top-right, bottom-right, bottom-left]
                 c = corner[0]
                 center = (c[:, 0].mean(), c[:, 1].mean())
                 centers.append(center)
                 cv2.circle(color_image_with_markers, (int(center[0]), int(center[1])), 3 ,(0,255,0),2)
-                if id[0] == 400: # Old center marker?
-                    centers = [center]
-                    break
             avg_center = np.mean(centers, axis=0)
             cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(255,0,0),2)
-            cv2.imwrite("aruco_detected.jpg", color_image_with_markers)
-            # cv2.imshow("aruco_detected.jpg", color_image_with_markers)
+            key = cv2.waitKey(1)
+            cv2.imshow("aruco_detected.jpg", color_image_with_markers)
             return avg_center, color_image_with_markers
         else:
             print("No arucos detected")

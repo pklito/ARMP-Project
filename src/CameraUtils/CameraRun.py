@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from src.CameraUtils.cameraConstants.constants import *
 from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
-from src.CameraUtils.CameraFunctions import detect_ball, detect_object, get_world_position_from_camera
+from src.CameraUtils.CameraFunctions import detect_arucos, detect_ball, detect_object, get_world_position_from_camera
 def localization_detection(camera):
         try:
             while True:
@@ -101,3 +101,7 @@ def run_object_detection(camera):
 
 def drawBothFrames(camera):
     camera.stream()
+
+def draw_arucos(camera):
+    color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, was_new = camera.get_frames()
+    detect_arucos(color_image)

@@ -98,7 +98,7 @@ while keep_moving:
 
         timer_print += 1
         if timer_print % 120 == 1:
-            logger.error(" waiting for " + "[task robot]" if task_state.output_int_register_0 != 2 else "" + " [camera_robot]" if cam_state.output_int_register_0 != 2 else "")
+            logger.error("waiting for " + ("[task robot]" if task_state.output_int_register_0 != 2 else "") + (" [camera_robot]" if cam_state.output_int_register_0 != 2 else ""))
             # print("task config:", [round(q,2) for q in task_state.target_q])
             # print("camera config:", [round(q,2) for q in cam_state.target_q])
     else:

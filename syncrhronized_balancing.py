@@ -28,14 +28,15 @@ def calculateShorterLookahead(lookahead, other_robot_loc, other_robot_target):
 """Path follower that maintains the camera runs the same path points as the task robot.
     Requires both robots to use 'rtde_synced_servoj.urp'"""
 
-task_path = [[1.743, -1.458, 2.261, -3.928, -1.598, 1.558],
-             [1.743, -1.458, 2.261, -3.928, -1.598, 1.558],
-            [0.676, -1.713, 2.538, -3.928, -1.598, 1.558],
-            [0.676, -1.872, 2.104, -3.354, -1.598, 1.558],
-            [0.6, -0.876, -1.509, -0.76, -1.598, 1.558],
-            [-1.479, -1.444, -1.181, -0.486, -1.598, 1.558],
-            [-3.038, -1.656, 0.346, -1.816, -1.598, 1.558],
-            [-3.449, -2.784, 2.257, -2.618, -1.598, 1.558]]
+task_path = [[1.743, -1.458, 2.261, -3.988, -1.571, 1.571] ,
+        [1.743, -1.458, 2.261, -3.988, -1.571, 1.571] ,
+        [0.676, -1.713, 2.538, -4.01, -1.571, 1.571] ,
+        [0.676, -1.872, 2.104, -3.417, -1.571, 1.571] ,
+        [0.6, -0.876, -1.509, -0.8, -1.571, 1.571] ,
+        [-1.479, -1.444, -1.181, -0.56, -1.571, 1.571] ,
+        [-3.038, -1.656, 0.346, -1.875, -1.571, 1.571] ,
+        [-3.449, -2.784, 2.257, -2.658, -1.571, 1.571] ,
+        ]
 
 camera_path = [
   [0.0, -1.554, -0.0, -0.539, -1.145, -0.0],
@@ -77,7 +78,7 @@ keep_moving = True
 has_started = False
 _task_target_t = 0
 _task_target_edge = 0
-camera_failed_counter = 0
+camera_failed_counter = 100
 # initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 
 last_offsets = (0,0)
@@ -120,8 +121,6 @@ while keep_moving:
         ball_position = get_ball_position(color_image,DEBUG=False)
         if ball_position is None:           # no point in reading screen
             camera_failed_counter += 1
-            if camera_failed_counter > CAMERA_FAILED_MAX:
-                error = (0,0)
         else:                               # read new position
             camera_failed_counter = 0
             error = ball_position - plate_center
@@ -136,8 +135,7 @@ while keep_moving:
     # # Get lookaheads # #
     cam_lookahead_config = PathFollow.getClampedTarget(current_cam_config, PathFollow.getPointFromT(camera_path, _task_target_edge, _task_target_t), SLOW_CLAMP)
     shortened_lookahead = calculateShorterLookahead(SLOW_LOOKAHEAD, current_cam_config, cam_lookahead_config)
-    if camera_failed_counter > CAMERA_FAILED_MAX:
-        shortened_lookahead = 0
+
     task_lookahead_config, target_edge, target_t = task_follower.getLookaheadData(current_task_config,lookahead_distance=shortened_lookahead)
     _task_target_edge = target_edge
     _task_target_t = target_t
@@ -154,6 +152,11 @@ while keep_moving:
     task_config[5] += last_offsets[1]
     logger.debug({"error": error, "robot_pos": [round(q,2) for q in task_state.target_q], "target_pos":[round(q,2) for q in cam_state.target_q]})
     camera_robot.sendConfig(cam_lookahead_config)
+
+    if camera_failed_counter > CAMERA_FAILED_MAX:
+        logger.error("camera failed to find error for a while! halting movement")
+        lookahead_again, _, _ = task_follower.getLookaheadData(current_task_config,lookahead_distance=0)
+        task_config = PathFollow.getClampedTarget(current_task_config, lookahead_again ,SLOW_CLAMP)
     task_robot.sendConfig(task_config)
 
 

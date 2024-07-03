@@ -2,7 +2,9 @@ import sys
 import os
 import numpy as np
 from simple_pid import PID
-
+from src.LogGenerator import LogGenerator
+import time
+import datetime
 # Append the parent directory of the current script's directory to sys.path
 from src.CameraUtils.CameraStreamer import CameraStreamer
 from src.CameraUtils.localization import get_aruco_corners, get_object, getPixelOnPlane, get_obj_pxl_points
@@ -48,12 +50,14 @@ camera_path = [
 SLOW_LOOKAHEAD = 0.1
 SLOW_EDGE_CUTOFF = 0.05
 SLOW_CLAMP = 0.1
-
+curr_time = datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
+logger = LogGenerator(logfile=f"synchronized_balancing_{curr_time}.log", consoleLevel=20)
 task_follower = PathFollow.PathFollowStrict(task_path, SLOW_LOOKAHEAD, SLOW_EDGE_CUTOFF)
-print("Starting Camera")
+logger.info("Starting Camera")
 camera = CameraStreamer(no_depth=True)
-print("Initializing robots")
+logger.info("Initialzing task robot")
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
+logger.info("Initializing Camera robot")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
 pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.321,output_limits=(-0.4,0.4))
@@ -66,7 +70,7 @@ plate_center = (0, 0, 0)
 
 CAMERA_FAILED_MAX = 5
 
-print("start!")
+logger.warning("Starting the loop.")
 
 timer_print = 0
 keep_moving = True
@@ -83,7 +87,7 @@ while keep_moving:
     cam_state = camera_robot.getState()
 
     if not task_state or not cam_state:
-        print("Robot ", "[task] " if not task_state else "", "[camera] " if not cam_state else "","is off!")
+        logger.error("Robot " + "[task] " if not task_state else "" + "[camera] " if not cam_state else "" + "is off!")
         continue
 
     # Wait for both robots to say they are waiting to start. (the programs are running)
@@ -93,9 +97,9 @@ while keep_moving:
 
         timer_print += 1
         if timer_print % 120 == 1:
-            print(" waiting for ", "[task robot]" if task_state.output_int_register_0 != 2 else "", " [camera_robot]" if cam_state.output_int_register_0 != 2 else "")
-            print("task config:", [round(q,2) for q in task_state.target_q])
-            print("camera config:", [round(q,2) for q in cam_state.target_q])
+            logger.error(" waiting for " + "[task robot]" if task_state.output_int_register_0 != 2 else "" + " [camera_robot]" if cam_state.output_int_register_0 != 2 else "")
+            # print("task config:", [round(q,2) for q in task_state.target_q])
+            # print("camera config:", [round(q,2) for q in cam_state.target_q])
     else:
         # Running!
         task_robot.sendWatchdog(2)
@@ -138,7 +142,7 @@ while keep_moving:
     _task_target_edge = target_edge
     _task_target_t = target_t
 
-    print("path:", _task_target_edge, _task_target_t)
+    logger.info("path: " + str( _task_target_edge) + str(_task_target_t))
     # # Follow the paths. # #
     current_ideal_task_config = current_task_config.copy()  # ignore the pid joints.
     current_ideal_task_config[3] = task_lookahead_config[3]
@@ -148,7 +152,7 @@ while keep_moving:
     task_config = PathFollow.getClampedTarget(current_ideal_task_config, task_lookahead_config, SLOW_CLAMP).copy() #ideal? maybe real?
     task_config[3] += last_offsets[0]
     task_config[5] += last_offsets[1]
-
+    logger.debug({"error": error, "robot_pos": [round(q,2) for q in task_state.target_q], "target_pos":[round(q,2) for q in cam_state.target_q]})
     camera_robot.sendConfig(cam_lookahead_config)
     task_robot.sendConfig(task_config)
 

@@ -60,10 +60,10 @@ task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuratio
 logger.info("Initializing Camera robot")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
-pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.321,output_limits=(-0.4,0.4))
+pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.361,output_limits=(-0.4,0.4))
 pid_controller_x.setpoint = 0
 
-pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.16,output_limits=(-0.3,0.3))
+pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.2,output_limits=(-0.3,0.3))
 pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)

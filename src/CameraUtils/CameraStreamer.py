@@ -13,9 +13,9 @@ def signal_handler(sig, frame, cam):
 
 
 class CameraStreamer:
-    def __init__(self, no_depth=False):
-        self.WIDTH = 640
-        self.HEIGHT = 360
+    def __init__(self, width = 640, height = 360, no_depth=False):
+        self.WIDTH = width
+        self.HEIGHT = height
         # Initialize RealSense camera pipeline
         # self.cap = cv2.VideoCapture(2) # Intel's Realsense Camera is on my pc
         self.pipeline = rs.pipeline()

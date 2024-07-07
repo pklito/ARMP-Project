@@ -24,14 +24,16 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-sys.path.append("..")
-import logging
-from time import time
-from math import fmod
 import numpy as np
-from realsense_camera.CameraStreamer import *
-from RTDERobot import *
+import os
 from simple_pid import PID
+
+# Append the parent directory of the current script's directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.CameraUtils.CameraStreamer import *
+from src.Robot.RTDERobot import *
+from src.CameraUtils.CameraFunctions import *
+
 
 # Config
 plate_center = (355, 220)
@@ -56,7 +58,7 @@ pid_controller_y.setpoint = 0
 camera = CameraStreamer()
 
 def get_error():
-    color_image, depth_image, depth_frame, depth_map = camera.get_frames()
+    color_image, depth_image, depth_frame, depth_map, _, _ = camera.get_frames()
     if color_image.size == 0 or depth_image.size == 0:
         print("Can't receive frame (stream end?).")
         return None  # Return None to indicate an error state

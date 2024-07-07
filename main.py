@@ -24,17 +24,19 @@
 
 import sys
 from tracemalloc import start
-sys.path.append("..")
 import logging
 from time import time
 from math import fmod
 import numpy as np
-from realsense_camera.CameraStreamer import *
-from RTDERobot import *
 from simple_pid import PID
-# from ur_ikfast import ur_kinematics
-from robot_utils.kinematics import *
-from robot_utils.kinematicsUtils import *
+import os
+from src.CameraUtils.CameraFunctions import *
+
+# Append the parent directory of the current script's directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.CameraUtils.CameraStreamer import *
+from src.MotionUtils.kinematicsUtils import *
+from src.Robot.RTDERobot import *
 
 # Config
 plate_center = (338, 280)
@@ -63,7 +65,7 @@ camera_params = {
 }
 
 def get_error():
-    color_image, depth_image, depth_frame, depth_map = camera.get_frames()
+    color_image, depth_image, depth_frame, depth_map, _, _ = camera.get_frames()
     if color_image.size == 0 or depth_image.size == 0:
         print("Can't receive frame (stream end?).")
         return None  # Return None to indicate an error state

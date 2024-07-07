@@ -63,13 +63,14 @@ def detect_ball(frame):
 
 
 def detect_arucos(color_image):
-        """Detects arucos       [!] uses cv2.imwrite("aruco_detected.jpg")"""
+        """Detects arucos       [!] uses cv2.imwrite("aruco_detected.png")"""
 
         if color_image is None or color_image.size == 0:
             print("Error: The image is empty or not loaded correctly.")
             return None, None
 
         arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_1000)
+        # arucoDict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_ARUCO_ORIGINAL )
         arucoParams = cv2.aruco.DetectorParameters()
         corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(color_image, arucoDict, parameters=arucoParams)
         if ids is not None:
@@ -85,7 +86,8 @@ def detect_arucos(color_image):
             avg_center = np.mean(centers, axis=0)
             cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(255,0,0),2)
             key = cv2.waitKey(1)
-            cv2.imshow("aruco_detected.jpg", color_image_with_markers)
+            cv2.imshow("aruco_detected", color_image_with_markers)
+            cv2.imwrite("aruco_detected.png", color_image_with_markers)
             if key == ord('q'):
                 return None, None
             return avg_center, color_image_with_markers

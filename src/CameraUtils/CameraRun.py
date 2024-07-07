@@ -98,7 +98,6 @@ def run_object_detection(camera):
                     cv2.putText(color_image, f'World Coordinates: {camera_world_coords}', (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                 images = np.hstack((color_image, depth_colormap))
                 cv2.imshow('RealSense Color and Depth Stream', images)
-
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
@@ -110,5 +109,11 @@ def drawBothFrames(camera):
     camera.stream()
 
 def draw_arucos(camera):
-    color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, was_new = camera.get_frames()
-    detect_arucos(color_image)
+    collecting = True
+    while collecting:
+        color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, was_new = camera.get_frames()
+        if color_image is not None:
+            collecting = False
+            print("done collecting frames")
+        print("still collecting frames")
+    return detect_arucos(color_image)[1]

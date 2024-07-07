@@ -8,5 +8,5 @@ if __name__ == "__main__":
     # ret = True
     # while ret is not None:
     #     ret = draw_arucos(camera)
-    localization_detection(camera)
-    # camera.stream()
+    # localization_detection(camera)
+    camera.stream()

@@ -22,13 +22,16 @@ DH_matrix_ur5e = np.matrix([[0, np.pi / 2.0, 0.1625],
 
 T_AB_UR3E_to_UR5E = np.eye(4)
 
-T_AB_UR3E_to_UR5E[0, 3] = -1.35  # Distance along the x-axis from UR3E to UR5E
+T_AB_UR3E_to_UR5E[0, 3] = -0.12  # Distance along the x-axis from UR3E to UR5E
 T_AB_UR3E_to_UR5E[1, 3] = -0.07  # Distance along the y-axis from UR3E to UR5E
 T_AB_UR3E_to_UR5E[2, 3] = -0.00   # Distance along the z-axis from UR3E to UR5E
 
 CAMERA_EE_DISPLACEMENT = [0,-0.13,0]
 PLATE_EE_DISPLACEMENT = [0,0,0.12]
 ACCEPTABLE_DISPLACEMENT = 0.02 # was 0.05 originally
+
+def toView(conf, end = "\n"):
+    return [round(a, 2) for a in conf]
 
 def mat_transform_DH(DH_matrix, n, edges=np.matrix([[0], [0], [0], [0], [0], [0]])):
     """
@@ -126,7 +129,8 @@ def inverse_kinematic_solution(DH_matrix, transform_matrix,):
 
     P05 = T06 * np.matrix([[0], [0], [-DH_matrix[5, 2]], [1]])
     psi = atan2(P05[1], P05[0])
-    phi = acos((DH_matrix[1, 2] + DH_matrix[3, 2] + DH_matrix[2, 2]) / sqrt(P05[0] ** 2 + P05[1] ** 2))
+    # phi = acos((DH_matrix[1, 2] + DH_matrix[3, 2] + DH_matrix[2, 2]) / sqrt(P05[0] ** 2 + P05[1] ** 2)) # possible error here - changed to line below
+    phi = acos(np.clip((DH_matrix[1, 2] + DH_matrix[3, 2] + DH_matrix[2, 2]) / sqrt(P05[0] ** 2 + P05[1] ** 2), -1, 1))
     theta[0, 0:4] = psi + phi + pi / 2
     theta[0, 4:8] = psi - phi + pi / 2
 
@@ -243,3 +247,30 @@ def ur5e_effector_to_home(ur5e_joints, local_coords = [0,0,0,1]):
     array = np.ravel(np.dot(mat_end_to_ur5_base, local_coords))
     return np.array([round(num, 4) for num in array.tolist()])
 
+def calculate_assistant_robot_path(task_path):
+    alpha, beta, gamma = -np.pi, 0.0, 0.0
+    safety_distance = 0.12  # add 0.25 [meters] safety distance above the plate for safety concerns
+
+    assistant_path = []
+
+    for index, conf in enumerate(task_path):
+        ur3e_position_in_home = ur3e_effector_to_home(conf) # possible BUG
+        print([round(q,2) for q in ur3e_position_in_home])
+
+        try:
+            tx, ty, tz = ur3e_position_in_home[0], ur3e_position_in_home[1], ur3e_position_in_home[2] + safety_distance
+            if index == len(task_path) - 1:
+                x = 1
+            ur5e_joint_angles = get_valid_inverse_solutions(DH_matrix_ur5e, tx, ty, tz, alpha, beta, gamma)[0]
+            print(toView(ur5e_joint_angles))
+            if ur5e_joint_angles is not None:
+                assistant_path.append(ur5e_joint_angles)
+                xyz_position_ur5e_end_effector = forward_kinematic_solution(DH_matrix_ur5e, ur5e_joint_angles)
+                print(f"UR3E position: {toView(ur3e_position_in_home[:3])}, config: {conf}\n",
+                        f"UR5E position: {toView(xyz_position_ur5e_end_effector)}, config: {toView(ur5e_joint_angles)}\n")
+            else:
+                print(f"{index}'th config has no corresponding solution.")
+                assistant_path.append(None)
+        except Exception as e:
+            print(f"Error in computing inverse kinematics solution: {e}")
+    return assistant_path

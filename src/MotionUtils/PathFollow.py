@@ -16,7 +16,7 @@ def getEdgeProjection(config, edge):
     # Get a vector of the given path edge
     edge_vector = p2 - p1
     edge_length_squared = np.dot(edge_vector,edge_vector)
-    if edge_length_squared <= 0.001:
+    if edge_length_squared <= 0.001:    
         return p2, 1
 
     # Vector from path start to current point

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import time
 from .cameraConstants.constants import *
+import logging
 """
 These are helper functions for getting the position of the markers from a color image containing arucos.
 Additionally, there is a function for getting pixel to aruco plane, given a constant height from the plane z.
@@ -37,8 +38,11 @@ def get_obj_pxl_points(ids, corners):
     pixel_pts = np.array([c for id, rect in zip(ids, corners) for c in rect[0] if id in VALID_ARUCOS], dtype=np.float32)
     return object_pts[:min(len(object_pts), MAX_ARUCOS)], pixel_pts[:min(len(pixel_pts), MAX_ARUCOS)]
 
+
+_local_logger = logging.getLogger("LogGenerator")
 ## Unprojection function ##
 def getPixelOnPlane(pixel, rvec, tvec, z_height = BALL_HEIGHT):
+    _local_logger.debug("rvecs", rvec,tvec)
     """Given rvec and tvec of a plane and pixel coords of a point, returns it in plane coordinates np.array(x,y,z_height)"""
     uvcoord = np.array([pixel[0], pixel[1], 1])
     rotation_matrix, _ = cv2.Rodrigues(rvec)

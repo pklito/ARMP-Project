@@ -55,7 +55,8 @@ curr_time = datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
 logger = LoggerGenerator(logfile=f"synchronized_balancing_{curr_time}.log", consoleLevel=20)
 task_follower = PathFollow.PathFollowStrict(task_path, SLOW_LOOKAHEAD, SLOW_EDGE_CUTOFF)
 logger.info("Starting Camera")
-camera = CameraStreamer(no_depth=True)
+SHOW_CAMERA = True
+camera = CameraStreamer(no_depth=not SHOW_CAMERA)
 logger.info("Initialzing task robot")
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 logger.info("Initializing Camera robot")
@@ -83,7 +84,11 @@ camera_failed_counter = 100
 
 last_offsets = (0,0)
 while keep_moving:
-    color_image, _, _, _, _, Is_image_new = camera.get_frames()
+    color_image, _, _, depth_colormap, _, Is_image_new = camera.get_frames()
+    if( SHOW_CAMERA):
+        draw_frame = np.hstack((color_image, depth_colormap))
+        cv2.imshow("sync", draw_frame)
+        cv2.waitKey(1)
     task_state = task_robot.getState()
     cam_state = camera_robot.getState()
 

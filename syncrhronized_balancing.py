@@ -28,12 +28,12 @@ def calculateShorterLookahead(lookahead, other_robot_loc, other_robot_target):
 """Path follower that maintains the camera runs the same path points as the task robot.
     Requires both robots to use 'rtde_synced_servoj.urp'"""
 
-task_path = [[0.3, -1.059, -1.229, -0.897, 1.571, 1.571] ,
-            [0.3, -1.059, -1.229, -0.897, 1.571, 1.571] ,
-            [-0.406, -1.349, -1.227, -0.609, 1.571, 1.571] ,
-            [-0.619, -2.458, -1.248, 0.521, 1.571, 1.571] ,
-            [0.237, -1.844, -1.927, 0.586, 1.571, 1.571] ,
-            [0.3, -1.059, -1.229, -0.897, 1.571, 1.571] ,
+task_path = [[0.3, -1.059, -1.229, -0.81, 1.571, 1.571] ,
+        [0.3, -1.059, -1.229, -0.81, 1.571, 1.571] ,
+        [-0.406, -1.349, -1.227, -0.522, 1.571, 1.571] ,
+        [-0.619, -2.458, -1.248, 0.608, 1.571, 1.571] ,
+        [0.237, -1.844, -1.927, 0.673, 1.571, 1.571] ,
+        [0.3, -1.059, -1.229, -0.81, 1.571, 1.571] ,
         ]
 
 camera_path = [[-0.03, -1.745, 0.1, -0.572, -1.753, 0.0],
@@ -130,7 +130,10 @@ while keep_moving:
         pass
     else:
         #calculate new PID readings
-        last_offsets = (pid_controller_y(error[0]), pid_controller_x(-error[1]))
+        if(abs(np.sin(current_task_config[4])) < 0.01):
+            last_offsets = (pid_controller_y(0), pid_controller_x(-error[1]))
+        else:
+            last_offsets = (pid_controller_y(-error[0]/np.sin(current_task_config[4])), pid_controller_x(-error[1]))
 
     # # Get lookaheads # #
     cam_lookahead_config = PathFollow.getClampedTarget(current_cam_config, PathFollow.getPointFromT(camera_path, _task_target_edge, _task_target_t), SLOW_CLAMP)

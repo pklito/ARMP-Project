@@ -3,7 +3,7 @@ import numpy as np
 from src.CameraUtils.cameraConstants.constants import *
 from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
 from src.CameraUtils.CameraFunctions import _ball_hsv_mask, mark_arucos, detect_ball, detect_object, get_world_position_from_camera
-
+import time
 def runCamera(camera, gen_function, draw_depth = False):
     try:
         while True:
@@ -97,7 +97,24 @@ def generateArucos(camera):
     color_image, _, _, _, _, was_new = camera.get_frames()
     return mark_arucos(color_image)[1]
 
+def generateNothing(camera):
+    color_image, _, _, _, _, was_new = camera.get_frames()
+    return color_image
 
+
+_gen_start_time = time.time()
+def generateAll(camera):
+    current = int(time.time()-_gen_start_time)//2
+    if current % 5 == 0:
+        return generateNothing(camera)
+    if current % 5 == 1:
+        return generateArucos(camera)
+    if current % 5 == 2:
+        return generatePlateAndBall(camera)
+    if current % 5 == 3:
+        return generateBallGrayscale(camera)
+    if current % 5 == 4:
+        return generateBallMask(camera)
 
 #def run_object_detection(camera):
 #         try:

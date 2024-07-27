@@ -6,10 +6,10 @@ from src.CameraUtils.CameraFunctions import detect_arucos, detect_ball, detect_o
 
 def _localization_detection(camera):
     color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
-    if color_image is None or depth_image is None:
+    if color_image is None or is_new_image == False:
         return True
 
-    if color_image.size == 0 or depth_image.size == 0:
+    if color_image.size == 0:
         print("Can't receive frame (stream end?).")
         return True
 
@@ -46,7 +46,11 @@ def _localization_detection(camera):
         cv2.circle((color_image), ball_center, 2 ,color,2) # a dot in the middle of the circle
         cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (ball_center[0], ball_center[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-    images = np.hstack((color_image, depth_colormap))
+    if depth_colormap is not None:
+        images = np.hstack((color_image, depth_colormap))
+    else:
+        images = color_image
+
     cv2.imshow('RealSense Stream', images)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):

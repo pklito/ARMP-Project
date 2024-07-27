@@ -104,48 +104,6 @@ def ball_hsv_mask_grayscale(camera):
         camera.stop()
         cv2.destroyAllWindows()
 
-def run_object_detection(camera):
-        try:
-            while True:
-                color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
-
-                if color_image is None or depth_colormap is None or depth_frame is None:
-                    continue
-
-                object_bounding_boxes = detect_object(color_image)
-                plate_bounding_boxes = [] # detect_plate(color_image)
-
-                # Combine bounding boxes for both ball and plate
-                all_bounding_boxes = object_bounding_boxes + plate_bounding_boxes
-
-                for bbox in all_bounding_boxes:
-                    x1, y1, x2, y2 = bbox
-                    center_x = (x1 + x2) // 2
-                    center_y = (y1 + y2) // 2
-                    depth_value = depth_frame.get_distance(center_x, center_y)
-                    distance_meters = depth_value * 1000  # Convert to millimeters
-                    camera_world_coords = get_world_position_from_camera(center_x, center_y, depth_frame_input=depth_frame)
-
-                    if bbox in object_bounding_boxes:
-                        color = (0, 255, 0)  # Green for ball
-                        object_type = "Ball"
-                    else:
-                        color = (0, 0, 255)  # Red for plate
-                        object_type = "Plate"
-
-                    cv2.rectangle(color_image, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(color_image, f'{object_type} Distance: {distance_meters:.2f} mm,', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                    cv2.putText(color_image, f'Center: ({center_x}, {center_y}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                    cv2.putText(color_image, f'World Coordinates: {camera_world_coords}', (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                images = np.hstack((color_image, depth_colormap))
-                cv2.imshow('RealSense Color and Depth Stream', images)
-
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-
-        finally:
-            camera.stop()
-            cv2.destroyAllWindows()
 
 def drawBothFrames(camera):
     camera.stream()
@@ -153,3 +111,48 @@ def drawBothFrames(camera):
 def draw_arucos(camera):
     color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, was_new = camera.get_frames()
     detect_and_draw_arucos(color_image)
+
+
+
+#def run_object_detection(camera):
+#         try:
+#             while True:
+#                 color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
+
+#                 if color_image is None or depth_colormap is None or depth_frame is None:
+#                     continue
+
+#                 object_bounding_boxes = detect_object(color_image)
+#                 plate_bounding_boxes = [] # detect_plate(color_image)
+
+#                 # Combine bounding boxes for both ball and plate
+#                 all_bounding_boxes = object_bounding_boxes + plate_bounding_boxes
+
+#                 for bbox in all_bounding_boxes:
+#                     x1, y1, x2, y2 = bbox
+#                     center_x = (x1 + x2) // 2
+#                     center_y = (y1 + y2) // 2
+#                     depth_value = depth_frame.get_distance(center_x, center_y)
+#                     distance_meters = depth_value * 1000  # Convert to millimeters
+#                     camera_world_coords = get_world_position_from_camera(center_x, center_y, depth_frame_input=depth_frame)
+
+#                     if bbox in object_bounding_boxes:
+#                         color = (0, 255, 0)  # Green for ball
+#                         object_type = "Ball"
+#                     else:
+#                         color = (0, 0, 255)  # Red for plate
+#                         object_type = "Plate"
+
+#                     cv2.rectangle(color_image, (x1, y1), (x2, y2), color, 2)
+#                     cv2.putText(color_image, f'{object_type} Distance: {distance_meters:.2f} mm,', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+#                     cv2.putText(color_image, f'Center: ({center_x}, {center_y}),', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+#                     cv2.putText(color_image, f'World Coordinates: {camera_world_coords}', (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+#                 images = np.hstack((color_image, depth_colormap))
+#                 cv2.imshow('RealSense Color and Depth Stream', images)
+
+#                 if cv2.waitKey(1) & 0xFF == ord('q'):
+#                     break
+
+#         finally:
+#             camera.stop()
+#             cv2.destroyAllWindows()

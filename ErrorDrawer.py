@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import re
 import numpy as np
 from matplotlib.animation import FuncAnimation
+import matplotlib.patches as patches
+
 from PIL import Image
 from matplotlib.animation import PillowWriter
 from regex import F
@@ -89,6 +91,11 @@ print("total time of simulation:", normalized_timestamps[-1] - normalized_timest
 fig, ax = plt.subplots()
 ax.set_xlim(0, plate_width)
 ax.set_ylim(0, plate_height)
+
+#Add squares
+square = patches.Rectangle((0.1,0.25), 0.05, 0.1, linewidth=1, alpha=0.1, facecolor='b',hatch='//')
+ax.add_patch(square)
+
 ball_dot, = plt.plot([], [], 'ro', markersize=23)
 old_dots, = plt.plot([],[], 'x', markersize=8)
 
@@ -106,6 +113,6 @@ def update(frame):
 
 try:
     anim = FuncAnimation(fig, update, frames=len(normalized_timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation4.gif', writer='pillow', fps=30)
+    anim.save('ball_simulation5.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

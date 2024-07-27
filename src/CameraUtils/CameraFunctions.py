@@ -36,8 +36,7 @@ def detect_object(frame):
 
     return bounding_boxes
 
-
-def detect_ball(frame):
+def _ball_hsv_mask(frame):
     frame = cv2.GaussianBlur(frame, (17, 17), 0)
     kernel = np.ones((5, 5), np.uint8)
     frame = cv2.dilate(frame, kernel, iterations=1)
@@ -50,7 +49,10 @@ def detect_ball(frame):
     mask1 = cv2.inRange(hsv_image, lower_limit1, upper_limit1)
     mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)
     mask = cv2.bitwise_or(mask1, mask2)
+    return mask
 
+def detect_ball(frame):
+    mask = _ball_hsv_mask(frame)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     bounding_circles = []

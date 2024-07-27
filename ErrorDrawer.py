@@ -88,18 +88,23 @@ normalized_timestamps, ball_positions_x, ball_positions_y = zip(*timed_errors)
 print("Length of timeset timestamps:", len(normalized_timestamps))
 print("total time of simulation:", normalized_timestamps[-1] - normalized_timestamps[0], "simulated time: ", len(normalized_timestamps)/FRAMERATE)
 
+#Figure stuff
 fig, ax = plt.subplots()
+ax.set_aspect(1)
+ax.set_xticks([i for i in np.arange(0,plate_width,0.05)])
+ax.set_yticks([i for i in np.arange(0,plate_width,0.05)])
 ax.set_xlim(0, plate_width)
 ax.set_ylim(0, plate_height)
 
+plt.grid(True, 'major')
+
 #Add squares
-square = patches.Rectangle((0.1,0.25), 0.05, 0.1, linewidth=1, alpha=0.1, facecolor='b',hatch='//')
-ax.add_patch(square)
+# square = patches.Rectangle((0.1,0.25), 0.05, 0.1, linewidth=1, alpha=0.1, facecolor='b',hatch='//')
+# ax.add_patch(square)
 
 ball_dot, = plt.plot([], [], 'ro', markersize=23)
 old_dots, = plt.plot([],[], 'x', markersize=8)
 
-plt.grid(True)
 
 def init():
     ball_dot.set_data([], [])
@@ -112,7 +117,7 @@ def update(frame):
     return old_dots, ball_dot
 
 try:
-    anim = FuncAnimation(fig, update, frames=len(normalized_timestamps), init_func=init, blit=True)
+    anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)
     anim.save('ball_simulation5.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

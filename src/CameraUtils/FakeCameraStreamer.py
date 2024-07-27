@@ -7,11 +7,11 @@ import signal
 import time
 
 class FakeCameraStreamer:
-    def __init__(self, path, depth_path=None, width = 640, height = 360, framerate = 60):
+    def __init__(self, path, depth_path=None, width = 640, height = 360, framerate = 60, loop = False):
         self.WIDTH = width
         self.HEIGHT = height
         self.FRAMERATE = framerate
-
+        self.LOOP = loop
         self.cap = cv2.VideoCapture(path)
         self.depth_cap = None
         if depth_path is not None:
@@ -41,6 +41,11 @@ class FakeCameraStreamer:
             ret2 = None
             ret, frame = self.cap.read()
             if not ret:
+                if self.LOOP:
+                    self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    if self.depth_cap:
+                        self.depth_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    continue
                 return
             frame = cv2.resize(frame, (self.WIDTH, self.HEIGHT))
             if self.depth_cap is not None:

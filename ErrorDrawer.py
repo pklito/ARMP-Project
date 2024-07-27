@@ -6,14 +6,14 @@ from PIL import Image
 from matplotlib.animation import PillowWriter
 from regex import F
 
-def init():
-    ball_dot.set_data([], [])
-    return ball_dot,
+# def init():
+#     ball_dot.set_data([], [])
+#     return ball_dot,
 
-def update(frame):
-    if frame < len(ball_positions_x):
-        ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
-    return ball_dot,
+# def update(frame):
+#     if frame < len(ball_positions_x):
+#         ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
+#     return ball_dot,
 
 file_path = 'Square_path_log.txt'
 log_data = None
@@ -54,8 +54,8 @@ error_x, error_y, error_z = list(zip(*errors))
 filtered_errors = [(x, y) for x, y, z in zip(error_x, error_y, error_z) if z == 0.035]
 plate_width, plate_height = 0.21, 0.297
 
-ball_positions_x = np.clip(np.array([x for x, _ in filtered_errors]) + plate_width / 2, 0, plate_width)
-ball_positions_y = np.clip(np.array([y for _, y in filtered_errors]) + plate_height / 2, 0, plate_height)
+ball_positions_x = np.clip(np.array([-x for x, _ in filtered_errors]) + plate_width / 2, 0, plate_width) # pay attention to '- sign', added for mirroring
+ball_positions_y = np.clip(np.array([-y for _, y in filtered_errors]) + plate_height / 2, 0, plate_height) # pay attention to '- sign', added for mirroring
 
 print("Length of timestamps:", len(timestamps))
 print("Length of ball_positions_x:", len(ball_positions_x), ball_positions_x)
@@ -72,8 +72,8 @@ for y in ball_positions_y:
 fig, ax = plt.subplots()
 ax.set_xlim(0, plate_width)
 ax.set_ylim(0, plate_height)
-ball_dot, = plt.plot([], [], 'ro', markersize=10)
-old_dots, = plt.plot([],[], 'x', markersize=5)
+ball_dot, = plt.plot([], [], 'ro', markersize=23)
+old_dots, = plt.plot([],[], 'x', markersize=13)
 
 plt.grid(True)
 
@@ -89,6 +89,6 @@ def update(frame):
 
 try:
     anim = FuncAnimation(fig, update, frames=len(timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation3.gif', writer='pillow', fps=30)
+    anim.save('ball_simulation4.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

@@ -52,9 +52,10 @@ normalized_timestamps = [t - start_time for t in timestamps]
 error_x, error_y, error_z = list(zip(*errors))
 
 # Filter errors based on z position
-plate_width, plate_height = 0.21, 0.297
+plate_width, plate_height = 0.297, 0.21
 
-filtered_errors = [(t, np.clip(-x + plate_width/2, 0, plate_width), np.clip(y + plate_height/2,0,plate_height)) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
+# flip axis: x = y, y = -x
+filtered_errors = [(t, np.clip(y + plate_width/2, 0, plate_width), np.clip(-x + plate_height/2,0,plate_height)) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
 
 normalized_timestamps, ball_positions_x, ball_positions_y = zip(*filtered_errors)
 
@@ -62,6 +63,27 @@ FRAMERATE = 30
 print("Length of timestamps:", len(normalized_timestamps))
 print("Length of ball_positions_x:", len(ball_positions_x))
 print("Length of ball_positions_y:", len(ball_positions_y))
+print("total time of simulation:", normalized_timestamps[-1] - normalized_timestamps[0], "simulated time: ", len(normalized_timestamps)/FRAMERATE)
+
+####This piece of code tries to ensure the rate of input data matches the gif FPS, however, its close enough as is.
+timed_errors = []
+lt = normalized_timestamps[0]-1/FRAMERATE
+taccum = 0
+for t, x, y in filtered_errors:
+    if taccum < -1/FRAMERATE:           # Only add a value if time difference is significant enough.
+        taccum += 1/FRAMERATE
+    elif taccum > 1/FRAMERATE:
+        timed_errors.append((t,x,y))
+        timed_errors.append((t,x,y))
+        taccum += t - lt - 2/FRAMERATE
+        lt = t
+    else:
+        timed_errors.append((t,x,y))
+        taccum += t - lt - 1/FRAMERATE
+        lt = t
+
+normalized_timestamps, ball_positions_x, ball_positions_y = zip(*timed_errors)
+print("Length of timeset timestamps:", len(normalized_timestamps))
 print("total time of simulation:", normalized_timestamps[-1] - normalized_timestamps[0], "simulated time: ", len(normalized_timestamps)/FRAMERATE)
 
 fig, ax = plt.subplots()

@@ -36,21 +36,25 @@ def detect_object(frame):
 
     return bounding_boxes
 
-
-def detect_ball(frame):
+def _ball_hsv_mask(frame):
     frame = cv2.GaussianBlur(frame, (17, 17), 0)
     kernel = np.ones((5, 5), np.uint8)
     frame = cv2.dilate(frame, kernel, iterations=1)
 
     hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    lower_limit1, upper_limit1 = (0, 154, 146), (9,  255, 255)
-    lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255)
+    lower_limit1, upper_limit1 = (165, 136, 141), (180,  255, 255)
+    #lower_limit1, upper_limit1 = (0, 154, 146), (9,  255, 255)
+    #lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255) Realsense!!
+    lower_limit2, upper_limit2 = (256, 255, 255), (255,  255, 255)       # fake camera
 
     mask1 = cv2.inRange(hsv_image, lower_limit1, upper_limit1)
     mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)
     mask = cv2.bitwise_or(mask1, mask2)
+    return mask
 
+def detect_ball(frame):
+    mask = _ball_hsv_mask(frame)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     bounding_circles = []
@@ -62,7 +66,7 @@ def detect_ball(frame):
     return bounding_circles
 
 
-def detect_arucos(color_image):
+def mark_arucos(color_image):
         """Detects arucos       [!] uses cv2.imwrite("aruco_detected.jpg")"""
 
         if color_image is None or color_image.size == 0:
@@ -84,10 +88,6 @@ def detect_arucos(color_image):
                 cv2.circle(color_image_with_markers, (int(center[0]), int(center[1])), 3 ,(0,255,0),2)
             avg_center = np.mean(centers, axis=0)
             cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(255,0,0),2)
-            key = cv2.waitKey(1)
-            cv2.imshow("aruco_detected.jpg", color_image_with_markers)
-            if key == ord('q'):
-                return None, None
             return avg_center, color_image_with_markers
         else:
             print("No arucos detected")

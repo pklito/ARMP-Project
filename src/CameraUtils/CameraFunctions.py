@@ -65,7 +65,7 @@ def detect_ball(frame):
     return bounding_circles
 
 
-def detect_arucos(color_image):
+def detect_and_draw_arucos(color_image):
         """Detects arucos       [!] uses cv2.imwrite("aruco_detected.jpg")"""
 
         if color_image is None or color_image.size == 0:

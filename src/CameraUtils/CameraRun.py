@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from src.CameraUtils.cameraConstants.constants import *
 from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
-from src.CameraUtils.CameraFunctions import _ball_hsv_mask, detect_arucos, detect_ball, detect_object, get_world_position_from_camera
+from src.CameraUtils.CameraFunctions import _ball_hsv_mask, detect_and_draw_arucos, detect_ball, detect_object, get_world_position_from_camera
 
 def _localization_detection(camera):
     color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
@@ -152,4 +152,4 @@ def drawBothFrames(camera):
 
 def draw_arucos(camera):
     color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, was_new = camera.get_frames()
-    detect_arucos(color_image)
+    detect_and_draw_arucos(color_image)

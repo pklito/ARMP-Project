@@ -6,9 +6,9 @@ from src.CameraUtils.FakeCameraStreamer import FakeCameraStreamer
 if __name__ == "__main__":
 
     camera = FakeCameraStreamer("C:/Users/paulo/Videos/Screen Recordings/Square path color only.mp4")
-    ball_hsv_mask(camera)
-    # run_object_detection(camera)
+    #ball_hsv_mask_grayscale(camera)
+    #run_object_detection(camera)
     # ret = True
     # while ret is not None:
     #     ret = draw_arucos(camera)
-    #localization_detection(camera)
+    localization_detection(camera)

@@ -74,6 +74,21 @@ def ball_hsv_mask(camera):
                 continue
 
             mask = _ball_hsv_mask(color_image)
+            cv2.imshow("mask", mask)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    finally:
+        camera.stop()
+        cv2.destroyAllWindows()
+
+def ball_hsv_mask_grayscale(camera):
+    try:
+        while True:
+            color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
+            if color_image is None or not is_new_image:
+                continue
+
+            mask = _ball_hsv_mask(color_image)
             mask3 = np.zeros_like(color_image)
             mask3[:, :, 0] = mask
             mask3[:, :, 1] = mask

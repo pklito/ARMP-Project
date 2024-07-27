@@ -6,6 +6,14 @@ from PIL import Image
 from matplotlib.animation import PillowWriter
 from regex import F
 
+def init():
+    ball_dot.set_data([], [])
+    return ball_dot,
+
+def update(frame):
+    if frame < len(ball_positions_x):
+        ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
+    return ball_dot,
 
 file_path = 'Square_path_log.txt'
 log_data = None
@@ -66,15 +74,6 @@ ax.set_xlim(0, plate_width)
 ax.set_ylim(0, plate_height)
 ball_dot, = plt.plot([], [], 'ro', markersize=10)
 plt.grid(True)
-
-def init():
-    ball_dot.set_data([], [])
-    return ball_dot,
-
-def update(frame):
-    if frame < len(ball_positions_x):
-        ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
-    return ball_dot,
 
 try:
     anim = FuncAnimation(fig, update, frames=len(timestamps), init_func=init, blit=True)

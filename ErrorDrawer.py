@@ -4,70 +4,80 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 from PIL import Image
 from matplotlib.animation import PillowWriter
+from regex import F
 
 
 file_path = 'Square_path_log.txt'
 log_data = None
 
-# Read log data from the file
 with open(file_path, 'r') as file:
     log_data = file.read()
 
-# Updated pattern to handle both 'None' and array format in the error field
+timestamps = []
+robot_positions = []
+target_positions = []
+
 pattern = re.compile(
-    r"(\d+\.\d+):DEBUG:syncrhronized_balancing\.py;{'error': (None|array\(\[(.*?)\]\)), 'robot_pos': \[(.*?)\], 'target_pos': \[(.*?)\]}")
+    r"(\d+\.\d+):DEBUG:syncrhronized_balancing\.py;{'error': (None|array\(\[.*?\]\)), 'robot_pos': \[(.*?)\], 'target_pos': \[(.*?)\]}")
 matches = pattern.findall(log_data)
 
 timestamps = []
 errors = []
 
 for match in matches:
-    timestamp, error, error_values, robot_pos_str, target_pos_str = match
+    timestamp, error, robot_pos_str, target_pos_str = match
+    # print("match: ", match)
     timestamps.append(float(timestamp))
-    # If error is not 'None', extract the values
     if error != "None":
-        # Use error_values if present, else error
-        error_values = error_values if error_values else error
-        # Remove 'array([' and '])' if present
-        error_values = error_values.replace('array([', '').replace('])', '')
-        errors.append([float(x) for x in error_values.split(', ')])
+        error_cleaned = error.replace('array([', '').replace('])', '').replace(' ', '')
+        error_values = np.array([float(x) for x in error_cleaned.split(',')])
+        errors.append(error_values)
+        # print("error_values: ", error_values)
     else:
         errors.append([0.0, 0.0, 0.0])  # Assuming zero error if not specified
 
-# Normalize timestamps by subtracting the start time
+
 start_time = timestamps[0]
 normalized_timestamps = [t - start_time for t in timestamps]
 
-# Extract error components (x, y, z)
 error_x, error_y, error_z = list(zip(*errors))
 
-# Plot and animate the error over time
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.set_xlim(0, max(normalized_timestamps))
-ax.set_ylim(min(min(error_x), min(error_y), min(error_z)), max(max(error_x), max(error_y), max(error_z)))
-ax.set_xlabel('Time Elapsed (s)')
-ax.set_ylabel('Error')
-ax.set_title('Error vs. Time')
-line_x, = ax.plot([], [], label='Error X', color='r')
-line_y, = ax.plot([], [], label='Error Y', color='g')
-line_z, = ax.plot([], [], label='Error Z', color='b')
-ax.legend()
+# Filter errors based on z position
+filtered_errors = [(x, y) for x, y, z in zip(error_x, error_y, error_z) if z == 0.035]
+plate_width, plate_height = 0.21, 0.297
+
+ball_positions_x = np.clip(np.array([x for x, _ in filtered_errors]) + plate_width / 2, 0, plate_width)
+ball_positions_y = np.clip(np.array([y for _, y in filtered_errors]) + plate_height / 2, 0, plate_height)
+
+print("Length of timestamps:", len(timestamps))
+print("Length of ball_positions_x:", len(ball_positions_x), ball_positions_x)
+print("Length of ball_positions_y:", len(ball_positions_y), ball_positions_y)
+
+print("Printing X positions: ")
+for x in ball_positions_x:
+    print(x)
+
+print("Printing Y positions: ")
+for y in ball_positions_y:
+    print(y)
+
+fig, ax = plt.subplots()
+ax.set_xlim(0, plate_width)
+ax.set_ylim(0, plate_height)
+ball_dot, = plt.plot([], [], 'ro', markersize=10)
+plt.grid(True)
 
 def init():
-    line_x.set_data([], [])
-    line_y.set_data([], [])
-    line_z.set_data([], [])
-    return line_x, line_y, line_z
+    ball_dot.set_data([], [])
+    return ball_dot,
 
 def update(frame):
-    line_x.set_data(normalized_timestamps[:frame], error_x[:frame])
-    line_y.set_data(normalized_timestamps[:frame], error_y[:frame])
-    line_z.set_data(normalized_timestamps[:frame], error_z[:frame])
-    return line_x, line_y, line_z
+    if frame < len(ball_positions_x):
+        ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
+    return ball_dot,
 
-ani = FuncAnimation(fig, update, frames=len(normalized_timestamps), init_func=init, blit=True)
-
-# Save the animation as a GIF
-ani.save('error_animation.gif', writer='pillow', fps=30)
-
-plt.show()
+try:
+    anim = FuncAnimation(fig, update, frames=len(timestamps), init_func=init, blit=True)
+    anim.save('ball_simulation3.gif', writer='pillow', fps=30)
+except Exception as e:
+    print(f"Error saving GIF: {e}")

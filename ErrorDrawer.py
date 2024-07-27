@@ -5,6 +5,7 @@ from matplotlib.animation import FuncAnimation
 from PIL import Image
 from matplotlib.animation import PillowWriter
 from regex import F
+from sklearn.preprocessing import normalize
 
 # def init():
 #     ball_dot.set_data([], [])
@@ -51,29 +52,23 @@ normalized_timestamps = [t - start_time for t in timestamps]
 error_x, error_y, error_z = list(zip(*errors))
 
 # Filter errors based on z position
-filtered_errors = [(x, y) for x, y, z in zip(error_x, error_y, error_z) if z == 0.035]
 plate_width, plate_height = 0.21, 0.297
 
-ball_positions_x = np.clip(np.array([-x for x, _ in filtered_errors]) + plate_width / 2, 0, plate_width) # pay attention to '- sign', added for mirroring
-ball_positions_y = np.clip(np.array([-y for _, y in filtered_errors]) + plate_height / 2, 0, plate_height) # pay attention to '- sign', added for mirroring
+filtered_errors = [(t, np.clip(-x + plate_width/2, 0, plate_width), np.clip(y + plate_height/2,0,plate_height)) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
 
-print("Length of timestamps:", len(timestamps))
-print("Length of ball_positions_x:", len(ball_positions_x), ball_positions_x)
-print("Length of ball_positions_y:", len(ball_positions_y), ball_positions_y)
+normalized_timestamps, ball_positions_x, ball_positions_y = zip(*filtered_errors)
 
-print("Printing X positions: ")
-for x in ball_positions_x:
-    print(x)
-
-print("Printing Y positions: ")
-for y in ball_positions_y:
-    print(y)
+FRAMERATE = 30
+print("Length of timestamps:", len(normalized_timestamps))
+print("Length of ball_positions_x:", len(ball_positions_x))
+print("Length of ball_positions_y:", len(ball_positions_y))
+print("total time of simulation:", normalized_timestamps[-1] - normalized_timestamps[0], "simulated time: ", len(normalized_timestamps)/FRAMERATE)
 
 fig, ax = plt.subplots()
 ax.set_xlim(0, plate_width)
 ax.set_ylim(0, plate_height)
 ball_dot, = plt.plot([], [], 'ro', markersize=23)
-old_dots, = plt.plot([],[], 'x', markersize=13)
+old_dots, = plt.plot([],[], 'x', markersize=8)
 
 plt.grid(True)
 
@@ -88,7 +83,7 @@ def update(frame):
     return old_dots, ball_dot
 
 try:
-    anim = FuncAnimation(fig, update, frames=len(timestamps), init_func=init, blit=True)
+    anim = FuncAnimation(fig, update, frames=len(normalized_timestamps), init_func=init, blit=True)
     anim.save('ball_simulation4.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

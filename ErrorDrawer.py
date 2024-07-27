@@ -65,16 +65,19 @@ fig, ax = plt.subplots()
 ax.set_xlim(0, plate_width)
 ax.set_ylim(0, plate_height)
 ball_dot, = plt.plot([], [], 'ro', markersize=10)
+old_dots, = plt.plot([],[], 'x', markersize=5)
+
 plt.grid(True)
 
 def init():
     ball_dot.set_data([], [])
-    return ball_dot,
+    return old_dots, ball_dot
 
 def update(frame):
     if frame < len(ball_positions_x):
-        ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
-    return ball_dot,
+        ball_dot.set_data([ball_positions_x[frame]], [ball_positions_y[frame]])
+        old_dots.set_data(ball_positions_x[max(frame-10,0):max(frame-1,0)], ball_positions_y[max(frame-10,0):max(frame-1,0)])
+    return old_dots, ball_dot
 
 try:
     anim = FuncAnimation(fig, update, frames=len(timestamps), init_func=init, blit=True)

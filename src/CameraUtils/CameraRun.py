@@ -72,7 +72,7 @@ def run_object_detection(camera):
             while True:
                 color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
 
-                if color_image is None or depth_image is None:
+                if color_image is None or depth_colormap is None or depth_frame is None:
                     continue
 
                 object_bounding_boxes = detect_object(color_image)

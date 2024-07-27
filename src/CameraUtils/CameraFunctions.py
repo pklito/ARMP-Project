@@ -65,7 +65,7 @@ def detect_ball(frame):
     return bounding_circles
 
 
-def detect_and_draw_arucos(color_image):
+def mark_arucos(color_image):
         """Detects arucos       [!] uses cv2.imwrite("aruco_detected.jpg")"""
 
         if color_image is None or color_image.size == 0:
@@ -87,10 +87,6 @@ def detect_and_draw_arucos(color_image):
                 cv2.circle(color_image_with_markers, (int(center[0]), int(center[1])), 3 ,(0,255,0),2)
             avg_center = np.mean(centers, axis=0)
             cv2.circle(color_image_with_markers, (int(avg_center[0]), int(avg_center[1])), 3 ,(255,0,0),2)
-            key = cv2.waitKey(1)
-            cv2.imshow("aruco_detected.jpg", color_image_with_markers)
-            if key == ord('q'):
-                return None, None
             return avg_center, color_image_with_markers
         else:
             print("No arucos detected")

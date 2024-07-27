@@ -2,16 +2,34 @@ import cv2
 import numpy as np
 from src.CameraUtils.cameraConstants.constants import *
 from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, getPixelOnPlane
-from src.CameraUtils.CameraFunctions import _ball_hsv_mask, detect_and_draw_arucos, detect_ball, detect_object, get_world_position_from_camera
+from src.CameraUtils.CameraFunctions import _ball_hsv_mask, mark_arucos, detect_ball, detect_object, get_world_position_from_camera
 
-def _localization_detection(camera):
-    color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
+def runCamera(camera, gen_function, draw_depth = False):
+    try:
+        while True:
+            image = gen_function(camera)
+            if image is None:
+                continue
+
+            if draw_depth:
+                _, _, _, depth_colormap, _, _ = camera.get_frames()
+                if depth_colormap is not None:
+                    image = np.hstack((image, depth_colormap))
+            cv2.imshow("camera view", image)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    finally:
+        camera.stop()
+        cv2.destroyAllWindows()
+
+def generatePlateAndBall(camera):
+    color_image, _, _, _, _, is_new_image = camera.get_frames()
     if color_image is None or is_new_image == False:
-        return True
+        return None
 
     if color_image.size == 0:
         print("Can't receive frame (stream end?).")
-        return True
+        return None
 
     positions = detect_ball(color_image)
     if len(positions) == 0:
@@ -30,7 +48,7 @@ def _localization_detection(camera):
                 pixel_pts = pixel_pts[:, 0, :]
 
             if object_pts.size == 0 or pixel_pts.size == 0:
-                return True
+                return None
             ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
 
             if ret:
@@ -46,71 +64,38 @@ def _localization_detection(camera):
         cv2.circle((color_image), ball_center, 2 ,color,2) # a dot in the middle of the circle
         cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (ball_center[0], ball_center[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-    if depth_colormap is not None:
-        images = np.hstack((color_image, depth_colormap))
-    else:
-        images = color_image
+    return color_image
 
-    cv2.imshow('RealSense Stream', images)
+def generateBallMask(camera):
+    color_image, _, _, _, _, is_new_image = camera.get_frames()
+    if color_image is None or not is_new_image:
+        return None
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        camera.stop()
-        cv2.destroyAllWindows()
+    mask = _ball_hsv_mask(color_image)
+    return mask
 
-def localization_detection(camera):
-        try:
-            while True:
-                ret = _localization_detection(camera)
-                if not ret:
-                    continue
-        finally:
-            pass
+def generateBallGrayscale(camera):
+    color_image, _, _, _, _, is_new_image = camera.get_frames()
+    if color_image is None or not is_new_image:
+        return None
 
-def ball_hsv_mask(camera):
-    try:
-        while True:
-            color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
-            if color_image is None or not is_new_image:
-                continue
-
-            mask = _ball_hsv_mask(color_image)
-            cv2.imshow("mask", mask)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    finally:
-        camera.stop()
-        cv2.destroyAllWindows()
-
-def ball_hsv_mask_grayscale(camera):
-    try:
-        while True:
-            color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()
-            if color_image is None or not is_new_image:
-                continue
-
-            mask = _ball_hsv_mask(color_image)
-            mask3 = np.zeros_like(color_image)
-            mask3[:, :, 0] = mask
-            mask3[:, :, 1] = mask
-            mask3[:, :, 2] = mask
-            overlay = cv2.bitwise_and(mask3, color_image)
-            background = cv2.bitwise_and(255-mask3, color_image)
-            background = cv2.cvtColor(cv2.cvtColor(background, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
-            #mask = cv2.multiply(color_image,cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR))
-            cv2.imshow("mask", overlay+background)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-    finally:
-        camera.stop()
-        cv2.destroyAllWindows()
+    mask = _ball_hsv_mask(color_image)
+    mask3 = np.zeros_like(color_image)
+    mask3[:, :, 0] = mask
+    mask3[:, :, 1] = mask
+    mask3[:, :, 2] = mask
+    overlay = cv2.bitwise_and(mask3, color_image)
+    background = cv2.bitwise_and(255-mask3, color_image)
+    background = cv2.cvtColor(cv2.cvtColor(background, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+    return overlay + background
 
 
 def drawBothFrames(camera):
     camera.stream()
 
-def draw_arucos(camera):
-    color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, was_new = camera.get_frames()
-    detect_and_draw_arucos(color_image)
+def generateArucos(camera):
+    color_image, _, _, _, _, was_new = camera.get_frames()
+    return mark_arucos(color_image)[1]
 
 
 

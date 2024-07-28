@@ -55,9 +55,14 @@ error_x, error_y, error_z = list(zip(*errors))
 
 # Filter errors based on z position
 plate_width, plate_height = 0.297, 0.21
+PLATE_LEFT = -plate_width/2
+PLATE_RIGHT = plate_width/2
+PLATE_UP = plate_height/2
+PLATE_DOWN = -plate_height/2
+PLATE_CENTER = (np.average(PLATE_LEFT,PLATE_RIGHT), np.average(PLATE_DOWN,PLATE_UP))
 
 # flip axis: x = y, y = -x
-filtered_errors = [(t, np.clip(y + plate_width/2, 0, plate_width), np.clip(-x + plate_height/2,0,plate_height)) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
+filtered_errors = [(t, np.clip(y, PLATE_LEFT, PLATE_RIGHT), np.clip(-x, PLATE_DOWN, PLATE_UP)) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
 
 normalized_timestamps, ball_positions_x, ball_positions_y = zip(*filtered_errors)
 
@@ -91,10 +96,11 @@ print("total time of simulation:", normalized_timestamps[-1] - normalized_timest
 #Figure stuff
 fig, ax = plt.subplots()
 ax.set_aspect(1)
-ax.set_xticks([i for i in np.arange(0,plate_width,0.05)])
-ax.set_yticks([i for i in np.arange(0,plate_width,0.05)])
-ax.set_xlim(0, plate_width)
-ax.set_ylim(0, plate_height)
+grid_step = 0.05
+ax.set_xticks([i for i in np.arange(0,PLATE_RIGHT, grid_step)] + [-i for i in np.arange(grid_step,PLATE_LEFT, grid_step)])
+ax.set_yticks([i for i in np.arange(0,PLATE_UP, grid_step)] + [-i for i in np.arange(grid_step, PLATE_DOWN, grid_step)])
+ax.set_xlim(PLATE_LEFT,PLATE_RIGHT)
+ax.set_ylim(PLATE_DOWN,PLATE_UP)
 
 plt.grid(True, 'major')
 

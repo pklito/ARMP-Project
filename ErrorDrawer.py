@@ -104,8 +104,10 @@ ax.set_ylim(PLATE_DOWN,PLATE_UP)
 
 plt.grid(True, 'major')
 
+
+ball_screen_radius = 0.035
 # # Add robot hand square
-square = patches.Rectangle((PLATE_CENTER[0]-0.025,PLATE_CENTER[1]+0.05), 0.05, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
+square = patches.Rectangle((PLATE_CENTER[0]-0.035+ball_screen_radius/2,PLATE_CENTER[1]+0.033+ball_screen_radius), 0.07-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
 ax.add_patch(square)
 
 # # add arucos
@@ -117,10 +119,10 @@ SQUARE_SHAPE = [(-SIZE/2, SIZE/2), (SIZE/2, SIZE/2), (SIZE/2, -SIZE/2), (-SIZE/2
 SHAPE = (3,4)
 ARUCO_OBJ = [[((HOR_DISP * (i) + d[0] - HOR_DISP*(SHAPE[0]-1)/2) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*(SHAPE[1]-1)/2)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
 for aruco in ARUCO_OBJ:
-    square = patches.Rectangle((PLATE_CENTER[0]+aruco[3][1],PLATE_CENTER[1]+aruco[3][0]), SIZE/1000., SIZE/1000., alpha=0.1, facecolor='black')
+    square = patches.Rectangle((PLATE_CENTER[0]+aruco[3][1],PLATE_CENTER[1]+aruco[3][0]), SIZE/1000., SIZE/1000., alpha=0.15, facecolor='black')
     ax.add_patch(square)
 
-ball_dot, = plt.plot([], [], 'ro', markersize=23)
+ball_dot, = plt.plot([], [], 'ro', markersize=ball_screen_radius*72/0.035)
 old_dots, = plt.plot([],[], 'x', markersize=8)
 
 

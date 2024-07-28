@@ -59,7 +59,7 @@ PLATE_LEFT = -plate_width/2
 PLATE_RIGHT = plate_width/2
 PLATE_UP = plate_height/2
 PLATE_DOWN = -plate_height/2
-PLATE_CENTER = (np.average(PLATE_LEFT,PLATE_RIGHT), np.average(PLATE_DOWN,PLATE_UP))
+PLATE_CENTER = (np.average([PLATE_LEFT,PLATE_RIGHT]), np.average([PLATE_DOWN,PLATE_UP]))
 
 # flip axis: x = y, y = -x
 filtered_errors = [(t, np.clip(y, PLATE_LEFT, PLATE_RIGHT), np.clip(-x, PLATE_DOWN, PLATE_UP)) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
@@ -97,16 +97,28 @@ print("total time of simulation:", normalized_timestamps[-1] - normalized_timest
 fig, ax = plt.subplots()
 ax.set_aspect(1)
 grid_step = 0.05
-ax.set_xticks([i for i in np.arange(0,PLATE_RIGHT, grid_step)] + [-i for i in np.arange(grid_step,PLATE_LEFT, grid_step)])
-ax.set_yticks([i for i in np.arange(0,PLATE_UP, grid_step)] + [-i for i in np.arange(grid_step, PLATE_DOWN, grid_step)])
+ax.set_xticks([i for i in np.arange(0,PLATE_RIGHT, grid_step)] + [-i for i in np.arange(grid_step,abs(PLATE_LEFT), grid_step)])
+ax.set_yticks([i for i in np.arange(0,PLATE_UP, grid_step)] + [-i for i in np.arange(grid_step, abs(PLATE_DOWN), grid_step)])
 ax.set_xlim(PLATE_LEFT,PLATE_RIGHT)
 ax.set_ylim(PLATE_DOWN,PLATE_UP)
 
 plt.grid(True, 'major')
 
-#Add squares
-# square = patches.Rectangle((0.1,0.25), 0.05, 0.1, linewidth=1, alpha=0.1, facecolor='b',hatch='//')
-# ax.add_patch(square)
+# # Add robot hand square
+square = patches.Rectangle((PLATE_CENTER[0]-0.025,PLATE_CENTER[1]+0.05), 0.05, 0.1, linewidth=1, alpha=0.1, facecolor='b',hatch='//')
+ax.add_patch(square)
+
+# # add arucos
+VALID_ARUCOS = [a for a in range(12)]
+SIZE = 51.5
+VERT_DISP = 23 + SIZE
+HOR_DISP = 23 + SIZE
+SQUARE_SHAPE = [(-SIZE/2, SIZE/2), (SIZE/2, SIZE/2), (SIZE/2, -SIZE/2), (-SIZE/2, -SIZE/2)]
+SHAPE = (3,4)
+ARUCO_OBJ = [[((HOR_DISP * (i) + d[0] - HOR_DISP*(SHAPE[0]-1)/2) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*(SHAPE[1]-1)/2)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
+for aruco in ARUCO_OBJ:
+    square = patches.Rectangle((PLATE_CENTER[0]+aruco[3][1],PLATE_CENTER[1]+aruco[3][0]), SIZE/1000., SIZE/1000., alpha=0.1, facecolor='black')
+    ax.add_patch(square)
 
 ball_dot, = plt.plot([], [], 'ro', markersize=23)
 old_dots, = plt.plot([],[], 'x', markersize=8)

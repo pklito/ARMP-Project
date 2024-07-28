@@ -22,7 +22,7 @@ file_path = 'Square_path_log.txt'
 log_data = None
 
 # 'True': change color. 'False': drawn statically. 'None': don't draw.
-DO_ARUCOS_COLOR = True
+DO_ARUCOS_COLOR = False
 # True: draw robot wrist deadzone, False dont.
 DO_ROBOT_ARM = True
 
@@ -114,7 +114,7 @@ plt.grid(True, 'major')
 
 
 ## BALL MARKER SIZE V V V
-ball_screen_radius = 0.035
+ball_screen_radius = 0.013
 # # Add robot hand square
 if DO_ROBOT_ARM:
     square = patches.Rectangle((PLATE_CENTER[0]-0.035+ball_screen_radius/2,PLATE_CENTER[1]+0.033+ball_screen_radius), 0.07-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
@@ -129,9 +129,10 @@ SQUARE_SHAPE = [(-SIZE/2, SIZE/2), (SIZE/2, SIZE/2), (SIZE/2, -SIZE/2), (-SIZE/2
 SHAPE = (3,4)
 ARUCO_OBJ = [[(-1*(HOR_DISP * (i) + d[0] - HOR_DISP*(SHAPE[0]-1)/2) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*(SHAPE[1]-1)/2)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
 
-for aruco in ARUCO_OBJ:
-    square = patches.Rectangle((PLATE_CENTER[0]+aruco[3][1],PLATE_CENTER[1]+aruco[3][0]), SIZE/1000., SIZE/1000., alpha=0.15, facecolor='black')
-    ax.add_patch(square)
+if DO_ARUCOS_COLOR is not None:
+    for aruco in ARUCO_OBJ:
+        square = patches.Rectangle((PLATE_CENTER[0]+aruco[2][1],PLATE_CENTER[1]+aruco[2][0]), SIZE/1000., SIZE/1000., alpha=0.15, facecolor='black')
+        ax.add_patch(square)
 
 ball_dot, = plt.plot([], [], 'ro', markersize=ball_screen_radius*72/0.035)
 old_dots, = plt.plot([],[], 'x', markersize=8)
@@ -162,6 +163,6 @@ def update(frame):
 
 try:
     anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation8.gif', writer='pillow', fps=30)
+    anim.save('ball_simulation6.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

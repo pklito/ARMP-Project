@@ -9,14 +9,15 @@ from matplotlib.animation import PillowWriter
 from regex import F
 from sklearn.preprocessing import normalize
 
-# def init():
-#     ball_dot.set_data([], [])
-#     return ball_dot,
+def init():
+    ball_dot.set_data([], [])
+    return old_dots, ball_dot
 
-# def update(frame):
-#     if frame < len(ball_positions_x):
-#         ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
-#     return ball_dot,
+def update(frame):
+    if frame < len(ball_positions_x):
+        ball_dot.set_data([ball_positions_x[frame]], [ball_positions_y[frame]])
+        old_dots.set_data(ball_positions_x[max(frame-10,0):max(frame-1,0)], ball_positions_y[max(frame-10,0):max(frame-1,0)])
+    return old_dots, ball_dot
 
 file_path = 'Square_path_log.txt'
 log_data = None
@@ -120,17 +121,6 @@ for aruco in ARUCO_OBJ:
 
 ball_dot, = plt.plot([], [], 'ro', markersize=23)
 old_dots, = plt.plot([],[], 'x', markersize=8)
-
-
-def init():
-    ball_dot.set_data([], [])
-    return old_dots, ball_dot
-
-def update(frame):
-    if frame < len(ball_positions_x):
-        ball_dot.set_data([ball_positions_x[frame]], [ball_positions_y[frame]])
-        old_dots.set_data(ball_positions_x[max(frame-10,0):max(frame-1,0)], ball_positions_y[max(frame-10,0):max(frame-1,0)])
-    return old_dots, ball_dot
 
 try:
     anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)

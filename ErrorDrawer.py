@@ -20,14 +20,16 @@ from sklearn.preprocessing import normalize
 file_path = 'Square_path_log.txt'
 log_data = None
 
-# 'True': change color. 'False': drawn statically. 'None': don't draw.
-DO_ARUCOS_COLOR = False
+# 'True': change color if seen. 'False': drawn statically. 'None': don't draw.
+DO_ARUCOS_COLOR = True
 # True: draw robot wrist deadzone, False dont.
 DO_ROBOT_ARM = True
+# how many trailing X's (0 for none)
+DO_TRAILING_X_COUNT = 10
 # Do arrow of pid
 DO_PID_VECTOR = True
-# how many trailing X's (0 for none)
-DO_TRAILING_X_COUNT = 0
+# ball size in meters
+ball_screen_radius = 0.035
 
 CURR_FAKE_TIME = 0
 if DO_PID_VECTOR:
@@ -130,12 +132,12 @@ ax.set_ylim(PLATE_DOWN,PLATE_UP)
 plt.grid(True, 'major')
 
 
-## BALL MARKER SIZE V V V
-ball_screen_radius = 0.013
 # # Add robot hand square
 if DO_ROBOT_ARM:
     square = patches.Rectangle((PLATE_CENTER[0]-0.035+ball_screen_radius/2,PLATE_CENTER[1]+0.033+ball_screen_radius), 0.07-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
+    square2 = patches.Rectangle((PLATE_CENTER[0]-0.07+ball_screen_radius/2,PLATE_UP-0.002), 0.14-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
     ax.add_patch(square)
+    ax.add_patch(square2)
 
 # # add arucos
 VALID_ARUCOS = [a for a in range(12)]
@@ -154,7 +156,7 @@ if DO_ARUCOS_COLOR is not None:
 ball_dot, = plt.plot([], [], 'ro', markersize=ball_screen_radius*72/0.035)
 old_dots, = plt.plot([],[], 'x', markersize=8)
 if DO_PID_VECTOR:
-    arrow = plt.quiver([0,0],[1,1],angles='xy', scale_units='xy', scale=1)
+    arrow = plt.quiver([0,0],[0,0],[0,0],[0,0],angles='xy', scale_units='xy', scale=1)
 
 def init():
     ball_dot.set_data([], [])
@@ -176,19 +178,21 @@ def update(frame):
             ax.add_patch(p)
         if DO_ROBOT_ARM:
             square = patches.Rectangle((PLATE_CENTER[0]-0.035+ball_screen_radius/2,PLATE_CENTER[1]+0.033+ball_screen_radius), 0.07-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
+            square2 = patches.Rectangle((PLATE_CENTER[0]-0.07+ball_screen_radius/2,PLATE_UP-0.002), 0.14-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
             ax.add_patch(square)
+            ax.add_patch(square2)
 
     if DO_PID_VECTOR:
         SET_FAKE_TIME(normalized_timestamps[frame])
         dx = pid_controller_x(ball_positions_x[frame],)
         dy = pid_controller_y(ball_positions_y[frame])
-        arrow.set_UVC(dx,dy)
+        arrow.set_UVC([dx,0],[0,dy],[1,0])#1,0 fucks with the colors somehow, which i wanted?
         return old_dots, ball_dot
 
     return old_dots, ball_dot
 
 try:
     anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation10.gif', writer='pillow', fps=30)
+    anim.save('ball_simulation11.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

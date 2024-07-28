@@ -62,7 +62,7 @@ PLATE_DOWN = -plate_height/2
 PLATE_CENTER = (np.average([PLATE_LEFT,PLATE_RIGHT]), np.average([PLATE_DOWN,PLATE_UP]))
 
 # flip axis: x = y, y = -x
-filtered_errors = [(t, np.clip(y, PLATE_LEFT, PLATE_RIGHT), np.clip(-x, PLATE_DOWN, PLATE_UP)) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
+filtered_errors = [(t, y, -x) for t, x, y, z in zip(normalized_timestamps, error_x, error_y, error_z) if z == 0.035]
 
 normalized_timestamps, ball_positions_x, ball_positions_y = zip(*filtered_errors)
 
@@ -105,7 +105,7 @@ ax.set_ylim(PLATE_DOWN,PLATE_UP)
 plt.grid(True, 'major')
 
 # # Add robot hand square
-square = patches.Rectangle((PLATE_CENTER[0]-0.025,PLATE_CENTER[1]+0.05), 0.05, 0.1, linewidth=1, alpha=0.1, facecolor='b',hatch='//')
+square = patches.Rectangle((PLATE_CENTER[0]-0.025,PLATE_CENTER[1]+0.05), 0.05, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
 ax.add_patch(square)
 
 # # add arucos
@@ -136,6 +136,6 @@ def update(frame):
 
 try:
     anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation5.gif', writer='pillow', fps=30)
+    anim.save('ball_simulation6.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

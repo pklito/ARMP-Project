@@ -29,14 +29,14 @@ robot_positions = []
 target_positions = []
 
 pattern = re.compile(
-    r"(\d+\.\d+):DEBUG:syncrhronized_balancing\.py;{'error': (None|array\(\[.*?\]\)), 'robot_pos': \[(.*?)\], 'target_pos': \[(.*?)\]}")
+    r"aruco ids: \[((?:\[\s?[0-9]+\]\n.*)+)\]\n.*\n?.*\n?.*(\d+\.\d+):DEBUG:syncrhronized_balancing\.py;\{'error': (None|array\(\[.*?\]\)), 'robot_pos': \[(.*?)\], 'target_pos': \[(.*?)\]\}")
 matches = pattern.findall(log_data)
 
 timestamps = []
 errors = []
 
 for match in matches:
-    timestamp, error, robot_pos_str, target_pos_str = match
+    arucos, timestamp, error, robot_pos_str, target_pos_str = match
     # print("match: ", match)
     timestamps.append(float(timestamp))
     if error != "None":
@@ -105,7 +105,8 @@ ax.set_ylim(PLATE_DOWN,PLATE_UP)
 plt.grid(True, 'major')
 
 
-ball_screen_radius = 0.035
+## BALL MARKER SIZE V V V
+ball_screen_radius = 0.013
 # # Add robot hand square
 square = patches.Rectangle((PLATE_CENTER[0]-0.035+ball_screen_radius/2,PLATE_CENTER[1]+0.033+ball_screen_radius), 0.07-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
 ax.add_patch(square)

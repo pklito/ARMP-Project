@@ -8,7 +8,6 @@ from PIL import Image
 from matplotlib.animation import PillowWriter
 from regex import F
 from sklearn.preprocessing import normalize
-
 # def init():
 #     ball_dot.set_data([], [])
 #     return ball_dot,
@@ -25,6 +24,25 @@ log_data = None
 DO_ARUCOS_COLOR = False
 # True: draw robot wrist deadzone, False dont.
 DO_ROBOT_ARM = True
+# Do arrow of pid
+DO_PID_VECTOR = True
+# how many trailing X's (0 for none)
+DO_TRAILING_X_COUNT = 0
+
+CURR_FAKE_TIME = 0
+if DO_PID_VECTOR:
+    from simple_pid import PID
+    def SET_FAKE_TIME(val):
+        global CURR_FAKE_TIME
+        CURR_FAKE_TIME = val
+    def FAKE_TIME():
+        global CURR_FAKE_TIME
+        return CURR_FAKE_TIME
+    pid_controller_x = PID(Kp=0.9, Ki=0, Kd=0.361,output_limits=(-0.4,0.4),time_fn=FAKE_TIME)
+    pid_controller_x.setpoint = 0
+    pid_controller_y = PID(Kp=0.7, Ki=0, Kd=0.2,output_limits=(-0.3,0.3),time_fn=FAKE_TIME)
+    pid_controller_y.setpoint = 0
+
 
 with open(file_path, 'r') as file:
     log_data = file.read()
@@ -34,7 +52,7 @@ robot_positions = []
 target_positions = []
 
 pattern = re.compile(
-    r"aruco ids: \[((?:\[\s?[0-9]+\]\n.*)+)\]\n.*\n?.*\n?.*(\d+\.\d+):DEBUG:syncrhronized_balancing\.py;\{'error': (None|array\(\[.*?\]\)), 'robot_pos': \[(.*?)\], 'target_pos': \[(.*?)\]\}")
+    r"aruco ids: \[((?:\[\s?[0-9]+\]\n.*)+)\]\n.*\n.*\n(\d+\.\d+):DEBUG:syncrhronized_balancing\.py;\{'error': (None|array\(\[.*?\]\)), 'robot_pos': \[(.*?)\], 'target_pos': \[(.*?)\]\}")
 matches = pattern.findall(log_data)
 
 timestamps = []
@@ -58,7 +76,6 @@ for match in matches:
 
 start_time = timestamps[0]
 normalized_timestamps = [t - start_time for t in timestamps]
-
 error_x, error_y, error_z = list(zip(*errors))
 
 # Filter errors based on z position
@@ -136,17 +153,19 @@ if DO_ARUCOS_COLOR is not None:
 
 ball_dot, = plt.plot([], [], 'ro', markersize=ball_screen_radius*72/0.035)
 old_dots, = plt.plot([],[], 'x', markersize=8)
-
+if DO_PID_VECTOR:
+    arrow = plt.quiver([0,0],[1,1],angles='xy', scale_units='xy', scale=1)
 
 def init():
     ball_dot.set_data([], [])
-    if DO_ARUCOS_COLOR is True:
+    if DO_PID_VECTOR is True:
         return old_dots, ball_dot
     return old_dots, ball_dot
 
 def update(frame):
     ball_dot.set_data([ball_positions_x[frame]], [ball_positions_y[frame]])
-    old_dots.set_data(ball_positions_x[max(frame-10,0):max(frame-1,0)], ball_positions_y[max(frame-10,0):max(frame-1,0)])
+    if DO_TRAILING_X_COUNT > 0:
+        old_dots.set_data(ball_positions_x[max(frame-DO_TRAILING_X_COUNT,0):max(frame-1,0)], ball_positions_y[max(frame-DO_TRAILING_X_COUNT,0):max(frame-1,0)])
     if DO_ARUCOS_COLOR is True:
         patch_list = []
         for index, aruco in enumerate(ARUCO_OBJ):
@@ -158,11 +177,18 @@ def update(frame):
         if DO_ROBOT_ARM:
             square = patches.Rectangle((PLATE_CENTER[0]-0.035+ball_screen_radius/2,PLATE_CENTER[1]+0.033+ball_screen_radius), 0.07-ball_screen_radius, 0.1, linewidth=1, alpha=0.2, facecolor='b',hatch='//')
             ax.add_patch(square)
+
+    if DO_PID_VECTOR:
+        SET_FAKE_TIME(normalized_timestamps[frame])
+        dx = pid_controller_x(ball_positions_x[frame],)
+        dy = pid_controller_y(ball_positions_y[frame])
+        arrow.set_UVC(dx,dy)
         return old_dots, ball_dot
+
     return old_dots, ball_dot
 
 try:
     anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation6.gif', writer='pillow', fps=30)
+    anim.save('ball_simulation10.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

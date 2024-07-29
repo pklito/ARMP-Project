@@ -22,6 +22,29 @@ def runCamera(camera, gen_function, draw_depth = False):
         camera.stop()
         cv2.destroyAllWindows()
 
+
+def saveCamera(camera, gen_function, name='output.mp4', draw_depth = False):
+    result = cv2.VideoWriter(name,
+                         cv2.VideoWriter_fourcc(*'MJPG'),30 , (camera.WIDTH, camera.HEIGHT))
+    try:
+        while True:
+            image = gen_function(camera)
+            if image is None:
+                continue
+
+            if draw_depth:
+                _, _, _, depth_colormap, _, _ = camera.get_frames()
+                if depth_colormap is not None:
+                    image = np.hstack((image, depth_colormap))
+            result.write(image)
+            cv2.imshow("camera view", image)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    finally:
+        result.release()
+        camera.stop()
+        cv2.destroyAllWindows()
+
 def generatePlateAndBall(camera):
     color_image, _, _, _, _, is_new_image = camera.get_frames()
     if color_image is None or is_new_image == False:

@@ -5,12 +5,13 @@ from src.CameraUtils.localization import get_aruco_corners, get_obj_pxl_points, 
 from src.CameraUtils.CameraFunctions import _ball_hsv_mask, mark_arucos, detect_ball, detect_object, get_world_position_from_camera
 import time
 def runCamera(camera, gen_function, draw_depth = False):
+    fcount = 0
     try:
         while True:
-            image = gen_function(camera)
+            image = gen_function(camera,fcount)
             if image is None:
                 continue
-
+            fcount += 1
             if draw_depth:
                 _, _, _, depth_colormap, _, _ = camera.get_frames()
                 if depth_colormap is not None:
@@ -23,15 +24,16 @@ def runCamera(camera, gen_function, draw_depth = False):
         cv2.destroyAllWindows()
 
 
-def saveCamera(camera, gen_function, name='output.mp4', draw_depth = False):
+def saveCamera(camera, gen_function, name='output.avi', draw_depth = False):
+    fcount = 0
     result = cv2.VideoWriter(name,
                          cv2.VideoWriter_fourcc(*'MJPG'),30 , (camera.WIDTH, camera.HEIGHT))
     try:
         while True:
-            image = gen_function(camera)
+            image = gen_function(camera,fcount)
             if image is None:
                 continue
-
+            fcount += 1
             if draw_depth:
                 _, _, _, depth_colormap, _, _ = camera.get_frames()
                 if depth_colormap is not None:
@@ -45,7 +47,7 @@ def saveCamera(camera, gen_function, name='output.mp4', draw_depth = False):
         camera.stop()
         cv2.destroyAllWindows()
 
-def generatePlateAndBall(camera):
+def generatePlateAndBall(camera,fcount):
     color_image, _, _, _, _, is_new_image = camera.get_frames()
     if color_image is None or is_new_image == False:
         return None
@@ -89,7 +91,59 @@ def generatePlateAndBall(camera):
 
     return color_image
 
-def generateBallMask(camera):
+def generateBall(camera,fcount):
+    color_image, _, _, _, _, is_new_image = camera.get_frames()
+    if color_image is None or is_new_image == False:
+        return None
+
+    if color_image.size == 0:
+        print("Can't receive frame (stream end?).")
+        return None
+
+    positions = detect_ball(color_image)
+    if len(positions) == 0:
+        ball_center, radius = None, None
+    else:
+        ball_center, radius = positions[0]
+
+    color = (0, 255, 0)  # Green for ball
+    if ball_center is not None:
+        cv2.circle((color_image), ball_center, radius, color, 2) # the enclosing circle
+        cv2.circle((color_image), ball_center, 2 ,color,2) # a dot in the middle of the circle
+        cv2.putText((color_image), f'Ball Center: ({ball_center[0]}, {ball_center[1]}),', (ball_center[0], ball_center[1] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+    return color_image
+
+
+def generatePlate(camera,fcount):
+    color_image, _, _, _, _, is_new_image = camera.get_frames()
+    if color_image is None or is_new_image == False:
+        return None
+
+    if color_image.size == 0:
+        print("Can't receive frame (stream end?).")
+        return None
+
+    ids, corners = get_aruco_corners(color_image)
+    wcpoints = (-1,-1,-1)
+    if ids is not None:
+        object_pts, pixel_pts = get_obj_pxl_points([a[0] for a in ids.tolist()], corners)
+        if(len(object_pts) != len(pixel_pts)):
+            print("Error, sizes", len(object_pts),len(pixel_pts))
+        else:
+            if pixel_pts.ndim == 3 and pixel_pts.shape[1] == 1 and pixel_pts.shape[2] == 4:
+                pixel_pts = pixel_pts[:, 0, :]
+
+            if object_pts.size == 0 or pixel_pts.size == 0:
+                return None
+            ret, rvec, tvec = cv2.solvePnP(object_pts, pixel_pts, CAMERA_MATRIX, CAMERA_DIST_COEFF)
+
+            if ret:
+                cv2.drawFrameAxes(color_image, CAMERA_MATRIX, CAMERA_DIST_COEFF, rvec, tvec, 0.026, 2)
+    return color_image
+
+
+def generateBallMask(camera,fcount):
     color_image, _, _, _, _, is_new_image = camera.get_frames()
     if color_image is None or not is_new_image:
         return None
@@ -97,7 +151,7 @@ def generateBallMask(camera):
     mask = _ball_hsv_mask(color_image)
     return mask
 
-def generateBallGrayscale(camera):
+def generateBallGrayscale(camera,fcount):
     color_image, _, _, _, _, is_new_image = camera.get_frames()
     if color_image is None or not is_new_image:
         return None
@@ -113,33 +167,38 @@ def generateBallGrayscale(camera):
     return overlay + background
 
 
-def drawBothFrames(camera):
+def drawBothFrames(camera,fcount):
     camera.stream()
 
-def generateArucos(camera):
+def generateArucos(camera,fcount):
     color_image, _, _, _, _, was_new = camera.get_frames()
+    if was_new is False:
+        return None
     return mark_arucos(color_image)[1]
 
-def generateNothing(camera):
+def generateNothing(camera,fcount):
     color_image, _, _, _, _, was_new = camera.get_frames()
+    if was_new is False:
+        return None
     return color_image
 
 
 _gen_start_time = time.time()
-def generateAll(camera):
-    current = int(time.time()-_gen_start_time)//2
-    if current % 5 == 0:
-        return generateNothing(camera)
-    if current % 5 == 1:
-        return generateArucos(camera)
-    if current % 5 == 2:
-        return generatePlateAndBall(camera)
-    if current % 5 == 3:
-        return generateBallGrayscale(camera)
-    if current % 5 == 4:
-        return generateBallMask(camera)
+def generateAll(camera,fcount):
+    if fcount/30 < 8:
+        return generateNothing(camera,fcount)
+    if fcount/30 <11:
+        return generateBallMask(camera,fcount)
+    if fcount/30 < 15:
+        return generateBallGrayscale(camera,fcount)
+    if fcount/30 < 21:
+        return generateNothing(camera,fcount)
+    if fcount/30 < 25:
+        return generateArucos(camera,fcount)
+    return generatePlate(camera,fcount)
 
-#def run_object_detection(camera):
+
+#def run_object_detection(camera,fcount):
 #         try:
 #             while True:
 #                 color_image, depth_image, depth_frame, depth_colormap, depth_intrinsics, is_new_image = camera.get_frames()

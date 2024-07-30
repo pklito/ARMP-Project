@@ -26,8 +26,7 @@ def runCamera(camera, gen_function, draw_depth = False):
 
 def saveCamera(camera, gen_function, name='output.avi', draw_depth = False):
     fcount = 0
-    result = cv2.VideoWriter(name,
-                         cv2.VideoWriter_fourcc(*'MJPG'),30 , (camera.WIDTH, camera.HEIGHT))
+    images = []
     try:
         while True:
             image = gen_function(camera,fcount)
@@ -38,11 +37,15 @@ def saveCamera(camera, gen_function, name='output.avi', draw_depth = False):
                 _, _, _, depth_colormap, _, _ = camera.get_frames()
                 if depth_colormap is not None:
                     image = np.hstack((image, depth_colormap))
-            result.write(image)
             cv2.imshow("camera view", image)
+            images.append(image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     finally:
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        result = cv2.VideoWriter('answer.avi', fourcc, 60.0, (camera.WIDTH,camera.HEIGHT))
+        for image in images:
+            result.write(image)
         result.release()
         camera.stop()
         cv2.destroyAllWindows()
@@ -149,7 +152,7 @@ def generateBallMask(camera,fcount):
         return None
 
     mask = _ball_hsv_mask(color_image)
-    return mask
+    return cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
 def generateBallGrayscale(camera,fcount):
     color_image, _, _, _, _, is_new_image = camera.get_frames()

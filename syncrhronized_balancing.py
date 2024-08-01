@@ -47,7 +47,7 @@ SLOW_LOOKAHEAD = 0.1
 SLOW_EDGE_CUTOFF = 0.05
 SLOW_CLAMP = 0.1
 curr_time = datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
-logger = LoggerGenerator(logfile=f"synchronized_balancing_{curr_time}.log", consoleLevel=20)
+logger = LoggerGenerator(logfile=f"logs/synchronized_balancing_{curr_time}.log", consoleLevel=20)
 task_follower = PathFollow.PathFollowStrict(task_path, SLOW_LOOKAHEAD, SLOW_EDGE_CUTOFF)
 logger.info("Starting Camera")
 SHOW_CAMERA = True

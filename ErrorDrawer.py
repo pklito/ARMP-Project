@@ -156,7 +156,7 @@ if DO_ARUCOS_COLOR is not None:
 ball_dot, = plt.plot([], [], 'ro', markersize=ball_screen_radius*72/0.035)
 old_dots, = plt.plot([],[], 'x', markersize=8)
 if DO_PID_VECTOR:
-    arrow = plt.quiver([0,0],[0,0],[0,0],[0,0],angles='xy', scale_units='xy', scale=1)
+    arrow = plt.quiver([0,0,0],[0,0,0],[0,0,0],[0,0,0],angles='xy', scale_units='xy', scale=1)
 
 def init():
     ball_dot.set_data([], [])
@@ -186,13 +186,13 @@ def update(frame):
         SET_FAKE_TIME(normalized_timestamps[frame])
         dx = pid_controller_x(ball_positions_x[frame],)
         dy = pid_controller_y(ball_positions_y[frame])
-        arrow.set_UVC([dx,0],[0,dy],[1,0])#1,0 fucks with the colors somehow, which i wanted?
+        arrow.set_UVC([dx,0,dx],[0,dy,dy],[1,0,0.5])#1,0 fucks with the colors somehow, which i wanted?
         return old_dots, ball_dot
 
     return old_dots, ball_dot
 
 try:
     anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation11.gif', writer='pillow', fps=30)
+    anim.save('ball_simulation12.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

@@ -43,7 +43,7 @@ def saveCamera(camera, gen_function, name='output.avi', draw_depth = False):
                 break
     finally:
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-        result = cv2.VideoWriter('answer.avi', fourcc, 60.0, (camera.WIDTH,camera.HEIGHT))
+        result = cv2.VideoWriter('answer.avi', fourcc, 30.0, (camera.WIDTH,camera.HEIGHT))
         for image in images:
             result.write(image)
         result.release()
@@ -166,7 +166,7 @@ def generateBallGrayscale(camera,fcount):
     mask3[:, :, 2] = mask
     overlay = cv2.bitwise_and(mask3, color_image)
     background = cv2.bitwise_and(255-mask3, color_image)
-    background = cv2.cvtColor(cv2.cvtColor(background, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+    background = cv2.cvtColor(cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)//3, cv2.COLOR_GRAY2BGR)
     return overlay + background
 
 
@@ -191,12 +191,12 @@ def generateAll(camera,fcount):
     if fcount/30 < 8:
         return generateNothing(camera,fcount)
     if fcount/30 <11:
-        return generateBallMask(camera,fcount)
-    if fcount/30 < 15:
         return generateBallGrayscale(camera,fcount)
-    if fcount/30 < 21:
+    if fcount/30 < 15:
+        return generateBall(camera,fcount)
+    if fcount/30 < 18:
         return generateNothing(camera,fcount)
-    if fcount/30 < 25:
+    if fcount/30 < 22:
         return generateArucos(camera,fcount)
     return generatePlate(camera,fcount)
 

@@ -193,6 +193,6 @@ def update(frame):
 
 try:
     anim = FuncAnimation(plt.gcf(), update, frames=len(normalized_timestamps), init_func=init, blit=True)
-    anim.save('ball_simulation12.gif', writer='pillow', fps=30)
+    anim.save('media/ball_simulation12.gif', writer='pillow', fps=30)
 except Exception as e:
     print(f"Error saving GIF: {e}")

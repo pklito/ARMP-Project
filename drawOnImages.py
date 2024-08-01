@@ -51,7 +51,7 @@ def custom_detect_arucos(color_image):
             for point in aruco_corner:
                 cv2.circle(color_image_with_markers, (int(point[0]), int(point[1])), 3 ,(0,255,0),2)
         key = cv2.waitKey(1)
-        cv2.imwrite("aruco_detected.png", color_image_with_markers)
+        cv2.imwrite("media/aruco_detected.png", color_image_with_markers)
         if key == ord('q'):
             return None, None
         return aruco_corners, color_image_with_markers
@@ -89,8 +89,8 @@ def drawAxesCustom(color_image, axis_length = 0.05):
     cv2.line(color_image, origin, z_axis, (255, 0, 0), 2)
     return color_image
 
-ball_image = cv2.imread('Ball_before_detect.png')
-aruco_image = cv2.imread('aruco_image.png')
+ball_image = cv2.imread('media/Ball_before_detect.png')
+aruco_image = cv2.imread('media/aruco_image.png')
 
 bounding_circles = detect_ball(ball_image)
 
@@ -99,10 +99,10 @@ for circle in bounding_circles:
     cv2.circle(ball_image, center, radius, (0, 255, 0), 2)
     cv2.circle(ball_image, center, 3, (255, 0, 0), -1)
 
-cv2.imwrite("Ball_Detected.png", ball_image)
+cv2.imwrite("media/Ball_Detected.png", ball_image)
 
 _ = custom_detect_arucos(aruco_image)
-aruco_image = cv2.imread('aruco_image.png')
+aruco_image = cv2.imread('media/aruco_image.png')
 new_image = drawAxesCustom(aruco_image, axis_length = 0.05)
 
-cv2.imwrite("Axes_Frames.png", new_image)
+cv2.imwrite("media/Axes_Frames.png", new_image)

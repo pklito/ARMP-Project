@@ -68,6 +68,8 @@ class Visualize_UR(object):
         '''
         Plots the path
         '''
+        if not isinstance(path, np.ndarray):
+            path = np.array(path)
         confs_num = len(path)-1
         resolution = 5*np.pi / 180
         for i in range(confs_num):
@@ -97,5 +99,4 @@ class Visualize_UR(object):
         self.draw_square()
         plt.ioff()
         self.show()
-        plt.show()
         time.sleep(0.1)

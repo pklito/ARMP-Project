@@ -80,36 +80,47 @@ class UR3e_PARAMS(object):
     def __init__(self, inflation_factor=1.0, tool_length=0.135):
         # alpha, a, d, theta_const
         self.ur_DH = [
-                        [0, 0, 0.1519, 0],           # shoulder -> base_link
-                        [-np.pi/2, 0, 0, 0],         # upper_arm_link -> shoulder
-                        [0, -0.24365, 0, 0],         # forearm_link -> upper_arm_link
-                        [0, -0.21325, 0.11235, 0],   # wrist1 -> forearm_link
-                        [np.pi/2, 0, 0.08535, 0],    # wrist2 -> wrist1
-                        [-np.pi/2, 0, 0.0819 + tool_length, 0]  # wrist3 -> wrist2, including tool length
-                    ]
-
-        self.ur_geometry = [
-            ['shoulder_link', np.array([0, 0, -0.1519]), 'z'],
-            ['upper_arm_link', np.array([-0.24365, 0, 0]), 'x'],
-            ['upper_arm_link', np.array([0, 0, 0.11235]), 'z'],
-            ['forearm_link', np.array([0, 0, 0.11235]), 'z'],
-            ['forearm_link', np.array([-0.21325, 0, 0.015]), 'x'],
-            ['wrist_1_link', np.array([0, 0, -0.109]), 'z'],
-            ['wrist_1_link', np.array([0, -0.11, 0]), 'y'],
-            ['wrist_1_link', np.array([0, 0.05, 0]), 'y'],
-            ['wrist_2_link', np.array([0, 0.0825, 0]), 'y'],
-            ['wrist_2_link', np.array([0, -0.05, 0]), 'y'],
-            ['wrist_3_link', np.array([0, 0, tool_length]), 'z']
+            [0, 0, 0.15185, 0],               # shoulder -> base_link
+            [np.pi/2, 0, 0, 0],              # upper_arm_link -> shoulder
+            [0, -0.24355, 0, 0],              # forearm_link -> upper_arm_link
+            [0, -0.2132, 0.11235, 0],         # wrist1 -> forearm_link
+            [np.pi/2, 0, 0.08535, 0],         # wrist2 -> wrist1
+            [-np.pi/2, 0, 0.0819, 0]  # wrist3 -> wrist2, including tool length
         ]
 
+        self.ur_geometry = [
+            ['shoulder_link', np.array([0, 0, -0.15185]), 'z'],           # shoulder_link relative to base_link
+            ['upper_arm_link', np.array([-0.24355, 0, 0.11235]), 'x'],    # upper_arm_link relative to shoulder_link
+            ['upper_arm_link', np.array([0, 0, 0.11235]), 'z'],           # secondary translation along Z
+            ['forearm_link', np.array([0, 0, 0.11235]), 'z'],             # forearm_link relative to upper_arm_link
+            ['forearm_link', np.array([-0.2132, 0, 0.015]), 'x'],         # additional translation for forearm_link
+            ['wrist_1_link', np.array([0, 0, -0.109]), 'z'],              # wrist_1_link relative to forearm_link
+            ['wrist_1_link', np.array([0, -0.11, 0]), 'y'],               # additional offset for wrist_1_link
+            ['wrist_1_link', np.array([0, 0.05, 0]), 'y'],                # additional offset for wrist_1_link
+            ['wrist_2_link', np.array([0, 0.0825, 0]), 'y'],              # wrist_2_link relative to wrist_1_link
+            ['wrist_2_link', np.array([0, -0.05, 0]), 'y'],               # additional offset for wrist_2_link
+            ['wrist_3_link', np.array([0, 0, tool_length]), 'z']          # wrist_3_link relative to wrist_2_link
+        ]
 
-        self.ur_links = [ 'shoulder_link', 'upper_arm_link',
-                        'forearm_link', 'wrist_1_link', 'wrist_2_link', 'wrist_3_link']
+        self.ur_links = [
+            'shoulder_link',
+            'upper_arm_link',
+            'forearm_link',
+            'wrist_1_link',
+            'wrist_2_link',
+            'wrist_3_link'
+        ]
 
-        self.ur_links_color = {'base_link':'gray', 'base_link_inertia':'gray',
-                               'shoulder_link':'gray','upper_arm_link':'yellow',
-                             'forearm_link':'green', 'wrist_1_link':'purple'
-                            , 'wrist_2_link':'black', 'wrist_3_link':'blue'}
+        self.ur_links_color = {
+            'base_link':'gray',
+            'base_link_inertia':'gray',
+            'shoulder_link':'gray',
+            'upper_arm_link':'yellow',
+            'forearm_link':'green',
+            'wrist_1_link':'purple',
+            'wrist_2_link':'black',
+            'wrist_3_link':'blue'
+        }
 
         self.mechanical_limits = {
             'shoulder_link': [-np.pi, np.pi],
@@ -120,22 +131,13 @@ class UR3e_PARAMS(object):
             'wrist_3_link': [-np.pi, np.pi]
         }
 
-        # self.min_sphere_radius = {
-        #     'shoulder_link': 0.03,  # Adjusted from 0.06 to 0.03
-        #     'upper_arm_link': 0.025,  # Adjusted from 0.05 to 0.025
-        #     'forearm_link': 0.025,  # Adjusted from 0.05 to 0.025
-        #     'wrist_1_link': 0.02,  # Adjusted from 0.04 to 0.02
-        #     'wrist_2_link': 0.02,  # Adjusted from 0.04 to 0.02
-        #     'wrist_3_link': 0.02  # Adjusted from 0.04 to 0.02
-        # }
-
         self.min_sphere_radius = {
-            'shoulder_link': 0.02,  # Further tightened from 0.03 to 0.02
-            'upper_arm_link': 0.015,  # Further tightened from 0.025 to 0.015
-            'forearm_link': 0.015,  # Further tightened from 0.025 to 0.015
-            'wrist_1_link': 0.01,  # Further tightened from 0.02 to 0.01
-            'wrist_2_link': 0.01,  # Further tightened from 0.02 to 0.01
-            'wrist_3_link': 0.01  # Further tightened from 0.02 to 0.01
+            'shoulder_link': 0.03,
+            'upper_arm_link': 0.025,
+            'forearm_link': 0.025,
+            'wrist_1_link': 0.02,
+            'wrist_2_link': 0.02,
+            'wrist_3_link': 0.02
         }
 
         self.sphere_radius = {key: val * inflation_factor for key, val in self.min_sphere_radius.items()}

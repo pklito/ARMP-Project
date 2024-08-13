@@ -26,8 +26,7 @@ def runCamera(camera, gen_function, draw_depth = False):
 
 def saveCamera(camera, gen_function, name='output.avi', draw_depth = False):
     fcount = 0
-    result = cv2.VideoWriter(name,
-                         cv2.VideoWriter_fourcc(*'MJPG'),30 , (camera.WIDTH, camera.HEIGHT))
+    images = []
     try:
         while True:
             image = gen_function(camera,fcount)
@@ -38,11 +37,15 @@ def saveCamera(camera, gen_function, name='output.avi', draw_depth = False):
                 _, _, _, depth_colormap, _, _ = camera.get_frames()
                 if depth_colormap is not None:
                     image = np.hstack((image, depth_colormap))
-            result.write(image)
             cv2.imshow("camera view", image)
+            images.append(image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     finally:
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        result = cv2.VideoWriter('answer.avi', fourcc, 30.0, (camera.WIDTH,camera.HEIGHT))
+        for image in images:
+            result.write(image)
         result.release()
         camera.stop()
         cv2.destroyAllWindows()
@@ -149,7 +152,7 @@ def generateBallMask(camera,fcount):
         return None
 
     mask = _ball_hsv_mask(color_image)
-    return mask
+    return cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
 def generateBallGrayscale(camera,fcount):
     color_image, _, _, _, _, is_new_image = camera.get_frames()
@@ -163,7 +166,7 @@ def generateBallGrayscale(camera,fcount):
     mask3[:, :, 2] = mask
     overlay = cv2.bitwise_and(mask3, color_image)
     background = cv2.bitwise_and(255-mask3, color_image)
-    background = cv2.cvtColor(cv2.cvtColor(background, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+    background = cv2.cvtColor(cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)//3, cv2.COLOR_GRAY2BGR)
     return overlay + background
 
 
@@ -188,12 +191,12 @@ def generateAll(camera,fcount):
     if fcount/30 < 8:
         return generateNothing(camera,fcount)
     if fcount/30 <11:
-        return generateBallMask(camera,fcount)
-    if fcount/30 < 15:
         return generateBallGrayscale(camera,fcount)
-    if fcount/30 < 21:
+    if fcount/30 < 15:
+        return generateBall(camera,fcount)
+    if fcount/30 < 18:
         return generateNothing(camera,fcount)
-    if fcount/30 < 25:
+    if fcount/30 < 22:
         return generateArucos(camera,fcount)
     return generatePlate(camera,fcount)
 

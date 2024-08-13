@@ -1,5 +1,4 @@
 import cv2
-import pyrealsense2 as rs
 import numpy as np
 import sys
 import threading
@@ -8,6 +7,9 @@ import time
 
 class FakeCameraStreamer:
     def __init__(self, path, depth_path=None, width = 640, height = 360, framerate = 60, loop = False):
+        """
+        @param framerate frequency of reading from file. -1 for reading once per call of get_frames()
+        """
         self.WIDTH = width
         self.HEIGHT = height
         self.FRAMERATE = framerate
@@ -17,13 +19,6 @@ class FakeCameraStreamer:
         if depth_path is not None:
             self.depth_cap = cv2.VideoCapture(depth_path)
 
-        # Create a lock to synchronize access to the frames
-        self.lock = threading.Lock()
-        self.running = True
-        # Create a thread for collecting frames
-        self.collect_thread = threading.Thread(target=self.collect_frames)
-        self.collect_thread.start()
-
         # Initialize variables for storing the frames
         self.color_image = None
         self.depth_image = None
@@ -31,6 +26,13 @@ class FakeCameraStreamer:
         self.depth_colormap = None
         self.depth_intrinsics = None
         self.is_new = False
+
+        # Create a lock to synchronize access to the frames
+        self.lock = threading.Lock()
+        self.running = True
+        # Create a thread for collecting frames
+        self.collect_thread = threading.Thread(target=self.collect_frames)
+        self.collect_thread.start()
 
     def collect_frames(self):
         while True:
@@ -59,9 +61,12 @@ class FakeCameraStreamer:
                     self.depth_colormap = dframe
                 self.is_new = True
             end_time = time.time()
-            remainder = 1/self.FRAMERATE - (end_time - start_time)
-            if  remainder > 0:
-                time.sleep(remainder)
+            if self.FRAMERATE > 0:
+                remainder = 1/self.FRAMERATE - (end_time - start_time)
+                if remainder > 0:
+                    time.sleep(remainder)
+            else:
+                time.sleep(0.01)
 
     def get_frames(self):
         with self.lock:

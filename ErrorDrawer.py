@@ -8,14 +8,6 @@ from PIL import Image
 from matplotlib.animation import PillowWriter
 from regex import F
 from sklearn.preprocessing import normalize
-# def init():
-#     ball_dot.set_data([], [])
-#     return ball_dot,
-
-# def update(frame):
-#     if frame < len(ball_positions_x):
-#         ball_dot.set_data(ball_positions_x[frame], ball_positions_y[frame])
-#     return ball_dot,
 
 file_path = 'Square_path_log.txt'
 log_data = None
@@ -71,9 +63,8 @@ for match in matches:
         error_cleaned = error.replace('array([', '').replace('])', '').replace(' ', '')
         error_values = np.array([float(x) for x in error_cleaned.split(',')])
         errors.append(error_values)
-        # print("error_values: ", error_values)
     else:
-        errors.append([0.0, 0.0, 0.0])  # Assuming zero error if not specified
+        errors.append([0.0, 0.0, 0.0])
 
 
 start_time = timestamps[0]

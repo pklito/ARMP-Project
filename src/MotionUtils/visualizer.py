@@ -90,13 +90,18 @@ class Visualize_UR(object):
     def draw_square(self):
         self.ax.plot([0.05, -0.34,-0.34,0.05,0.05],[-0.19, -0.19,-0.55,-0.55,-0.19])
 
-    def show_conf(self, conf:np.array):
+    def show_conf(self, conf:np.array ,freeze = True):
         '''
         Plots configuration
         '''
+        self.ax.clear()
         global_sphere_coords = self.transform.conf2sphere_coords(conf)
         self.draw_spheres(global_sphere_coords)
         self.draw_square()
-        plt.ioff()
+        if freeze:
+            plt.ioff()
+        else:
+            plt.ion()
         self.show()
-        time.sleep(0.1)
+        if freeze:
+            plt.show()

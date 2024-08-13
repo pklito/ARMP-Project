@@ -121,6 +121,14 @@ def forward_kinematic_matrix(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0]
     transform = t01 * t12 * t23 * t34 * t45 * t56
     return transform
 
+def config_autocomplete(config, joint_4_direction = -1, bias = (0,2.5)):
+    c = config
+    d = 1 if joint_4_direction > 0 else -1
+    return [config[0], config[1], config[2], -(c[1]+c[2]) + d*np.deg2rad(bias[1]) - np.pi,d*np.pi/2, np.pi/2 + np.deg2rad(bias[0])]
+
+def flat_inverse_kinematic_solution(DH_matrix, goal_xyz,):
+    initial_config = config_autocomplete((0, -np.pi/2, 0, 0))
+
 def inverse_kinematic_solution(DH_matrix, transform_matrix,):
 
     theta = np.matrix(np.zeros((6, 8)))

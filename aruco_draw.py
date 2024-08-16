@@ -23,7 +23,7 @@ while True:
         for corner in corners:
             pts = corner.reshape(4, 2)
             pts = pts.astype(np.int32)
-            pts_normalized = np.array([p - (pts[3]-pts[0]+(0,10))/2 for p in pts],dtype=np.float32)
+            pts_normalized = np.array([p - (pts[3]-pts[0])/1.8 for p in pts],dtype=np.float32)
             matrix = cv2.getPerspectiveTransform(np.array([(0,0),(text_img_shape[0], 0),(text_img_shape[0],text_img_shape[1]),(0,text_img_shape[1])]).astype(np.float32), pts_normalized)
             tilted_text_img = cv2.warpPerspective(text_img, matrix, (text_img_shape[1], text_img_shape[0]))
             cv2.fillPoly(color_image, [pts], color=(0, 255, 0))

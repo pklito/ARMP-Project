@@ -10,6 +10,10 @@ def easeInOutSine(x):
     return -(np.cos(np.pi * x) - 1) / 2
 
 def draw_filling_aruco_square(image, aruco_corners, percent, color = (0,200,0), easing = easeInOutSine):
+    if percent > 1:
+        percent = 1
+    if percent < 0:
+        percent = 0
     text_img = np.zeros(image.shape[:2], dtype=np.uint8)
     leftmost_corner = min(aruco_corners,key=lambda x: x[0])
     rightmost_corner = max(aruco_corners,key=lambda x: x[0])
@@ -22,7 +26,14 @@ def draw_filling_aruco_square(image, aruco_corners, percent, color = (0,200,0), 
     pts = pts.astype(np.int32)
     cv2.fillPoly(text_img, [pts], color=255)
     cv2.fillConvexPoly(text_img, np.array([(draw_until,topmost_corner[1]), (rightmost_corner[0],topmost_corner[1]), (rightmost_corner[0],bottom_corner[1]), (draw_until,bottom_corner[1])],dtype=np.int32),0)
-    image[text_img == 255] = color
+
+    if percent >= 1:
+        image[text_img == 255] //= np.array((10,10,10),dtype=np.uint8)
+        image[text_img == 255] += np.array((0,200,0),dtype=np.uint8)
+
+    else:
+        image[text_img == 255] //= np.array((4,2,4),dtype=np.uint8)
+        image[text_img == 255] += np.array((0,128*easing(percent),0),dtype=np.uint8)
     cv2.polylines(image, [pts], isClosed=True, color=(50,255,50),thickness=2)
 
 
@@ -55,7 +66,7 @@ while True:
         break
 
     time += 0.01
-    if time > 1:
+    if time > 1.5:
         time = 0
     corners, ids, _ = cv2.aruco.detectMarkers(color_image, ARUCO_DICT, parameters=ARUCO_PARAMS)
     if ids is not None:
@@ -63,8 +74,12 @@ while True:
             pts = corner.reshape(4, 2)
             pts = pts.astype(np.int32)
             if id == 100:
+                aruco_center = sum(pts)/4
+
                 draw_text_on_aruco(color_image, pts, "Move", color = (000,30,000))
+                cv2.polylines(color_image, [np.array([0.8 * p + 0.2 * aruco_center for p in pts],dtype=np.int32)], isClosed=True, color=(0, 255, 0),thickness=1)
                 cv2.polylines(color_image, [pts], isClosed=True, color=(0, 255, 0),thickness=2)
+
                 draw_arrow_in_aruco(color_image, pts)
             elif id == 101:
                 draw_text_on_aruco(color_image, pts, "Store", color=(255,100,0))

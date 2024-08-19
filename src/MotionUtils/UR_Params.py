@@ -77,7 +77,7 @@ class UR3e_PARAMS(object):
     @param inflation_factor - by what factor inflate the minimal sphere radious of each link
     @param tool_length - the lenght of the tool [meters]. for the gripper, set 0.135 meter
     '''
-    def __init__(self, inflation_factor=1.0, tool_length=0.135):
+    def __init__(self, inflation_factor=1.0, tool_length=0.135, plate_size=None):
         # alpha, a, d, theta_const
         self.ur_DH = [
             [0, 0, 0.15185, 0],               # shoulder -> base_link
@@ -101,6 +101,13 @@ class UR3e_PARAMS(object):
             ['wrist_2_link', np.array([0, -0.05, 0]), 'y'],               # additional offset for wrist_2_link
             ['wrist_3_link', np.array([0, 0, tool_length]), 'z']          # wrist_3_link relative to wrist_2_link
         ]
+
+        if plate_size:
+            plate_width, plate_height = plate_size
+            self.plate_dimensions = {'width': plate_width, 'height': plate_height}
+        else:
+            self.plate_dimensions = None
+
 
         self.ur_links = [
             'shoulder_link',
@@ -171,10 +178,6 @@ class Transform(object):
                     self.local_sphere_coords[frame].append(np.array([offset[0],offset[1],sphere_offset ,1], dtype=float))
 
     def dh_transform(self, alpha, a, d, theta):
-        # return np.array([[np.cos(theta), -np.sin(theta), 0, a],
-        #                 [np.sin(theta) * np.cos(alpha) , np.cos(theta) * np.cos(alpha), -np.sin(alpha), -d * np.sin(alpha)],
-        #                 [np.sin(theta) * np.sin(alpha) , np.cos(theta) * np.sin(alpha), np.cos(alpha),  d * np.cos(alpha)],
-        #                 [0,0,0,1]], dtype=float)
         return np.array([
         [np.cos(theta), -np.sin(theta) * np.cos(alpha), np.sin(theta) * np.sin(alpha), a * np.cos(theta)],
         [np.sin(theta), np.cos(theta) * np.cos(alpha), -np.cos(theta) * np.sin(alpha), a * np.sin(theta)],

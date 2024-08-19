@@ -1,5 +1,7 @@
+from flask import config
 import numpy as np
 import random
+from src.MotionUtils.kinematicsUtils import config_autocomplete
 
 def sphere_collision(p1,p2,r1,r2):
     return np.linalg.norm(np.array(p1)-np.array(p2)) < r1 + r2
@@ -62,11 +64,11 @@ class Building_Blocks(object):
                         if sphere_collision(s[0:3], s2[0:3], self.ur_params.sphere_radius[self.ur_params.ur_links[i]], self.ur_params.sphere_radius[self.ur_params.ur_links[j]]):
                             return True
         # arm - obstacle collision
-        # for joint, spheres in global_sphere_coords.items():
-        #     for sphere in spheres:
-        #         for obstacle in self.env.obstacles:
-        #             if sphere_collision(sphere[0:3], obstacle, self.ur_params.sphere_radius[joint], self.env.radius):
-        #                 return True
+        for joint, spheres in global_sphere_coords.items():
+            for sphere in spheres:
+                for obstacle in self.env.obstacles:
+                    if sphere_collision(sphere[0:3], obstacle, self.ur_params.sphere_radius[joint], self.env.radius):
+                        return True
         # arm - floor collision
         for joint, spheres in global_sphere_coords.items():
             if joint == self.ur_params.ur_links[0]:
@@ -105,6 +107,14 @@ class Building_Blocks_UR5e(Building_Blocks):
 
 
 class Building_Blocks_UR3e(Building_Blocks):
+    def sample(self, goal_conf) -> np.array:
+        if random.random() < self.p_bias:
+            return np.array(goal_conf)
+        else:
+            joint_4_direction = 1 # 1 for positive, -1 for negative, has to be constant for the path
+            config = (np.random.uniform(-np.pi, np.pi), np.random.uniform(-np.pi, np.pi), np.random.uniform(-np.pi, np.pi))
+            conf = config_autocomplete(config, joint_4_direction)
+            return np.array(conf)
     def is_in_collision(self, conf) -> bool:
         """check for collision in given configuration, arm-arm and arm-obstacle
         return True if in collision
@@ -112,20 +122,22 @@ class Building_Blocks_UR3e(Building_Blocks):
         """
         global_sphere_coords = self.transform.conf2sphere_coords(conf)
         # arm - arm collision
-        # for i in range(len(self.ur_params.ur_links) - 2):
-        #     for j in range(i + 2, len(self.ur_params.ur_links)):
-        #         spheres = global_sphere_coords[self.ur_params.ur_links[i]]
-        #         other_spheres = global_sphere_coords[self.ur_params.ur_links[j]]
-        #         for s in spheres:
-        #             for s2 in other_spheres:
-        #                 if sphere_collision(s[0:3], s2[0:3], self.ur_params.sphere_radius[self.ur_params.ur_links[i]], self.ur_params.sphere_radius[self.ur_params.ur_links[j]]):
-        #                     return True
-        # arm - obstacle collision
-        for joint, spheres in global_sphere_coords.items():
-            for sphere in spheres:
-                for obstacle in self.env.obstacles:
-                    if sphere_collision(sphere[0:3], obstacle, self.ur_params.sphere_radius[joint], self.env.radius):
-                        return True
+        for i in range(len(self.ur_params.ur_links) - 2):
+            for j in range(i + 2, len(self.ur_params.ur_links)):
+                spheres = global_sphere_coords[self.ur_params.ur_links[i]]
+                other_spheres = global_sphere_coords[self.ur_params.ur_links[j]]
+                for s in spheres:
+                    for s2 in other_spheres:
+                        if sphere_collision(s[0:3], s2[0:3], self.ur_params.sphere_radius[self.ur_params.ur_links[i]],
+                        self.ur_params.sphere_radius[self.ur_params.ur_links[j]]):
+                            return True
+        # arm - obstacle collision <Currently we don't have obstacles in our environment for simpliicity>
+        # for joint, spheres in global_sphere_coords.items():
+        #     for sphere in spheres:
+        #         for obstacle in self.env.obstacles:
+        #             if sphere_collision(sphere[0:3], obstacle, self.ur_params.sphere_radius[joint], self.env.radius):
+        #                 return True
+
         # arm - floor collision
         for joint, spheres in global_sphere_coords.items():
             if joint == self.ur_params.ur_links[0]:
@@ -133,10 +145,42 @@ class Building_Blocks_UR3e(Building_Blocks):
             for sphere in spheres:
                 if sphere[2] < self.ur_params.sphere_radius[joint]:
                     return True
+        # y - axis limit
+        for joint, spheres in global_sphere_coords.items():
+            for sphere in spheres:
+                if sphere[1] + self.ur_params.sphere_radius[joint] > 0.5: # could be slightly buggy
+                    return True
+
         # x - axis limit
-        # for joint, spheres in global_sphere_coords.items():
-        #     for sphere in spheres:
-        #         if sphere[0] + self.ur_params.sphere_radius[joint] > 0.4:
-        #             return True
+        for joint, spheres in global_sphere_coords.items():
+            for sphere in spheres:
+                if sphere[0] + self.ur_params.sphere_radius[joint] > 0.4: # could be slightly buggy
+                    return True
+
+        # plate - arm collision
+
+
+        # wrist3_spheres = global_sphere_coords[self.ur_params.ur_links[5]]
+        # plate_center = np.array([0.0, 0.0, 0.0])  # center of the plate
+        # plate_radius = 0.297  # radius of the plate (A4 size)
+
+        # # Add spheres around the plate
+        # plate_spheres = []
+        # for theta in np.linspace(0, 2 * np.pi, num=20):
+        #     x = plate_center[0] + plate_radius * np.cos(theta)
+        #     y = plate_center[1] + plate_radius * np.sin(theta)
+        #     z = plate_center[2]
+        #     plate_spheres.append([x, y, z, 0.0])  # 0.0 is the radius of the sphere
+
+        # # Add the plate spheres to the wrist3_spheres list
+        # wrist3_spheres.extend(plate_spheres)
+
+        # for sphere in wrist3_spheres:
+        #     if sphere_collision(sphere[0:3], plate_center, self.ur_params.sphere_radius[joint], plate_radius):
+        #         return True
+
+        # # plate - floor collision
+        # if plate_center[2] - plate_radius < 0.0:
+        #     return True
         return False
 

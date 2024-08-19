@@ -1,6 +1,6 @@
 import numpy as np
 import time, sys
-from RRTTree import RRTTree
+from .RRTTree import RRTTree
 
 class RRT_STAR(object):
     def __init__(self, max_step_size, max_itr, bb):

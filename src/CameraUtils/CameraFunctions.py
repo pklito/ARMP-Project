@@ -43,10 +43,10 @@ def _ball_hsv_mask(frame):
 
     hsv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    lower_limit1, upper_limit1 = (165, 136, 141), (180,  255, 255)
-    #lower_limit1, upper_limit1 = (0, 154, 146), (9,  255, 255)
-    #lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255) Realsense!!
-    lower_limit2, upper_limit2 = (256, 255, 255), (255,  255, 255)       # fake camera
+    #lower_limit1, upper_limit1 = (165, 136, 141), (180,  255, 255)
+    lower_limit1, upper_limit1 = (0, 154, 146), (9,  255, 255)
+    lower_limit2, upper_limit2 = (176, 154, 146), (179,  255, 255)
+    #lower_limit2, upper_limit2 = (256, 255, 255), (255,  255, 255)       # fake camera
 
     mask1 = cv2.inRange(hsv_image, lower_limit1, upper_limit1)
     mask2 = cv2.inRange(hsv_image, lower_limit2, upper_limit2)

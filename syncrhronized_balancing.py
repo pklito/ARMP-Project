@@ -65,7 +65,8 @@ pid_controller_y.setpoint = 0
 
 plate_center = (0, 0, 0)
 
-CAMERA_FAILED_MAX = 100
+CAMERA_FAILED_IGNORE = 10
+CAMERA_FAILED_STOP = 500
 
 logger.warning("Starting the loop.")
 
@@ -74,7 +75,7 @@ keep_moving = True
 has_started = False
 _task_target_t = 0
 _task_target_edge = 0
-camera_failed_counter = CAMERA_FAILED_MAX + 10
+camera_failed_counter = CAMERA_FAILED_STOP + 10
 # initial_pos = [-0.129, -1.059, -1.229, -0.875, 1.716, 1.523]
 
 last_offsets = (0,0)
@@ -121,6 +122,9 @@ while keep_moving:
         ball_position = get_ball_position(color_image,DEBUG=False)
         if ball_position is None:           # no point in reading screen
             camera_failed_counter += 1
+            if camera_failed_counter > CAMERA_FAILED_IGNORE:
+                logger.error("camera ignored! counter at: " + str(camera_failed_counter))
+                error = (0,0)
         else:                               # read new position
             camera_failed_counter = 0
             error = ball_position - plate_center
@@ -156,7 +160,7 @@ while keep_moving:
     logger.debug({"error": error, "robot_pos": [round(q,2) for q in task_state.actual_q], "target_pos":[round(q,2) for q in cam_state.actual_q]})
     camera_robot.sendConfig(cam_lookahead_config)
 
-    if camera_failed_counter > CAMERA_FAILED_MAX:
+    if camera_failed_counter > CAMERA_FAILED_STOP:
         logger.error("camera failed to find error for a while! halting movement")
         lookahead_again, _, _ = task_follower.getLookaheadData(current_task_config,lookahead_distance=0)
         task_config = PathFollow.getClampedTarget(current_task_config, lookahead_again ,SLOW_CLAMP)

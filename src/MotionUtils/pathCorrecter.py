@@ -1,5 +1,5 @@
 import numpy as np
-
+from kinematicsUtils import balanced_config_autocomplete
 bias = (0,2.5)
 # task_path = [[0.3, -1.059, -1.229, -0.897, 1.571, 1.571] ,
 #             [0.3, -1.059, -1.229, -0.897, 1.571, 1.571] ,
@@ -22,7 +22,7 @@ def pos_sign(x):
         return 1
     return -1
 
-new_path = [[c[0],c[1],c[2],-(c[1]+c[2]) + pos_sign(c[4])*np.deg2rad(bias[1]) - np.pi,pos_sign(c[4])*np.pi/2, np.pi/2 + np.deg2rad(bias[0])] for c in task_path]
+new_path = [balanced_config_autocomplete(c, joint_4_direction=c[4],bias=bias) for c in task_path]
 print("task_path = [", end="")
 for config in new_path:
     print([round(p,3)for p in config ],",",end="\n\t")

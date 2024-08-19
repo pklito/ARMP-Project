@@ -1,7 +1,7 @@
 import numpy as np
 from math import sin, cos, atan2, acos, pi, sqrt, asin, atan
 from scipy.spatial.transform import Rotation as R
-
+from random import random
 
 # Define the tool length and DH matrices for different UR arms
 tool_length = 0.135  # [m]
@@ -121,13 +121,18 @@ def forward_kinematic_matrix(DH_matrix, edges=np.matrix([[0], [0], [0], [0], [0]
     transform = t01 * t12 * t23 * t34 * t45 * t56
     return transform
 
-def config_autocomplete(config, joint_4_direction = -1, bias = (0,2.5)):
+def balanced_config_autocomplete(config, joint_4_direction = -1, bias = (0,2.5)):
+    """ input a config, where the first 3 angles are read.
+        returns a robot config where the plate on the end effector is balanced.
+        bias accounts for LR, and UpDown augmentation of the plate.
+        joint 4 direction chooses the sign of the 4th joint angle, -np/2 or np/2.
+    """
     c = config
     d = 1 if joint_4_direction > 0 else -1
     return [config[0], config[1], config[2], -(c[1]+c[2]) + d*np.deg2rad(bias[1]) - np.pi,d*np.pi/2, np.pi/2 + np.deg2rad(bias[0])]
 
 def flat_inverse_kinematic_solution(DH_matrix, goal_xyz,):
-    initial_config = config_autocomplete((0, -np.pi/2, 0, 0))
+    initial_config = balanced_config_autocomplete((0, -np.pi/2, 0, 0))
 
 def inverse_kinematic_solution(DH_matrix, transform_matrix,):
 
@@ -282,3 +287,43 @@ def calculate_assistant_robot_path(task_path):
         except Exception as e:
             print(f"Error in computing inverse kinematics solution: {e}")
     return assistant_path
+
+def gen_ik_descent(target, itr = 100, epsilon = 0.001):
+    target = np.array(target)
+    delta = 4
+    w = [0,-np.pi/2, 0]
+    latest_dist = 0
+    latest_conf = None
+    for i in range(itr):
+        for angle in range(len(w)):
+            old_w = w.copy()
+            old_conf = balanced_config_autocomplete(w)
+            w[angle] += (random()-0.5)*delta
+            latest_conf = balanced_config_autocomplete(w)
+            new_end = np.array(forward_kinematic(DH_matrix_ur3e, latest_conf)[:3])
+            old_end = np.array(forward_kinematic(DH_matrix_ur3e, old_conf)[:3])
+            latest_dist = np.linalg.norm(new_end - target)
+            old_dist = np.linalg.norm(old_end - target)
+            if old_dist <= latest_dist:
+                w = old_w
+                latest_dist = old_dist
+        if latest_dist < epsilon:
+            return latest_conf, latest_dist
+        # if i % 10 == 1 and draw_progress:
+        #     visualize.clear()
+        #     visualize.draw_sphere(*target, 0.05, color = 'black', alpha=1)
+        #     visualize.show_conf(latest_conf, freeze=False, clear=False)
+
+        delta = 6/(i+1)
+    return latest_conf, latest_dist
+
+def balanced_inverse_kinematics(target, epsilon = 0.005):
+    best_conf, best_dist = None,1000000
+    for k in range(10):
+        conf, dist = gen_ik_descent(target, epsilon=epsilon)
+        if(best_dist > dist):
+            best_conf = conf
+            best_dist = dist
+        if dist < epsilon:
+            break
+    return best_conf, best_dist

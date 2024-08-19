@@ -99,8 +99,8 @@ while keep_moving:
         timer_print += 1
         if timer_print % 120 == 1:
             logger.error("waiting for " + ("[task robot]" if task_state.output_int_register_0 != 2 else "") + (" [camera_robot]" if cam_state.output_int_register_0 != 2 else ""))
-            # print("task config:", [round(q,2) for q in task_state.target_q])
-            # print("camera config:", [round(q,2) for q in cam_state.target_q])
+            # print("task config:", [round(q,2) for q in task_state.actual_q])
+            # print("camera config:", [round(q,2) for q in cam_state.actual_q])
     else:
         # Running!
         task_robot.sendWatchdog(2)
@@ -112,8 +112,8 @@ while keep_moving:
     if not has_started:
         continue
 
-    current_task_config = task_state.target_q
-    current_cam_config = cam_state.target_q
+    current_task_config = task_state.actual_q
+    current_cam_config = cam_state.actual_q
 
     # We want to read a new ball reading. but skip if the image is old, the ball isn't seen, and many other reasons.
     error = None
@@ -153,7 +153,7 @@ while keep_moving:
     task_config = PathFollow.getClampedTarget(current_ideal_task_config, task_lookahead_config, SLOW_CLAMP).copy() #ideal? maybe real?
     task_config[3] += last_offsets[0]
     task_config[5] += last_offsets[1]
-    logger.debug({"error": error, "robot_pos": [round(q,2) for q in task_state.target_q], "target_pos":[round(q,2) for q in cam_state.target_q]})
+    logger.debug({"error": error, "robot_pos": [round(q,2) for q in task_state.actual_q], "target_pos":[round(q,2) for q in cam_state.actual_q]})
     camera_robot.sendConfig(cam_lookahead_config)
 
     if camera_failed_counter > CAMERA_FAILED_MAX:

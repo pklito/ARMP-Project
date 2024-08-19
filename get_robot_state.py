@@ -18,8 +18,8 @@ if __name__ == '__main__':
             continue
         if last_time + 4 < time.time():
             print(round(time.time() - start_time, 3))
-            print("task: ", [round(q, 3) for q in state.target_q])
-            print("cam: ", [round(q, 3) for q in camstate.target_q])
+            print("task: ", [round(q, 3) for q in state.actual_q])
+            print("cam: ", [round(q, 3) for q in camstate.actual_q])
             last_time = time.time()
 
 # task:  [-1.254, -0.182, -1.686, -1.134, 2.728, 1.675]

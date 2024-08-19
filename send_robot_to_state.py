@@ -36,5 +36,5 @@ if __name__ == '__main__':
         if not state:
             continue
 
-        robot.sendConfig(PathFollow.getClampedTarget(state.target_q, task_path[3], 0.1))
+        robot.sendConfig(PathFollow.getClampedTarget(state.actual_q, task_path[3], 0.1))
         robot.sendWatchdog(1)

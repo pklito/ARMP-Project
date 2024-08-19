@@ -36,16 +36,19 @@ class Visualize_UR(object):
         self.draw_obstacles()
         self.fig.canvas.flush_events()
 
+    def draw_sphere(self,x,y,z,radius, color = 'black', alpha = 0.5):
+        u, v = np.mgrid[0:2 * np.pi:10j, 0:np.pi:10j]
+
+        sx = np.cos(u) * np.sin(v) * radius + x
+        sy = np.sin(u) * np.sin(v) * radius + y
+        sz = np.cos(v) * radius + z
+        self.ax.plot_surface(sx, sy, sz, color=color,alpha=alpha)
     def draw_obstacles(self):
         '''
         Draws the spheres constructing the obstacles
         '''
-        u, v = np.mgrid[0:2 * np.pi:10j, 0:np.pi:10j]
         for sphere in self.env.obstacles:
-            x = np.cos(u) * np.sin(v) * self.env.radius + sphere[0]
-            y = np.sin(u) * np.sin(v) * self.env.radius + sphere[1]
-            z = np.cos(v) * self.env.radius + sphere[2]
-            self.ax.plot_surface(x, y, z, color='red',alpha=0.5)
+            self.draw_sphere(*sphere[:3], self.env.radius, 'red', 0.5)
 
 
     def draw_spheres(self, global_sphere_coords, track_end_effector=False):
@@ -55,10 +58,7 @@ class Visualize_UR(object):
         u, v = np.mgrid[0:2 * np.pi:10j, 0:np.pi:10j]
         for frame in global_sphere_coords.keys():
             for sphere_coords in global_sphere_coords[frame]:
-                x = np.cos(u) * np.sin(v) *self.sphere_radius[frame] + sphere_coords[0]
-                y = np.sin(u) * np.sin(v) *self.sphere_radius[frame] + sphere_coords[1]
-                z = np.cos(v) * self.sphere_radius[frame] + sphere_coords[2]
-                self.ax.plot_surface(x, y, z, color=self.colors[frame], alpha=0.3)
+                self.draw_sphere(*sphere_coords[:3], self.sphere_radius[frame], color = self.colors[frame], alpha=0.3)
         if track_end_effector:
             self.end_effector_pos =np.vstack((self.end_effector_pos, global_sphere_coords['wrist_3_link'][-1]))
             self.ax.scatter(self.end_effector_pos[:,0], self.end_effector_pos[:,1], self.end_effector_pos[:,2])
@@ -90,14 +90,17 @@ class Visualize_UR(object):
     def draw_square(self):
         self.ax.plot([0.05, -0.34,-0.34,0.05,0.05],[-0.19, -0.19,-0.55,-0.55,-0.19])
 
-    def show_conf(self, conf:np.array ,freeze = True):
+    def clear(self):
+        self.ax.clear()
+
+    def show_conf(self, conf:np.array ,freeze = True, clear = True):
         '''
         Plots configuration
         '''
-        self.ax.clear()
+        if clear:
+            self.ax.clear()
         global_sphere_coords = self.transform.conf2sphere_coords(conf)
         self.draw_spheres(global_sphere_coords)
-        self.draw_square()
         if freeze:
             plt.ioff()
         else:

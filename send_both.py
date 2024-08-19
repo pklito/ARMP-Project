@@ -64,8 +64,8 @@ if __name__ == '__main__':
             path_index -= 1
             print("new index", path_index)
         if key == ord('f'):
-            new_robot_path.append(state.target_q)
-            new_cam_path.append(camstate.target_q)
+            new_robot_path.append(state.actual_q)
+            new_cam_path.append(camstate.actual_q)
         if key == ord('q'):
             print("task_path = ", new_robot_path)
             print("camera_path = ", new_cam_path)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
         _localization_detection(camera)
 
-        robot.sendConfig(PathFollow.getClampedTarget(state.target_q,  task_path[path_index], 0.1))
-        cam_robot.sendConfig(PathFollow.getClampedTarget(camstate.target_q, camera_path[path_index], 0.1))
+        robot.sendConfig(PathFollow.getClampedTarget(state.actual_q,  task_path[path_index], 0.1))
+        cam_robot.sendConfig(PathFollow.getClampedTarget(camstate.actual_q, camera_path[path_index], 0.1))
         cam_robot.sendWatchdog(1)
         robot.sendWatchdog(1)

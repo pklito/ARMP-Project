@@ -70,8 +70,8 @@ while keep_moving:
     task_robot.sendWatchdog(1)
     camera_robot.sendWatchdog(1)
 
-    current_task_config = task_state.target_q
-    current_cam_config = cam_state.target_q
+    current_task_config = task_state.actual_q
+    current_cam_config = cam_state.actual_q
 
     ball_position = get_position()
     if ball_position is None:

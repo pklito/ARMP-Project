@@ -55,7 +55,7 @@ while keep_moving:
         break
 
     if not task_state.output_int_register_0:
-        print("Not started yet", [round(q,2) for q in task_state.target_q])
+        print("Not started yet", [round(q,2) for q in task_state.actual_q])
         continue
     elif not_started:
         not_started = True
@@ -73,8 +73,8 @@ while keep_moving:
 
     # cv2.waitKey(1)
     # cv2.imshow("name", color_image)
-    current_task_config = task_state.target_q
-    current_cam_config = cam_state.target_q
+    current_task_config = task_state.actual_q
+    current_cam_config = cam_state.actual_q
 
     ball_position = get_ball_position(color_image,DEBUG=False)
     error = (0,0)

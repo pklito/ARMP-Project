@@ -55,6 +55,9 @@ camera_path = [[-0.03, -1.745, 0.1, -0.572, -1.753, 0.0],
 
 task_follower = PathFollow.PathFollowStrict(task_path, TASK_PATH_LOOKAHEAD, TASK_EDGE_CUTOFF)
 
+from src.LogGenerator import LoggerGenerator
+logger = LoggerGenerator(logfile=f"logs/synchronized_path_follow_checks.log", consoleLevel=20)
+
 task_robot = RTDERobot("192.168.0.12",config_filename="control_loop_configuration.xml")
 camera_robot = RTDERobot("192.168.0.10",config_filename="control_loop_configuration.xml")
 
@@ -90,8 +93,8 @@ while keep_moving:
         timer_print += 1
         if timer_print % 120 == 1:
             print(" waiting for ", "[task robot]" if task_state.output_int_register_0 != 2 else "", " [camera_robot]" if cam_state.output_int_register_0 != 2 else "")
-            print("task config:", [round(q,2) for q in task_state.target_q])
-            print("camera config:", [round(q,2) for q in cam_state.target_q])
+            print("task config:", [round(q,2) for q in task_state.actual_q])
+            print("camera config:", [round(q,2) for q in cam_state.actual_q])
     else:
         # Running!
         task_robot.sendWatchdog(2)
@@ -103,8 +106,8 @@ while keep_moving:
     if not has_started:
         continue
 
-    current_task_config = task_state.target_q
-    current_cam_config = cam_state.target_q
+    current_task_config = task_state.actual_q
+    current_cam_config = cam_state.actual_q
 
     # Follow camera path
     cam_lookahead_config = PathFollow.getClampedTarget(current_cam_config, PathFollow.getPointFromT(camera_path, _task_target_edge, _task_target_t), TASK_PATH_LOOKAHEAD)
@@ -118,7 +121,7 @@ while keep_moving:
     _task_target_edge = target_edge
     _task_target_t = target_t
 
+    #logger.warning(f"time : {target_t}")
+    logger.warning(f"pose: {task_state.actual_TCP_pose}, force: {task_state.actual_TCP_force}")
     print("new line", target_edge, target_t)
-    print("cam: ", toView(current_cam_config), toView(cam_lookahead_config))
-    print("task: ", toView(current_task_config), toView(task_lookahead_config))
 

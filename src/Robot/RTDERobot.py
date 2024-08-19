@@ -91,7 +91,7 @@ if __name__ == '__main__':
             robot.sendConfig(new_setp)
             wd = 1
         elif not move_completed and state.output_int_register_0 == 0:
-            print("Move to confirmed pose = " + str(state.target_q))
+            print("Move to confirmed pose = " + str(state.actual_q))
             move_completed = True
             wd = 0
 

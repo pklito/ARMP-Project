@@ -38,6 +38,7 @@ we used a plate the size of A4 page where we placed the ArUcos on top, and a red
     ```python
     python3 synchronized_balancing.py
     # for other tasks, change the file you're running for instance:
+    #  python3 camera.py
     #  python3 synchronized_path_follow_main.py
     ```
 

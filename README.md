@@ -24,6 +24,7 @@ To install the required libraries, run the following command:
 ## Tools
 
 we used a plate the size of A4 page where we placed the ArUcos on top, and a red foam ball.
+- to create the plate, we cut 2 foam pieces the size of an A4 page and adhered them together for better strength and we then adhered the A4 page with the ArUcos on top of the foam pieces.
 
 ## Running The Project
 

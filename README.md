@@ -2,55 +2,57 @@
 
 Yada Yada this is a semester project we'll make this more official later i promise.
 
-
-Idea: having the arm hold a plate, on which a ball resides, and to try to move it around a pre determined obstacle, to a predetermined goal.
-
-- The first challenge we would face with this project is planning a path where we have a constraint that is not just robot-robot and robot-obstacle collisions, but also an allowed angle of the plate, that may have some leeway. (we are not entirely sure if this is non trivial however).
-- The second challenge we want to try to explore, is using the real-sense camera to check how far the ball is from the center of the plate, and adjusting the angle to prevent it from falling out. this closed loop is akin to a local avoidance among a global planner.
-
-### TODO List:
-1. Conifgure the masks in plate_detect() to be able to detect the plate
-2. Check the correctness of kinematics.py functions
-3. Try executing a path with the help of the kinematics.py functionality while keeping the ball balanced
-
 ## Requirements
+To install the required libraries, run the following command:
+```bash
+    pip install -r requirements.txt
+```
+- Note: The versions of the libraries listed in the requirements.txt file are compatible with Python3.11. However, compatibility with other Python versions has not been verified and may cause issues.
 
-pip install -r requirements.txt
+- We utilize a library called RTDE, which can be found under src/Robot. There is an additional README.md file in that directory with instructions on how to download this library. The `requirements.txt` file should be able to automatically download the library but if it causes any problems then consider running the commands that are found in `src/Robot/README.md`.
 
+- Additionally, we have a UR script that needs to be uploaded to the robot's iPads to facilitate communication with the robot. we called these scripts  something like `rtde_simple_servoj` or `rtde_synched_servoj`. (In our lab, the scripts are already installed on the ipads)
 
-## Dependencies
+## Useful Repositories
 
-### Linux Installation
-sudo apt-get install libblas-dev liblapack-dev
-
-pip install --user numpy Cython
-
-### Windows Installation
-
-#### * this could be a little buggy as we only tested the linux installation. But go to your C:\ and clone the following
-
-
-git clone https://github.com/Microsoft/vcpkg.git
-
-cd vcpkg
-
-.\bootstrap-vcpkg.bat
-
-#### * after this add your vcpkg path to PATH Environment Variable and restart
-
-vcpkg install lapack:x64-windows
-
-vcpkg install blas:x64-windows
-
-vcpkg integrate install
-
-pip install --user numpy Cython
+1. We used the following repository for generating ArUco markers, which we placed on our plate. While there are online tools available for generating ArUco markers, we preferred using this library:
+    ```bash
+    https://github.com/dogod621/OpenCVMarkerPrinter
+    ```
 
 
-### Kinematics Library Download
+## Tools
 
-git clone https://github.com/cambel/ur_ikfast.git
+we used a plate the size of A4 page where we placed the ArUcos on top, and a red foam ball.
+- to create the plate, we cut 2 foam pieces the size of an A4 page and adhered them together for better strength and we then adhered the A4 page with the ArUcos on top of the foam pieces.
 
-cd ur_ikfast
+## Running The Project
 
-pip install -e .
+1. Activate your virtual environment (if you have one):
+
+    ```bash
+    source venv/bin/activate
+    ```
+2. Navigate to the ROOT directory of the project.
+
+3. Run the desired script to perform the task you desire. For example, to balance the ball on a plate, run:
+    ```python
+    python3 synchronized_balancing.py
+    # for other tasks, change the file you're running for instance:
+    #  python3 camera.py
+    #  python3 synchronized_path_follow_main.py
+    ```
+
+4. Communicate with the robots:
+
+    - Turn on the iPads and load the corresponding script for communication. The script is likely named something similar to `rtde_synched_servoj`.
+    Hit play on both the task and camera assistant robot.
+
+**Order of Operations:**
+
+- First, run the Python script.
+- Then, hit run on the iPads to enable communication with the robots.
+- After completing the task, stop the scripts on the iPads, and terminate your Python script. to ensure no sudden movements occur
+
+**Safety Recommendation:**
+- When running the robots, keep your hand near the emergency stop buttons in case an incorrect configuration causes the robot to move in a dangerous manner.

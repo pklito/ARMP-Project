@@ -1,7 +1,21 @@
 ## Description
 
-Yada Yada this is a semester project we'll make this more official later i promise.
+Joint project for the extension project of 2360901(Algorithmic motion planning) by Saleh Hassan and Paulo Khayat.
 
+This project utilizes two UniversalRobots arms (Ur5e and Ur3e) and aims to perform balancing a ball on one arm, while the second arm provides information via a camera.
+Both arms are given predetermined paths to move along, and the goal is to reach the ends of their paths simultaneously, without dropping the ball.
+
+This project utilizes the [RTDE Python Client Library](https://github.com/UniversalRobots/RTDE_Python_Client_Library) in order to communicate in real time with the arms, and OpenCV for the image recognition portion.
+
+## Project poster
+
+![](media/Robotic%20arm%20poster.png)
+
+## Media
+
+<image src="media/Ball_before_detect.png" height=300><image src="media/ball_simulation12.gif" height=300>  
+**Project demonstration video:**  
+[![Video link](https://img.youtube.com/vi/ndlsUIqdbCk/0.jpg)](https://www.youtube.com/watch?v=ndlsUIqdbCk)
 ## Requirements
 To install the required libraries, run the following command:
 ```bash

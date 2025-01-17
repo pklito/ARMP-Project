@@ -11,14 +11,15 @@ Additionally, there is a function for getting pixel to aruco plane, given a cons
 BALL_HEIGHT = 0.035
 
 # Aruco board constants
-VALID_ARUCOS = [a for a in range(12)]
-SIZE = 51.5
-VERT_DISP = 23 + SIZE
-HOR_DISP = 23 + SIZE
-SQUARE_SHAPE = [(-SIZE/2, SIZE/2), (SIZE/2, SIZE/2), (SIZE/2, -SIZE/2), (-SIZE/2, -SIZE/2)]
-SHAPE = (3,4)
-ARUCO_OBJ = [[((HOR_DISP * (i) + d[0] - HOR_DISP*(SHAPE[0]-1)/2) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*(SHAPE[1]-1)/2)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
+VALID_ARUCOS = [a for a in range(12)]       # aruco IDS
+SIZE = 51.5                                 # aruco square size in mm
+VERT_DISP = 23 + SIZE                       # offset between aruco centers vertically
+HOR_DISP = 23 + SIZE                        # offset between aruco centers horizontally
+SHAPE = (3,4)                               # Shape of aruco markers on the plate
 
+SQUARE_SHAPE = [(-SIZE/2, SIZE/2), (SIZE/2, SIZE/2), (SIZE/2, -SIZE/2), (-SIZE/2, -SIZE/2)]
+ARUCO_OBJ = [[((HOR_DISP * (i) + d[0] - HOR_DISP*(SHAPE[0]-1)/2) / 1000., (VERT_DISP*(-j) + d[1] + VERT_DISP*(SHAPE[1]-1)/2)/1000., 0) for d in SQUARE_SHAPE]  for j in range(SHAPE[1]) for i in range(SHAPE[0])]
+# ARUCO_OBJ should give a list of aruco positions, as lists of the four corners. This is the only value the code uses from these constants
 
 ## ARUCO HELPER FUNCTIONS ##
 def get_aruco_corners(color_image):

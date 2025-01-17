@@ -8,4 +8,4 @@ if __name__ == "__main__":
     # runCamera(camera, generateAll)
     camera = CameraStreamer()
 
-    drawBothFrames(camera,0)
+    runCamera(camera, generatePlate)

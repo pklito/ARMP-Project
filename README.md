@@ -14,7 +14,7 @@ This project utilizes the [RTDE Python Client Library](https://github.com/Univer
 ## Media
 
 <image src="media/Ball_before_detect.png" height=300><image src="media/ball_simulation12.gif" height=300>  
-**Project demonstration video:**  
+**Project demonstration video:**  https://www.youtube.com/watch?v=ndlsUIqdbCk
 [![Video link](https://img.youtube.com/vi/ndlsUIqdbCk/0.jpg)](https://www.youtube.com/watch?v=ndlsUIqdbCk)
 ## Requirements
 To install the required libraries, run the following command:
